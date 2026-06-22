@@ -336,7 +336,6 @@ button:disabled {
   padding: 12px 20px;
   border: none;
   border-radius: 12px;
-
   background: linear-gradient(
     135deg,
     #009e81ad,
@@ -351,6 +350,38 @@ button:disabled {
 
   transition: all 0.3s ease;
 }
+
+/* .glow-button {
+  width: 100%;
+  max-width: 500px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+
+  position: relative;
+  overflow: hidden;
+  padding: 20px;
+
+  border: none;
+  border-radius: 25px;
+
+  background: linear-gradient(
+    135deg,
+    #009e81ad,
+    #067ea9
+  );
+
+  color: white;
+  font-weight: 600;
+  font-size: 2rem;
+
+  cursor: pointer;
+  transition: all 0.3s ease;
+} */
+
+
 
 .glow-button::before {
   content: "";
@@ -432,4 +463,11 @@ button:disabled {
   z-index: 900;
   background: linear-gradient(rgba(0, 255, 136, 0.3),rgba(0, 187, 255, 0.5));
   border-radius: 5%;
+}
+
+
+.btn-icon {
+  width: 40px;
+  text-align: center;
+  flex-shrink: 0;
 }

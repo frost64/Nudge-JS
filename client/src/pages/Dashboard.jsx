@@ -50,44 +50,33 @@ function Dashboard() {
       <div
         style={{
           display: "flex",
-          flexWrap: "wrap",
-          gap: "10px",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: "14px"
         }}
       >
-        <h1 
-        className="search-section-title"
-        >⚡ Quick Access</h1>
-        <button
-          className="glow-button"
-          onClick={() =>
-            navigate("/reminders")
-          }
-        >⏰ New Reminder
+        {/* ------Quick Access Panel------ */}
+        <h1 className="search-section-title">⚡ Quick Access</h1>
+        
+        <button className="glow-button" onClick={() => navigate("/reminders")}>
+            <span className="btn-icon">⏰</span>
+            <span>New Reminder</span>
         </button>
         
 
-        <button
-          className="glow-button"
-          onClick={() =>
-            navigate("/notes")
-          }
-        >📝 New Note
+        <button className="glow-button" onClick={() => navigate("/notes")}>
+          <span className="btn-icon">📝</span>
+          <span>New Note</span>
         </button>
 
-        <button
-          className="glow-button"
-          onClick={() =>
-            navigate("/birthdays")
-          }
-        >🎂 Add Birthday
+        <button className="glow-button" onClick={() => navigate("/birthdays")}>
+          <span className="btn-icon">🎂</span>
+          <span>Add Birthday</span>
         </button>
 
-        <button
-          className="glow-button"
-          onClick={() =>
-            navigate("/links")
-          }
-        >🔗 Save Link
+        <button className="glow-button" onClick={() => navigate("/links")}>
+          <span className="btn-icon">🔗</span>
+          <span>Save Link</span>
         </button>
       </div>
 </div>
