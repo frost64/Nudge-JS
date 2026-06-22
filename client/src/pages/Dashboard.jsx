@@ -52,11 +52,13 @@ function Dashboard() {
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          gap: "14px"
+          gap: "10px"
         }}
       >
         {/* ------Quick Access Panel------ */}
         <h1 className="search-section-title">⚡ Quick Access</h1>
+        {/* ----------------Just to get rid of alignment issue------------------ */}
+        <button style={{padding: "0px", opacity: "0"}}></button>
         
         <button className="glow-button" onClick={() => navigate("/reminders")}>
             <span className="btn-icon">⏰</span>
