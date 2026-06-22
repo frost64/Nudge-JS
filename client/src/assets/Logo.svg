@@ -1,0 +1,17 @@
+<svg width="500" height="500" viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <clipPath id="cc"><circle cx="250" cy="250" r="220"/></clipPath>
+  </defs>
+
+  <circle cx="250" cy="250" r="220" fill="#0C0C0C"/>
+
+  <rect x="120" y="120" width="62" height="260" rx="16" fill="white" clip-path="url(#cc)"/>
+  <rect x="318" y="120" width="62" height="260" rx="16" fill="white" clip-path="url(#cc)"/>
+  <polygon points="182,120 244,120 380,380 318,380" fill="#6366F1" clip-path="url(#cc)"/>
+  <polygon points="182,120 206,120 342,380 318,380" fill="white" opacity="0.12" clip-path="url(#cc)"/>
+
+  <circle cx="436" cy="82" r="44" fill="#0C0C0C"/>
+  <circle cx="436" cy="82" r="34" fill="#F43F5E"/>
+  <circle cx="436" cy="82" r="20" fill="none" stroke="white" stroke-width="3.5"/>
+  <circle cx="436" cy="82" r="8"  fill="white"/>
+</svg>
