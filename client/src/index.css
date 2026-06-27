@@ -5,7 +5,7 @@
   }
 
 body {
-background-color: #f5f7fb;
+background-color: #ffffff;
 color: #222;
 font-family: Arial, Helvetica, sans-serif;
 line-height: 1.6;
@@ -24,12 +24,12 @@ padding: 20px;
 
 h1 {
 margin-bottom: 20px;
-color: #1f2937;
+color: #014c68;
 }
 
 h2 {
 margin-bottom: 15px;
-color: #374151;
+color: #027199;
 }
 
 h3 {
@@ -55,25 +55,7 @@ font-size: 14px;
 input:focus,
 select:focus,
 textarea:focus {
-border-color: #2563eb;
-}
-
-button {
-padding: 10px 16px;
-border: none;
-border-radius: 8px;
-background-color: #2563eb;
-color: white;
-cursor: pointer;
-transition: 0.2s;
-}
-
-button:hover {
-background-color: #1d4ed8;
-}
-
-button + button {
-margin-left: 8px;
+border-color: #78f7fd;
 }
 
 hr {
@@ -330,7 +312,7 @@ button:disabled {
 
 /* ---------------------Buttons----------------------------- */
 .glow-button {
-  width: 200px;
+  width: relative;
   position: relative;
   overflow: hidden;
   padding: 12px 20px;
@@ -351,35 +333,11 @@ button:disabled {
   transition: all 0.3s ease;
 }
 
-/* .glow-button {
-  width: 100%;
-  max-width: 500px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-
-  position: relative;
-  overflow: hidden;
-  padding: 20px;
-
+.hidden{
+  padding: 0;
+  opacity: 0;
   border: none;
-  border-radius: 25px;
-
-  background: linear-gradient(
-    135deg,
-    #009e81ad,
-    #067ea9
-  );
-
-  color: white;
-  font-weight: 600;
-  font-size: 2rem;
-
-  cursor: pointer;
-  transition: all 0.3s ease;
-} */
+}
 
 
 
@@ -450,7 +408,7 @@ button:disabled {
 
 
   /* ----------------------Quick Access Panel---------------- */
-  .quick-access {
+  /* .quick-access {
   padding: 1.5%;
   margin-left: 10px;
   position: fixed;
@@ -463,11 +421,38 @@ button:disabled {
   z-index: 900;
   background: linear-gradient(rgba(0, 255, 136, 0.3),rgba(0, 187, 255, 0.5));
   border-radius: 5%;
+} */
+.quick-access {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 25px;
+  border-radius: 30px;
 }
 
+.quick-access .glow-button {
+  width: 100%;
+}
 
 .btn-icon {
   width: 40px;
   text-align: center;
   flex-shrink: 0;
+}
+
+/* -----------------nav style----------------- */
+.nav-style{
+    position: sticky;
+    top: 0;
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    height: 80px;
+    min-height: 80px;
+    overflow: visible;
+    justify-content: space-between;
+    gap: 20px;
+    z-index: 1000;
+    padding: 15px 25px;
 }

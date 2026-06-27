@@ -39,61 +39,51 @@ function Dashboard() {
       </Layout>
     );
   }
+  const quickAccess = (
+    <div className="quick-access">
+
+      <h2>
+        ⚡ Quick Access
+      </h2>
+      
+      <button className = "hidden"></button>
+      
+      <button
+        className="glow-button"
+        onClick={() => navigate("/reminders")}
+      >
+        ⏰ New Reminder
+      </button>
+
+      <button
+        className="glow-button"
+        onClick={() => navigate("/notes")}
+      >
+        📝 New Note
+      </button>
+
+      <button
+        className="glow-button"
+        onClick={() => navigate("/birthdays")}
+      >
+        🎂 Add Birthday
+      </button>
+
+      <button
+        className="glow-button"
+        onClick={() => navigate("/links")}
+      >
+        🔗 Save Link
+      </button>
+
+    </div>
+  );
 
   return (
-    <Layout>
-      <div 
-      className="quick-access"
-      >
-      
+      <Layout sidebar={quickAccess}>
 
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: "10px"
-        }}
-      >
-        {/* ------Quick Access Panel------ */}
-        <h1 className="search-section-title">⚡ Quick Access</h1>
-        {/* ----------------Just to get rid of alignment issue------------------ */}
-        <button style={{padding: "0px", opacity: "0"}}></button>
-        
-        <button className="glow-button" onClick={() => navigate("/reminders")}>
-            <span className="btn-icon">⏰</span>
-            <span>New Reminder</span>
-        </button>
-        
-
-        <button className="glow-button" onClick={() => navigate("/notes")}>
-          <span className="btn-icon">📝</span>
-          <span>New Note</span>
-        </button>
-
-        <button className="glow-button" onClick={() => navigate("/birthdays")}>
-          <span className="btn-icon">🎂</span>
-          <span>Add Birthday</span>
-        </button>
-
-        <button className="glow-button" onClick={() => navigate("/links")}>
-          <span className="btn-icon">🔗</span>
-          <span>Save Link</span>
-        </button>
-      </div>
-</div>
-<div style={{ marginLeft: '100px' }}>
       <h2 className="search-section-title">Statistics</h2>
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns:
-            "repeat(auto-fit, minmax(220px, 1fr))",
-          gap: "20px",
-          marginBottom: "30px"
-        }}
-      >
         <Card>
           <h3>⏰ Reminders</h3>
           <h1>{data.stats?.totalReminders ?? 0}</h1>
@@ -113,9 +103,6 @@ function Dashboard() {
           <h3>🔗 Links</h3>
           <h1>{data.stats?.totalLinks ?? 0}</h1>
         </Card>
-      </div>
-
-      <hr />
 
       <Card>
         <h2 className="search-section-title">Recent Notes</h2>
@@ -133,8 +120,6 @@ function Dashboard() {
         )}
       </Card>
 
-      <hr />
-
       <Card>
         <h2 className="search-section-title">Favorite Links</h2>
 
@@ -151,8 +136,6 @@ function Dashboard() {
         )}
       </Card>
 
-      <hr />
-
       <Card>
         <h2 className="search-section-title">Pending Reminders</h2>
 
@@ -168,7 +151,6 @@ function Dashboard() {
           ))
         )}
       </Card>
-      </div>
     </Layout>
   );
 }

@@ -2,7 +2,7 @@ import Navbar from "./Navbar";
 import { useContext, useEffect } from "react";
 import { AuthContext } from "../context/AuthContext";
 
-function Layout({ children }) {
+function Layout({ children, sidebar }) {
   const { user } = useContext(AuthContext);
 
   const darkMode =
@@ -39,15 +39,38 @@ function Layout({ children }) {
 
       <div
         style={{
-          maxWidth: "1200px",
+          maxWidth: "1400px",
           margin: "0 auto",
           padding: "20px",
-          overflow: "visible",
-          position: "relative",
-          zIndex: 1
+
+          display: "flex",
+          gap: "30px",
+          alignItems: "flex-start"
         }}
       >
-        {children}
+
+        {/* Sidebar */}
+        {sidebar && (
+          <aside
+            style={{
+              width: "250px",
+              flexShrink: 0
+            }}
+          >
+            {sidebar}
+          </aside>
+        )}
+
+        {/* Main Content */}
+        <main
+          style={{
+            flex: 1,
+            minWidth: 0
+          }}
+        >
+          {children}
+        </main>
+
       </div>
     </div>
   );

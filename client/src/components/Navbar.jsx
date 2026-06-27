@@ -110,20 +110,8 @@ function Navbar() {
 
   return (
     <nav
+      className = "nav-style"
       style={{
-        position: "sticky",
-        top: 0,
-        display: "flex",
-        alignItems: "center",
-        flexWrap: "nowrap",
-        height: "80px",
-        minHeight: "80px",
-        overflow: "visible",
-        justifyContent: "space-between",
-        gap: "20px",
-        // position: "relative",
-        zIndex: 1000,
-        padding: "15px 25px",
         backgroundColor: darkMode ? "#1f2937" : "#ffffff",
         borderBottom: darkMode ? "1px solid #374151" : "1px solid #e5e7eb",
         boxShadow: "0 2px 10px rgba(0,0,0,0.05)"
