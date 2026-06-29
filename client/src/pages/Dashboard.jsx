@@ -40,11 +40,12 @@ function Dashboard() {
     );
   }
   const quickAccess = (
-    <div className="quick-access">
+    <div 
+    className="quick-access">
 
-      <h2>
+      <h1>
         ⚡ Quick Access
-      </h2>
+      </h1>
       
       <button className = "hidden"></button>
       
@@ -81,31 +82,54 @@ function Dashboard() {
 
   return (
       <Layout sidebar={quickAccess}>
-
-      <h2 className="search-section-title">Statistics</h2>
-
+      <h1>Statistics</h1>
+      <div style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(4, 1fr)",
+          gap: "20px",
+          width: "100%",
+        }}>
         <Card>
-          <h3>⏰ Reminders</h3>
-          <h1>{data.stats?.totalReminders ?? 0}</h1>
+          <h3
+          className="underline"
+          onClick={() =>
+            navigate("/reminders")
+          }>⏰ Reminders</h3>
+          <h1 style={{userSelect: "none"}}>{data.stats?.totalReminders ?? 0}</h1>
         </Card>
         
         <Card>
-          <h3>📝 Notes</h3>
-          <h1>{data.stats?.totalNotes ?? 0}</h1>
+          <h3
+          className="underline"
+          onClick={() =>
+            navigate("/notes")
+          }>📝 Notes</h3>
+          <h1 style={{userSelect: "none"}}>{data.stats?.totalNotes ?? 0}</h1>
         </Card>
 
         <Card>
-          <h3>🎂 Birthdays</h3>
-          <h1>{data.stats?.totalBirthdays ?? 0}</h1>
+          <h3
+          className="underline"
+          onClick={() =>
+            navigate("/birthdays")
+          }>🎂 Birthdays</h3>
+          <h1 style={{userSelect: "none"}}>{data.stats?.totalBirthdays ?? 0}</h1>
         </Card>
 
         <Card>
-          <h3>🔗 Links</h3>
-          <h1>{data.stats?.totalLinks ?? 0}</h1>
+          <h3
+          className="underline"
+          onClick={() =>
+            navigate("/links")
+          }>🔗 Links</h3>
+          <h1 style={{userSelect: "none"}}>{data.stats?.totalLinks ?? 0}</h1>
         </Card>
-
+      </div>
+      
+      
+      
       <Card>
-        <h2 className="search-section-title">Recent Notes</h2>
+        <h2>Recent Notes</h2>
 
         {data.recentNotes?.length === 0 ? (
           <p>No notes found</p>
@@ -113,7 +137,12 @@ function Dashboard() {
           data.recentNotes?.map((note) => (
             <div
               className="search-result-item" 
-              key={note._id}>
+              key={note._id}
+              onClick={() =>
+                navigate(
+                  `/notes?noteId=${note._id}`
+                )
+              }>
               {note.title}
             </div>
           ))
@@ -121,7 +150,7 @@ function Dashboard() {
       </Card>
 
       <Card>
-        <h2 className="search-section-title">Favorite Links</h2>
+        <h2>Favorite Links</h2>
 
         {data.favoriteLinks?.length === 0 ? (
           <p>No favorite links</p>
@@ -129,7 +158,12 @@ function Dashboard() {
           data.favoriteLinks?.map((link) => (
             <div
               className="search-result-item" 
-              key={link._id}>
+              key={link._id}
+              onClick={() =>
+                navigate(
+                  `/links?linkId=${link._id}`
+                )
+              }>
               {link.title}
             </div>
           ))
@@ -137,7 +171,7 @@ function Dashboard() {
       </Card>
 
       <Card>
-        <h2 className="search-section-title">Pending Reminders</h2>
+        <h2>Pending Reminders</h2>
 
         {data.pendingReminders?.length === 0 ? (
           <p>No pending reminders</p>
@@ -145,8 +179,13 @@ function Dashboard() {
           data.pendingReminders?.map((reminder) => (
             <div
               className="search-result-item" 
-              key={reminder._id}>
-              {reminder.title}
+              key={reminder._id}
+              onClick={() =>
+                navigate(
+                  `/reminders?reminderId=${reminder._id}`
+                )
+              }>
+              `Title{reminder.title}`
             </div>
           ))
         )}

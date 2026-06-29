@@ -42,7 +42,6 @@ function Layout({ children, sidebar }) {
           maxWidth: "1400px",
           margin: "0 auto",
           padding: "20px",
-
           display: "flex",
           gap: "30px",
           alignItems: "flex-start"
@@ -53,8 +52,19 @@ function Layout({ children, sidebar }) {
         {sidebar && (
           <aside
             style={{
-              width: "250px",
-              flexShrink: 0
+              position: "sticky",
+              width: "18%",
+              flexShrink: 0,
+              top: "10%",
+              display: "flex",
+              alignItems: "center",
+              flexWrap: "nowrap",
+              height: "1%",
+              minHeight: "1%",
+              overflow: "visible",
+              justifyContent: "space-between",
+              gap: "20px",
+              zIndex: 900
             }}
           >
             {sidebar}
