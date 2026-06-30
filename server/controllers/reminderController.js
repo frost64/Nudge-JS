@@ -41,7 +41,7 @@ const toggleReminder =
 const createReminder = async (req, res) => {
   try {
 
-    const { title, description, dueDate, reminderTime, priority } = req.body;
+    const { title, description, dueDate, reminderTime, priority, category} = req.body;
 
     const reminder = await Reminder.create({
       title,
@@ -49,6 +49,7 @@ const createReminder = async (req, res) => {
       dueDate,
       reminderTime,
       priority,
+      category,
       user: req.user.id
     });
 

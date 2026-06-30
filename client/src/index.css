@@ -182,7 +182,6 @@ button:disabled {
   padding: 12px 0;
   border-bottom: 1px solid #e5e7eb;
   transition: 0.2s ease;
-  border: #00ffff;
   box-shadow: #12062f;
 }
 
@@ -201,7 +200,7 @@ button:disabled {
   border-radius: 14px;
 
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid rgb(0, 255, 225);
 
   transition: all 0.4s ease;
 }
@@ -321,13 +320,10 @@ button:disabled {
     #009e81ad,
     #067ea9
   );
-
   color: white;
   font-weight: 600;
   font-size: 15px;
-
   cursor: pointer;
-
   transition: all 0.3s ease;
 }
 
@@ -487,4 +483,60 @@ button:disabled {
 
 .underline:hover::after{
   transform: scaleX(1);
+}
+
+/* ----------------- Glow button top ------------------ */
+.glow-top {
+  width: relative;
+  position: relative;
+  overflow: hidden;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(
+    135deg,
+    #009e81ad,
+    #067ea9
+  );
+  color: white;
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.glow-top::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    0deg,
+    transparent,
+    transparent 30%,
+    rgba(255,255,255,0.25)
+  );
+  transform: rotate(-45deg);
+  opacity: 0;
+  transition: all 0.6s ease;
+}
+
+.glow-top:hover {
+  transform: translateY(5px);
+  box-shadow:
+    0 0 15px rgba(59,130,246,0.35),
+    0 0 35px rgba(59,130,246,0.2);
+}
+
+.glow-top:hover::before {
+  opacity: 1;
+  transform:
+    rotate(-45deg)
+    translateY(100%);
+}
+
+.glow-top:active {
+  transform: scale(0.98);
 }

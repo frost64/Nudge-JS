@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import { useLocation } from "react-router-dom";
 import api from "../services/api";
 import Layout from "../components/Layout";
 import Card from "../components/Card";
-import { useLocation } from "react-router-dom";
-import { useRef } from "react";
+
 
 function Reminders() {
 
@@ -15,20 +15,11 @@ const [reminderTime, setReminderTime] = useState("09:00");
 const [priority, setPriority] = useState("");
 const [category, setCategory] = useState("");
 const [showForm, setShowForm] = useState(false);
+
 const location = useLocation();
-
 const reminderRefs = useRef({});
-
-const searchParams =
-  new URLSearchParams(
-    location.search
-  );
-
-const selectedReminderId =
-  searchParams.get(
-    "reminderId"
-  );
-
+const searchParams = new URLSearchParams(location.search);
+const selectedReminderId = searchParams.get("reminderId");
 
 const fetchReminders = async () => {
 try {
@@ -68,7 +59,7 @@ category,
   setPriority("");
   setCategory("");
   setEditingId(null);
-
+  setShowForm(false);
   fetchReminders();
 } catch (error) {
   console.log(error);
@@ -155,27 +146,11 @@ responseType: "blob",
 const startEdit = (reminder) => {
 setEditingId(reminder._id)
 setShowForm(true);
-
-   
 setTitle(reminder.title);
-
-setDueDate(
-  reminder.dueDate.split("T")[0]
-);
-
-setReminderTime(
-  reminder.reminderTime || "09:00"
-);
-
-setPriority(
-  reminder.priority || ""
-);
-
-setCategory(
-  reminder.category || ""
-);
-   
-
+setDueDate(reminder.dueDate.split("T")[0]);
+setReminderTime(reminder.reminderTime || "09:00");
+setPriority(reminder.priority || "");
+setCategory(reminder.category || "");
 };
 
 const cancelEdit = () => {
@@ -186,34 +161,25 @@ setReminderTime("09:00");
 setPriority("");
 setCategory("");
 };
- useEffect(() => {
 
-  fetchReminders();
-
-}, []);
 useEffect(() => {
+  fetchReminders();
+}, []);
 
+useEffect(() => {
   if (
     selectedReminderId &&
     reminderRefs.current[selectedReminderId]
   ) {
-
-    reminderRefs.current[
-      selectedReminderId
-    ].scrollIntoView({
+      reminderRefs.current[selectedReminderId].scrollIntoView({
       behavior: "smooth",
       block: "center"
     });
-
   }
-
-}, [
-  reminders,
-  selectedReminderId
-]);
+}, [reminders, selectedReminderId]);
 
 return ( <Layout>  
-  <button
+  {!showForm && (<button
     className="glow-button"
     onClick={() =>
       setShowForm(true)
@@ -221,16 +187,20 @@ return ( <Layout>
   >
     ⏰ Create Reminder
   </button>
+  )}
+
   {showForm && (
-  <Card>
-  <h2 className="search-section-title">
+  <Card style={{width: "40%"}}>
+  <h2>
     {editingId
       ? "Edit Reminder"
       : "New Reminder"}
   </h2>
   <div
   style={{
-    maxWidth: "600px"
+    display: "flex",
+    flexDirection: "column",
+    gap: "15px"
   }}
 >
 
@@ -242,10 +212,7 @@ return ( <Layout>
   onChange={(e) =>
     setTitle(e.target.value)
   }
-/>
-
-  <br />
-  <br />
+  />
 
   <input
     className="input-glow"
@@ -255,9 +222,6 @@ return ( <Layout>
       setDueDate(e.target.value)
     }
   />
-
-  <br />
-  <br />
 
   <input
     className="input-glow"
@@ -269,9 +233,6 @@ return ( <Layout>
       )
     }
   />
-
-  <br />
-  <br />
 
   <select
     className="input-glow"
@@ -301,9 +262,6 @@ return ( <Layout>
     </option>
   </select>
 
-  <br />
-  <br />
-
   <input
   className="input-glow"
   type="text"
@@ -316,34 +274,34 @@ return ( <Layout>
   }
 />
 
-  <br />
-  <br />
+  <div
+    style={{
+      display: "flex",
+      padding:"1%",
+      gap: "10px"
 
-  <button 
-    className="glow-button"
-    onClick={handleSave}>
-    {editingId
-      ? "Update Reminder"
-      : "Add Reminder"}
-  </button>
+    }}
+  >
+    <button
+      className="glow-top"
+      onClick={handleSave}
+    >
+      {editingId ? "Update Reminder" : "Add Reminder"}
+    </button>
 
-  {" "}
-
- <button
-  className="glow-button"
-  type="button"
-  onClick={() => {
-
-    if (editingId) {
-      cancelEdit();
-    }
-
-    setShowForm(false);
-
-  }}
->
-  Cancel
-</button>
+    <button
+      className="glow-top"
+      type="button"
+      onClick={() => {
+        if (editingId) {
+          cancelEdit();
+        }
+        setShowForm(false);
+      }}
+    >
+      Cancel
+    </button>
+  </div>
 </div>
 </Card>
 )}
@@ -424,7 +382,7 @@ return ( <Layout>
           </p>
 
           <button
-            className="glow-button"
+            className="glow-top"
             onClick={() =>
               startEdit(reminder)
             }
@@ -435,7 +393,7 @@ return ( <Layout>
           {" "}
 
           <button
-            className="glow-button"
+            className="glow-top"
             onClick={() =>
               handleToggle(
                 reminder._id
@@ -450,7 +408,7 @@ return ( <Layout>
           {" "}
 
           <button
-            className="glow-button"
+            className="glow-top"
             onClick={() =>
               handleDelete(
                 reminder._id
@@ -463,7 +421,7 @@ return ( <Layout>
           {" "}
 
           <button
-            className="glow-button"
+            className="glow-top"
             onClick={() =>
               handleExport(
                 reminder._id

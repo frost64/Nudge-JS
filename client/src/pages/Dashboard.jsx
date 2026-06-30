@@ -134,7 +134,7 @@ function Dashboard() {
         {data.recentNotes?.length === 0 ? (
           <p>No notes found</p>
         ) : (
-          data.recentNotes?.map((note) => (
+          data.recentNotes?.map((note, index) => (
             <div
               className="search-result-item" 
               key={note._id}
@@ -143,7 +143,7 @@ function Dashboard() {
                   `/notes?noteId=${note._id}`
                 )
               }>
-              {note.title}
+              {index+1}. {note.title}
             </div>
           ))
         )}
@@ -155,7 +155,7 @@ function Dashboard() {
         {data.favoriteLinks?.length === 0 ? (
           <p>No favorite links</p>
         ) : (
-          data.favoriteLinks?.map((link) => (
+          data.favoriteLinks?.map((link, index) => (
             <div
               className="search-result-item" 
               key={link._id}
@@ -164,7 +164,7 @@ function Dashboard() {
                   `/links?linkId=${link._id}`
                 )
               }>
-              {link.title}
+              {index+1}. {link.title}
             </div>
           ))
         )}
@@ -176,7 +176,7 @@ function Dashboard() {
         {data.pendingReminders?.length === 0 ? (
           <p>No pending reminders</p>
         ) : (
-          data.pendingReminders?.map((reminder) => (
+          data.pendingReminders?.map((reminder, index) => (
             <div
               className="search-result-item" 
               key={reminder._id}
@@ -185,7 +185,7 @@ function Dashboard() {
                   `/reminders?reminderId=${reminder._id}`
                 )
               }>
-              `Title{reminder.title}`
+              {index+1}. {reminder.title}
             </div>
           ))
         )}
