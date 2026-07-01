@@ -23,10 +23,11 @@ function Card({ children, style }) {
         borderRadius: "12px",
         padding: "20px",
         margin: "15px 0",
+        
         boxShadow:
           darkMode
-            ? "0 4px 12px rgba(0,0,0,0.3)"
-            : "0 4px 12px rgba(0,0,0,0.08)",
+            ? "0 0 15px rgba(1, 129, 88, 0.25),0 0 35px rgba(0, 38, 100, 0.2)"
+            : "0 0 15px rgba(115, 255, 192, 0.35),0 0 35px rgba(146, 188, 255, 0.45)",
         overflowWrap: "break-word",
         transition: "all 0.3s ease",
         ...style

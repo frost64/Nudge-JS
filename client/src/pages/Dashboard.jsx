@@ -86,7 +86,7 @@ function Dashboard() {
       <div style={{
           display: "grid",
           gridTemplateColumns: "repeat(4, 1fr)",
-          gap: "20px",
+          gap: "30px",
           width: "100%",
         }}>
         <Card>
@@ -127,7 +127,13 @@ function Dashboard() {
       </div>
       
       
-      
+      <div  
+        style={{ 
+          display: "flex",
+          flexDirection: "column",
+          gap: "10px",
+        }}
+      >
       <Card>
         <h2>Recent Notes</h2>
 
@@ -190,6 +196,7 @@ function Dashboard() {
           ))
         )}
       </Card>
+      </div>
     </Layout>
   );
 }

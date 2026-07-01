@@ -15,6 +15,7 @@ function Notes() {
   const [content, setContent] = useState("");
   const [tags, setTags] = useState("");
   const [editingId, setEditingId] = useState(null);
+  const [showForm, setShowForm] = useState(false);
   const allTags = [...new Set(notes.flatMap(note => note.tags))];
 
   const fetchNotes =
@@ -61,6 +62,7 @@ function Notes() {
         setContent("");
         setTags("");
         setEditingId(null);
+        setShowForm(false);
         fetchNotes();
       } 
       catch (error) {console.log(error);}
@@ -69,6 +71,7 @@ function Notes() {
   const startEdit =
     (note) => {
       setEditingId(note._id);
+      setShowForm(true);
       setTitle(note.title);
       setContent(note.content);
       setTags(note.tags.join(", "));
@@ -80,6 +83,7 @@ function Notes() {
       setTitle("");
       setContent("");
       setTags("");
+      setShowForm(false);
     };
 
   const handleDelete =
@@ -140,10 +144,38 @@ function Notes() {
 
   return (
     <Layout>
-      <h1>Notes</h1>
-      <div
+      {!showForm && (
+  <div
+    style={{
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: "30px"
+    }}
+  >
+    <h1
+      style={{
+        margin: 0,
+        fontSize: "2.5rem"
+      }}
+    >
+      Notes
+    </h1>
+
+    <button
+      className="glow-top"
+      onClick={() => setShowForm(true)}
+    >
+      📝 Create Note
+    </button>
+  </div>
+)}
+      {showForm && (
+      <Card
         style={{
-          maxWidth: "600px"
+          width: "50%",
+          marginLeft: "auto",
+          marginRight: "auto"
         }}
       >
         <h2>
@@ -166,13 +198,11 @@ function Notes() {
           }
         />
 
-        <br />
-        <br />
 
         <textarea
           className="input-glow"
           placeholder="Content"
-          rows="5"
+          rows="10"
           value={content}
           onChange={(e) =>
             setContent(
@@ -203,34 +233,36 @@ function Notes() {
           ))}
         </datalist>
 
-        <br />
-        <br />
-
-        <button
-          onClick={handleSave}
+        <div
+          style={{
+            display: "flex",
+            gap: "10px",
+            marginTop: "15px"
+          }}
         >
-          {
-            editingId
-              ? "Update Note"
-              : "Add Note"
-          }
-        </button>
-
-        {editingId && (
           <button
+            className="glow-top"
+            onClick={handleSave}
+          >
+            {editingId ? "Update Note" : "Add Note"}
+          </button>
+
+          <button
+            className="glow-top"
             onClick={cancelEdit}
           >
             Cancel
           </button>
-        )}
+        </div>
 
-      </div>
+      </Card>
+)}
 
-      <hr />
+      {!showForm && (
+      <>
 
       {
         notes.length === 0 ? (
-
           <p>
             No notes found
           </p>
@@ -355,11 +387,8 @@ function Notes() {
 
         )
       }
-
+  </>
+)}
     </Layout>
-
-  );
-
-}
-
+  );}
 export default Notes;

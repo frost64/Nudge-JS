@@ -4,7 +4,6 @@ import api from "../services/api";
 import Layout from "../components/Layout";
 import Card from "../components/Card";
 
-
 function Reminders() {
 
 const [reminders, setReminders] = useState([]);
@@ -22,50 +21,48 @@ const searchParams = new URLSearchParams(location.search);
 const selectedReminderId = searchParams.get("reminderId");
 
 const fetchReminders = async () => {
-try {
-const res = await api.get("/reminders");
-setReminders(res.data.data);
-} catch (error) {
-console.log(error);
-}
+  try {
+    const res = await api.get("/reminders");
+    setReminders(res.data.data);
+  } 
+  catch (error) {
+    console.log(error);
+  }
 };
 
 const handleSave = async () => {
-try {
-const reminderData = {
-title,
-dueDate,
-reminderTime,
-priority,
-category,
-};
-
-   
-  if (editingId) {
-    await api.put(
-      `/reminders/${editingId}`,
-      reminderData
-    );
-  } else {
-    await api.post(
-      "/reminders",
-      reminderData
-    );
+  try {
+    const reminderData = {
+      title,
+      dueDate,
+      reminderTime,
+      priority,
+      category,
+    };
+    if (editingId) {
+      await api.put(
+        `/reminders/${editingId}`,
+        reminderData
+      );
+    } 
+    else {
+      await api.post(
+        "/reminders",
+        reminderData
+      );
+    }
+    setTitle("");
+    setDueDate("");
+    setReminderTime("09:00");
+    setPriority("");
+    setCategory("");
+    setEditingId(null);
+    setShowForm(false);
+    fetchReminders();
+  } 
+  catch (error) {
+    console.log(error);
   }
-
-  setTitle("");
-  setDueDate("");
-  setReminderTime("09:00");
-  setPriority("");
-  setCategory("");
-  setEditingId(null);
-  setShowForm(false);
-  fetchReminders();
-} catch (error) {
-  console.log(error);
-}
-   
-
 };
 
 const handleDelete = async (id) => {
@@ -179,18 +176,8 @@ useEffect(() => {
 }, [reminders, selectedReminderId]);
 
 return ( <Layout>  
-  {!showForm && (<button
-    className="glow-button"
-    onClick={() =>
-      setShowForm(true)
-    }
-  >
-    ⏰ Create Reminder
-  </button>
-  )}
-
   {showForm && (
-  <Card style={{width: "40%"}}>
+  <Card style={{width: "40%", marginLeft: "auto", marginRight: "auto"}}>
   <h2>
     {editingId
       ? "Edit Reminder"
@@ -306,14 +293,40 @@ return ( <Layout>
 </Card>
 )}
 
-<h1 >  Reminders</h1>
-  <hr />
+{!showForm && (
+  <>
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: "30px",
+        width: "100%"
+      }}
+    >
+      <h1 style={{ 
+          margin: 0,
+          fontSize: "2.5rem",
+          margin: 0 
+        }}>
+        Reminders
+      </h1>
 
-  {reminders.length === 0 ? (
-    <p>No reminders found</p>
-  ) : (
-    reminders.map(
-      (reminder) => (
+      <button
+        className="glow-top"
+        style={{
+          padding: "12px 22px",
+          fontSize: "1rem"
+        }}
+        onClick={() => setShowForm(true)}
+      >
+        ⏰ Create Reminder
+      </button>
+    </div>
+
+    {reminders.length === 0 ? (<p>No reminders found</p>) : 
+    (
+      reminders.map((reminder) => (
         <div
           key={reminder._id}
           ref={(el) => {
@@ -329,117 +342,87 @@ return ( <Layout>
                   selectedReminderId === reminder._id
                     ? "2px solid #3b82f6"
                     : "none",
-
                 backgroundColor:
                   selectedReminderId === reminder._id
                     ? "rgba(59,130,246,0.08)"
                     : "transparent",
-
                 borderRadius: "8px",
-
-                padding:
-                  selectedReminderId === reminder._id
-                    ? "8px"
-                    : "0",
-
-                transition:
-                  "all 0.3s ease"
+                padding: 
+                  selectedReminderId === reminder._id 
+                    ? "8px" : "0",
+                transition: "all 0.3s ease"
               }}
             >
+              <h3>Title:{" "}{reminder.title}</h3>
         
-          <h3>
-            Title:{" "}
-            {reminder.title}
-          </h3>
+              <p>
+                <strong>Due Date:{" "}</strong>
+                {new Date(reminder.dueDate).toLocaleDateString()}
+              </p>
 
-          <p>
-            Due Date:{" "}
-            {new Date(
-              reminder.dueDate
-            ).toLocaleDateString()}
-          </p>
+              <p>
+                <strong>Time:{" "}</strong>
+                {reminder.reminderTime}
+              </p>
 
-          <p>
-            Time:{" "}
-            {reminder.reminderTime}
-          </p>
+              <p>
+                <strong>Priority:{" "}</strong>
+                {reminder.priority}
+              </p>
 
-          <p>
-            Priority:{" "}
-            {reminder.priority}
-          </p>
+              <p>
+                <strong>Category:{" "}</strong>
+                {reminder.category}
+              </p>
 
-          <p>
-            Category:{" "}
-            {reminder.category}
-          </p>
+              <p>
+                <strong>Status:{" "}</strong>
+                {reminder.completed
+                  ? "✅ Completed"
+                  : "⏳ Pending"}
+              </p>
 
-          <p>
-            Status:{" "}
-            {reminder.completed
-              ? "✅ Completed"
-              : "⏳ Pending"}
-          </p>
+              <button
+                className="glow-top"
+                onClick={() => startEdit(reminder)}
+              >
+                Edit
+              </button>
+              {" "}
+              <button
+                className="glow-top"
+                onClick={() => handleToggle(reminder._id)}
+              >
+                {reminder.completed
+                  ? "Mark Pending"
+                  : "Mark Complete"}
+              </button>
 
-          <button
-            className="glow-top"
-            onClick={() =>
-              startEdit(reminder)
-            }
-          >
-            Edit
-          </button>
+              {" "}
 
-          {" "}
+              <button
+                className="glow-top"
+                onClick={() => handleDelete(reminder._id)}
+              >
+                Delete
+              </button>
 
-          <button
-            className="glow-top"
-            onClick={() =>
-              handleToggle(
-                reminder._id
-              )
-            }
-          >
-            {reminder.completed
-              ? "Mark Pending"
-              : "Mark Complete"}
-          </button>
+              {" "}
 
-          {" "}
-
-          <button
-            className="glow-top"
-            onClick={() =>
-              handleDelete(
-                reminder._id
-              )
-            }
-          >
-            Delete
-          </button>
-
-          {" "}
-
-          <button
-            className="glow-top"
-            onClick={() =>
-              handleExport(
-                reminder._id
-              )
-            }
-          >
-            Export Calendar
-          </button>
+              <button
+                className="glow-top"
+                onClick={() => handleExport(reminder._id)}
+              >
+                Export Calendar
+              </button>
+            </div>
+          </Card>
         </div>
-        </Card>
-        </div>
-      )
+      ))
     )
-  )}
+  }
+  </>
+)}
 </Layout>
-   
-
-);
-}
-
+);} 
 export default Reminders;
