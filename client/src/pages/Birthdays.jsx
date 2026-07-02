@@ -22,6 +22,7 @@ function Birthdays() {
   const [relationship, setRelationship] = useState("");
   const [notes, setNotes] = useState("");
   const [editingId, setEditingId] = useState(null);
+  const [showForm, setShowForm] = useState(false);
 
   const fetchBirthdays = async () => {
     try {
@@ -71,6 +72,7 @@ function Birthdays() {
       setRelationship("");
       setNotes("");
       setEditingId(null);
+      setShowForm(false);
 
       fetchBirthdays();
       fetchUpcoming();
@@ -80,36 +82,23 @@ function Birthdays() {
   };
 
   const startEdit = (birthday) => {
-    setEditingId(
-      birthday._id
-    );
-
-    setName(
-      birthday.name
-    );
-
-   setBirthDate(
+    setEditingId(birthday._id);
+    setShowForm(true);
+    setName(birthday.name);
+    setBirthDate(
       birthday.birthDate
-      ? birthday.birthDate.split("T")[0]
-      : ""
-    );
-
-    setRelationship(
-      birthday.relationship
-    );
-
-    setNotes(
-      birthday.notes
-    );
+      ? birthday.birthDate.split("T")[0]: "");
+    setRelationship(birthday.relationship);
+    setNotes(birthday.notes);
   };
 
   const cancelEdit = () => {
     setEditingId(null);
-
     setName("");
     setBirthDate("");
     setRelationship("");
     setNotes("");
+    setShowForm(false);
   };
 
   const handleDelete = async (id) => {
@@ -162,7 +151,32 @@ function Birthdays() {
     
   return (
     <Layout>
-      <h1>Birthdays</h1>
+      {!showForm && (
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "30px"
+          }}
+        >
+          <h1
+            style={{
+              margin: 0,
+              fontSize: "2.5rem"
+            }}
+          >
+            Birthdays
+          </h1>
+
+          <button
+            className="glow-top"
+            onClick={() => setShowForm(true)}
+          >
+            🎂 Create Birthday
+          </button>
+        </div>
+      )}
 
       <h2>
         Upcoming Birthdays
@@ -186,96 +200,101 @@ function Birthdays() {
 
          
       
-      <div
-        style={{
-          maxWidth: "600px"
-        }}
-      >
+      {showForm && (
+        <Card
+          style={{
+            width: "40%",
+            marginLeft: "auto",
+            marginRight: "auto"
+          }}
+        >
         <h2>
           {editingId
             ? "Edit Birthday"
-            : "Create Birthday"}
+            : "New Birthday"}
         </h2>
+
+         <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "15px"
+            }}
+          >
+            <input
+              className="input-glow"
+              type="text"
+              placeholder="Name"
+              value={name}
+              onChange={(e) =>
+                setName(
+                  e.target.value
+                )
+              }
+            />
 
           <input
             className="input-glow"
-            type="text"
-            placeholder="Name"
-            value={name}
+            type="date"
+            value={birthDate}
             onChange={(e) =>
-              setName(
+              setBirthDate(
                 e.target.value
               )
             }
           />
 
-        <br />
-        <br />
+          <input
+            className="input-glow"
+            type="text"
+            placeholder="Relationship"
+            value={relationship}
+            onChange={(e) =>
+              setRelationship(
+                e.target.value
+              )
+            }
+          />
 
-        <input
-          className="input-glow"
-          type="date"
-          value={birthDate}
-          onChange={(e) =>
-            setBirthDate(
-              e.target.value
-            )
-          }
-        />
+          <textarea
+            className="input-glow"
+            rows="4"
+            placeholder="Notes"
+            value={notes}
+            onChange={(e) =>
+              setNotes(
+                e.target.value
+              )
+            }
+          />
 
-        <br />
-        <br />
-
-        <input
-          className="input-glow"
-          type="text"
-          placeholder="Relationship"
-          value={relationship}
-          onChange={(e) =>
-            setRelationship(
-              e.target.value
-            )
-          }
-        />
-
-        <br />
-        <br />
-
-        <textarea
-          className="input-glow"
-          rows="4"
-          placeholder="Notes"
-          value={notes}
-          onChange={(e) =>
-            setNotes(
-              e.target.value
-            )
-          }
-        />
-
-        <br />
-        <br />
-
-        <button
-          onClick={handleSave}
-        >
-          {editingId
-            ? "Update Birthday"
-            : "Add Birthday"}
-        </button>
-
-            
-
-        {editingId && (
-          <button
-            onClick={cancelEdit}
+          <div
+            style={{
+              display: "flex",
+              gap: "10px",
+              marginTop: "15px"
+            }}
           >
-            Cancel
-          </button>
-        )}
-      </div>
-      <hr />
+            <button
+              className="glow-top"
+              onClick={handleSave}
+            >
+              {editingId ? "Update Birthday" : "Add Birthday"}
+            </button>
 
+            <button
+              className="glow-top"
+              onClick={cancelEdit}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </Card>
+      )}
+
+      {!showForm && (
+      <>
       {birthdays.length === 0 ? (
         <p>
           No birthdays found
@@ -320,27 +339,28 @@ function Birthdays() {
                   }}
                 >
               <h3>
-                {birthday.name}
+                <strong>Name: </strong>{birthday.name}
               </h3>
 
               <p>
-                Birth Date: {" "}  
+                <strong>Birth Date: </strong>  
                 {new Date(
                   birthday.birthDate
                 ).toLocaleDateString()}
               </p>
 
               <p>
-                Relationship:   {" "}
+                <strong>Relationship: </strong>
                 {birthday.relationship}
               </p>
 
               <p>
-                Notes:   {" "}
+                <strong>Notes: </strong>
                 {birthday.notes}
               </p>
 
               <button
+                className="glow-top"
                 onClick={() =>
                   startEdit(
                     birthday
@@ -348,11 +368,10 @@ function Birthdays() {
                 }
               >
                 Edit
-              </button>
-
-                 
-
+              </button> 
+              
               <button
+                className="glow-top"
                 onClick={() =>
                   handleDelete(
                     birthday._id
@@ -368,8 +387,8 @@ function Birthdays() {
           )
         )
       )}
+      </>
+      )}
     </Layout>
-  );
-}
-
+  );}
 export default Birthdays;

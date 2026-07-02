@@ -208,7 +208,7 @@ function Notes() {
 
           <textarea
             className="input-glow"
-            placeholder="Content"
+            placeholder="Note Description"
             rows="10"
             value={content}
             onChange={(e) =>
@@ -337,8 +337,6 @@ function Notes() {
 
                 <p><strong>Tags: </strong>{note.tags.join(", ")}</p>
 
-                <div className="action-buttons">
-
                   <button
                     className="glow-top"
                     onClick={() =>
@@ -390,8 +388,6 @@ function Notes() {
                   >
                     Delete
                   </button>
-
-                </div>
               </div>
               </Card>
             </div>

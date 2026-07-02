@@ -389,7 +389,7 @@ return (
               >
                 Edit
               </button>
-              {" "}
+            
               <button
                 className="glow-top"
                 onClick={() => handleToggle(reminder._id)}
@@ -399,16 +399,12 @@ return (
                   : "Mark Complete"}
               </button>
 
-              {" "}
-
               <button
                 className="glow-top"
                 onClick={() => handleDelete(reminder._id)}
               >
                 Delete
               </button>
-
-              {" "}
 
               <button
                 className="glow-top"

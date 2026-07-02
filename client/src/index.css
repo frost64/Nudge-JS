@@ -481,12 +481,13 @@ button:disabled {
 
 /* ----------------- Glow button top ------------------ */
 .glow-top {
+  margin-right: 5px;
   width: relative;
   position: relative;
   overflow: hidden;
-  padding: 12px 20px;
+  padding: 10px 14px;
   border: none;
-  border-radius: 12px;
+  border-radius: 15px;
   background: linear-gradient(
     135deg,
     #009e81ad,
