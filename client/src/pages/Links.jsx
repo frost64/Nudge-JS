@@ -7,202 +7,120 @@ import { useRef } from "react";
 
 function Links() {
 
-const [links, setLinks] =
-useState([]);
-
-const [title, setTitle] =
-useState("");
-
-const [url, setUrl] =
-useState("");
-
-const [category, setCategory] =
-useState("");
-
-const [notes, setNotes] =
-useState("");
-
-const [editingId, setEditingId] =
-useState(null);
+const [links, setLinks] = useState([]);
+const [title, setTitle] = useState("");
+const [url, setUrl] =useState("");
+const [category, setCategory] =useState("");
+const [notes, setNotes] =useState("");
+const [editingId, setEditingId] =useState(null);
+const [showForm, setShowForm] = useState(false);
 
 const location = useLocation();
-
 const linkRefs = useRef({});
 
-const searchParams =
-  new URLSearchParams(
-    location.search
-  );
-
-const selectedLinkId =
-  searchParams.get(
-    "linkId"
-  );
+const searchParams = new URLSearchParams(location.search);
+const selectedLinkId = searchParams.get("linkId");
 
 const fetchLinks =
 async () => {
-
-   
   try {
-
     const res =
       await api.get(
         "/links"
       );
-
     setLinks(
       res.data.data
     );
-
-  } catch (error) {
-
+  } 
+  catch (error) {
     console.log(error);
-
   }
-
 };
-   
 
 const handleSave =
-async () => {
-
-   
+async () => {   
   try {
-
     const linkData = {
       title,
       url,
       category,
       notes
     };
-
     if (editingId) {
-
       await api.put(
         `/links/${editingId}`,
         linkData
       );
-
-    } else {
-
+    } 
+    else {
       await api.post(
         "/links",
         linkData
       );
-
     }
-
     setTitle("");
     setUrl("");
     setCategory("");
     setNotes("");
     setEditingId(null);
-
+    setShowForm(false);
     fetchLinks();
-
-  } catch (error) {
-
+  } 
+  catch (error) {
     console.log(error);
-
   }
-
 };
-   
 
 const startEdit =
 (link) => {
-
-   
-  setEditingId(
-    link._id
-  );
-
-  setTitle(
-    link.title
-  );
-
-  setUrl(
-    link.url
-  );
-
-  setCategory(
-    link.category
-  );
-
-  setNotes(
-    link.notes
-  );
-
+  setEditingId(link._id);
+  setShowForm(true);
+  setTitle(link.title);
+  setUrl(link.url);
+  setCategory(link.category);
+  setNotes(link.notes);
 };
    
 
-const cancelEdit =
-() => {
-
-   
+const cancelEdit = () => {
   setEditingId(null);
-
   setTitle("");
-
   setUrl("");
-
   setCategory("");
-
   setNotes("");
-
+  setShowForm(false);
 };
    
 
 const handleDelete =
 async (id) => {
-
-   
-  const confirmed =
-    window.confirm(
-      "Delete this link?"
-    );
-
+  const confirmed = window.confirm("Delete this link?");
   if (!confirmed) {
     return;
   }
-
   try {
-
     await api.delete(
       `/links/${id}`
     );
-
     fetchLinks();
-
-  } catch (error) {
-
+  } 
+  catch (error) {
     console.log(error);
-
   }
-
 };
-   
 
 const handleFavorite =
-async (id) => {
-
-   
+async (id) => {   
   try {
-
     await api.patch(
       `/links/${id}/favorite`
     );
-
     fetchLinks();
-
-  } catch (error) {
-
+  } 
+  catch (error) {
     console.log(error);
-
   }
-
 };
-   
 
 useEffect(() => {
   fetchLinks();
@@ -219,117 +137,136 @@ useEffect(() => {
       behavior: "smooth",
       block: "center"
     });
-  }
-}, [
-  links,
-  selectedLinkId
-]);
-
-return ( <Layout>
-
-   
-  <h1>
-    Links
-  </h1>
-
-  <h2>
-    {
-      editingId
-        ? "Edit Link"
-        : "Create Link"
     }
-  </h2>
-<div
-  style={{
-    maxWidth: "700px"
-  }}
->
+}, [links,selectedLinkId]);
 
-  <input
-    className="input-glow"
-    type="text"
-    placeholder="Title"
-    value={title}
-    onChange={(e) =>
-      setTitle(
-        e.target.value
-      )
-    }
-  />
-
-  <br />
-  <br />
-
-  <input
-    className="input-glow"
-    type="text"
-    placeholder="https://example.com"
-    value={url}
-    onChange={(e) =>
-      setUrl(
-        e.target.value
-      )
-    }
-  />
-
-  <br />
-  <br />
-
-  <input
-    className="input-glow"
-    type="text"
-    placeholder="Category"
-    value={category}
-    onChange={(e) =>
-      setCategory(
-        e.target.value
-      )
-    }
-  />
-
-  <br />
-  <br />
-
-  <textarea
-    className="input-glow"
-    placeholder="Notes"
-    rows="4"
-    cols="40"
-    value={notes}
-    onChange={(e) =>
-      setNotes(
-        e.target.value
-      )
-    }
-  />
-
-  <br />
-  <br />
-
-  <button
-    onClick={handleSave}
-  >
-    {
-      editingId
-        ? "Update Link"
-        : "Add Link"
-    }
-  </button>
-
-  {" "}
-
-  {
-    editingId && (
-      <button
-        onClick={cancelEdit}
+return ( 
+<Layout>
+  {!showForm && (
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: "30px"
+      }}
+    >
+      <h1
+        style={{
+          margin: 0,
+          fontSize: "2.5rem"
+        }}
       >
-        Cancel
-      </button>
-    )
-  }
-</div>
-  <hr />
+        Links
+      </h1>
 
+      <button
+        className="glow-top"
+        onClick={() => setShowForm(true)}
+      >
+        🔗 Create Link
+      </button>
+    </div>
+  )}
+  {showForm && (
+    <Card
+      style={{
+        width: "40%",
+        marginLeft: "auto",
+        marginRight: "auto"
+      }}
+    >
+      <h2>
+          {
+            editingId
+              ? "Edit Link"
+              : "New Link"
+          }
+        </h2>
+        
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: "15px"
+        }}
+      >
+        <input
+          className="input-glow"
+          type="text"
+          placeholder="Title"
+          value={title}
+          onChange={(e) =>
+            setTitle(
+              e.target.value
+            )
+          }
+        />
+
+        <input
+          className="input-glow"
+          type="text"
+          placeholder="https://example.com"
+          value={url}
+          onChange={(e) =>
+            setUrl(
+              e.target.value
+            )
+          }
+        />
+
+        <input
+          className="input-glow"
+          type="text"
+          placeholder="Category"
+          value={category}
+          onChange={(e) =>
+            setCategory(
+              e.target.value
+            )
+          }
+        />
+
+        <textarea
+          className="input-glow"
+          placeholder="Notes"
+          rows="4"
+          cols="40"
+          value={notes}
+          onChange={(e) =>
+            setNotes(
+              e.target.value
+            )
+          }
+        />
+
+        <div
+          style={{
+            display: "flex",
+            gap: "10px",
+            marginTop: "15px"
+          }}
+        >
+          <button
+            className="glow-top"
+            onClick={handleSave}
+          >
+            {editingId ? "Update Link" : "Add Link"}
+          </button>
+
+          <button
+            className="glow-top"
+            onClick={cancelEdit}
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </Card>
+  )}
+
+  {!showForm && (
+  <>
   {
     links.length === 0 ? (
       <p>No links found</p>
@@ -368,21 +305,29 @@ return ( <Layout>
                     "all 0.3s ease"
                 }}
               >
-                <h3>
-                  {
-                    link.favorite
-                      ? "⭐ "
-                      : ""
-                  }
-                  {link.title}
-                </h3>
-
-                <p
+                <h3
                   style={{
-                    wordBreak:
-                      "break-all"
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center"
                   }}
                 >
+                  <span>
+                    <strong>Title: </strong>
+                    {link.title}
+                  </span>
+
+                  <span
+                    style={{
+                      fontSize: "1.2rem"
+                    }}
+                  >
+                    {link.favorite && "⭐"}
+                  </span>
+                </h3>
+
+                <p style={{ wordBreak: "break-all" }}>
+                  <strong>URL: </strong>
                   <a
                     href={link.url}
                     target="_blank"
@@ -393,17 +338,17 @@ return ( <Layout>
                 </p>
 
                 <p>
-                  Category:{" "}
+                  <strong>Category: </strong>
                   {link.category}
                 </p>
 
                 <p>
-                  Notes:{" "}
+                  <strong>Notes: </strong>
                   {link.notes}
                 </p>
 
-                <div className="action-buttons">
                   <button
+                    className="glow-top"
                     onClick={() =>
                       startEdit(link)
                     }
@@ -412,6 +357,7 @@ return ( <Layout>
                   </button>
 
                   <button
+                    className="glow-top"
                     onClick={() =>
                       handleFavorite(
                         link._id
@@ -426,6 +372,7 @@ return ( <Layout>
                   </button>
 
                   <button
+                    className="glow-top"
                     onClick={() =>
                       handleDelete(
                         link._id
@@ -434,7 +381,6 @@ return ( <Layout>
                   >
                     Delete
                   </button>
-                </div>
               </div>
             </Card>
           </div>
@@ -442,7 +388,8 @@ return ( <Layout>
       )
     )
   }
-
+</>
+)}
 </Layout>
    
 
