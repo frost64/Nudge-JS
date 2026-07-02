@@ -175,7 +175,8 @@ useEffect(() => {
   }
 }, [reminders, selectedReminderId]);
 
-return ( <Layout>  
+return ( 
+<Layout>  
   {showForm && (
   <Card style={{width: "40%", marginLeft: "auto", marginRight: "auto"}}>
   <h2>
@@ -353,30 +354,30 @@ return ( <Layout>
                 transition: "all 0.3s ease"
               }}
             >
-              <h3>Title:{" "}{reminder.title}</h3>
+              <h3><strong>Title: </strong>{reminder.title}</h3>
         
               <p>
-                <strong>Due Date:{" "}</strong>
+                <strong>Due Date: </strong>
                 {new Date(reminder.dueDate).toLocaleDateString()}
               </p>
 
               <p>
-                <strong>Time:{" "}</strong>
+                <strong>Time: </strong>
                 {reminder.reminderTime}
               </p>
 
               <p>
-                <strong>Priority:{" "}</strong>
+                <strong>Priority: </strong>
                 {reminder.priority}
               </p>
 
               <p>
-                <strong>Category:{" "}</strong>
+                <strong>Category: </strong>
                 {reminder.category}
               </p>
 
               <p>
-                <strong>Status:{" "}</strong>
+                <strong>Status: </strong>
                 {reminder.completed
                   ? "✅ Completed"
                   : "⏳ Pending"}

@@ -173,7 +173,7 @@ function Notes() {
       {showForm && (
       <Card
         style={{
-          width: "50%",
+          width: "40%",
           marginLeft: "auto",
           marginRight: "auto"
         }}
@@ -182,57 +182,64 @@ function Notes() {
           {
             editingId
               ? "Edit Note"
-              : "Create Note"
+              : "New Note"
           }
         </h2>
 
-        <input
-          className="input-glow"
-          type="text"
-          placeholder="Title"
-          value={title}
-          onChange={(e) =>
-            setTitle(
-              e.target.value
-            )
-          }
-        />
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "15px"
+          }}
+        >
+          <input
+            className="input-glow"
+            type="text"
+            placeholder="Title"
+            value={title}
+            onChange={(e) =>
+              setTitle(
+                e.target.value
+              )
+            }
+          />
 
 
-        <textarea
-          className="input-glow"
-          placeholder="Content"
-          rows="10"
-          value={content}
-          onChange={(e) =>
-            setContent(
-              e.target.value
-            )
-          }
-        />
+          <textarea
+            className="input-glow"
+            placeholder="Content"
+            rows="10"
+            value={content}
+            onChange={(e) =>
+              setContent(
+                e.target.value
+              )
+            }
+          />
 
-        <input
-          className="input-glow"
-          list="tags-list"
-          type="text"
-          placeholder="Create/Select Tags"
-          value={tags}
-          onChange={(e) =>
-            setTags(
-              e.target.value
-            )
-          }
-        />
+          <input
+            className="input-glow"
+            list="tags-list"
+            type="text"
+            placeholder="Create/Select Tags"
+            value={tags}
+            onChange={(e) =>
+              setTags(
+                e.target.value
+              )
+            }
+          />
 
-        <datalist id="tags-list">
-          {allTags.map(tag => (
-            <option
-              key={tag}
-              value={tag}
-            />
-          ))}
-        </datalist>
-
+          <datalist id="tags-list">
+            {allTags.map(tag => (
+              <option
+                key={tag}
+                value={tag}
+              />
+            ))}
+          </datalist>
+        </div>
         <div
           style={{
             display: "flex",
@@ -308,28 +315,32 @@ function Notes() {
                   }}
                 >
 
-                <h3>
-                  {note.pinned && "📌 "}
-                  {note.favorite && "⭐ "}
-                  Title: {note.title}
+                <h3
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center"
+                  }}
+                >
+                  <span>
+                    <strong>Title: </strong>
+                    {note.title}
+                  </span>
+
+                  <span>
+                    {note.pinned && "📌 "}
+                    {note.favorite && "⭐"}
+                  </span>
                 </h3>
 
-                <p>
-                  Description: {note.content}
-                </p>
+                <p><strong>Description: </strong>{note.content}</p>
 
-                <p>
-                  Tags:{" "}
-                  {
-                    note.tags.join(
-                      ", "
-                    )
-                  }
-                </p>
+                <p><strong>Tags: </strong>{note.tags.join(", ")}</p>
 
                 <div className="action-buttons">
 
                   <button
+                    className="glow-top"
                     onClick={() =>
                       startEdit(
                         note
@@ -340,6 +351,7 @@ function Notes() {
                   </button>
 
                   <button
+                    className="glow-top"
                     onClick={() =>
                       handlePin(
                         note._id
@@ -354,6 +366,7 @@ function Notes() {
                   </button>
 
                   <button
+                    className="glow-top"
                     onClick={() =>
                       handleFavorite(
                         note._id
@@ -368,6 +381,7 @@ function Notes() {
                   </button>
 
                   <button
+                    className="glow-top"
                     onClick={() =>
                       handleDelete(
                         note._id
