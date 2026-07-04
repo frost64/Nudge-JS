@@ -43,6 +43,20 @@ const getDashboard = async (req, res) => {
         .sort({ dueDate: 1 })
         .limit(5);
 
+        const overdueReminders = await Reminder.find({
+            user: userId,
+            completed: false,
+            dueDate: { $lt: new Date() }
+        })
+        .sort({ dueDate: 1 })
+        .limit(5);
+
+        const upcomingBirthdays = await Birthday.find({
+            user: userId
+        })
+        .sort({ birthDate: 1 })
+        .limit(5);
+
         res.status(200).json({
             stats: {
                 totalReminders,
@@ -52,7 +66,9 @@ const getDashboard = async (req, res) => {
             },
             recentNotes,
             favoriteLinks,
-            pendingReminders
+            pendingReminders,
+            overdueReminders,
+            upcomingBirthdays
         });
 
     } catch (error) {

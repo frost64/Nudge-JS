@@ -7,16 +7,43 @@ import Card from "../components/Card";
 function Notes() {
 
   const location = useLocation();
-  const noteRefs = useRef({});
   const searchParams = new URLSearchParams(location.search);
+  const shouldCreate = searchParams.get("create");  
   const selectedNoteId = searchParams.get("noteId");
+  const noteRefs = useRef({});
   const [notes, setNotes] = useState([]);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [tags, setTags] = useState("");
   const [editingId, setEditingId] = useState(null);
   const [showForm, setShowForm] = useState(false);
+  const [highlightId, setHighlightId] = useState(null);
+  const highlightTimeout = useRef(null);
   const allTags = [...new Set(notes.flatMap(note => note.tags))];
+
+  const recentNotes = [...notes]
+  .sort(
+    (a, b) =>
+      new Date(b.createdAt) - new Date(a.createdAt)
+  )
+  .slice(0, 5);
+
+  const highlightNote = (id) => {
+  setHighlightId(id);
+
+  noteRefs.current[id]?.scrollIntoView({
+    behavior: "smooth",
+    block: "center",
+  });
+
+  if (highlightTimeout.current) {
+    clearTimeout(highlightTimeout.current);
+  }
+
+  highlightTimeout.current = setTimeout(() => {
+    setHighlightId(null);
+  }, 2000);
+};
 
   const fetchNotes =
     async () => {
@@ -133,17 +160,71 @@ function Notes() {
       selectedNoteId &&
       noteRefs.current[selectedNoteId]
     ) {
-      noteRefs.current[
-        selectedNoteId
-      ].scrollIntoView({
-        behavior: "smooth",
-        block: "center"
-      });
+      highlightNote(selectedNoteId);
     }
-  }, [notes,selectedNoteId]);
+  }, [notes, selectedNoteId]);
+
+  useEffect(() => {
+    if (shouldCreate === "true") {
+      setShowForm(true);
+    }
+  }, [shouldCreate]);
+
+
+  useEffect(() => {
+    return () => {
+      if (highlightTimeout.current) {
+        clearTimeout(highlightTimeout.current);
+      }
+    };
+  }, []);
+
+  const sidebar = (
+  <div
+    style={{
+      userSelect: "none",
+      position: "fixed",
+      top: "15%",
+      left: "2%",
+      width: "20%",
+      height: "70%",
+      padding: "20px",
+      display: "flex",
+      flexDirection: "column",
+    }}
+  >
+    <h1 style={{ textAlign: "center" }}>
+      Recent 📝
+    </h1>
+
+    {recentNotes.length === 0 ? (
+      <p style={{ paddingLeft: "20px" }}>
+        No recent notes
+      </p>
+    ) : (
+      recentNotes.map((note) => (
+        <div
+          key={note._id}
+          className="glow-button"
+          style={{
+            paddingLeft: "20px",
+            marginBottom: "10px",
+            cursor: "pointer",
+            borderRadius: "10px",
+          }}
+          onClick={() => highlightNote(note._id)}
+        >
+          {note.title}
+        </div>
+      ))
+    )}
+  </div>
+);
+
+
 
   return (
-    <Layout>
+    <Layout sidebar={!showForm ? sidebar : null}>
       {!showForm && (
   <div
     style={{
@@ -289,29 +370,22 @@ function Notes() {
               <Card>
                 <div
                   style={{
-                    boxShadow:
-                      selectedNoteId === note._id
-                        ? "0 0 15px rgba(59,130,246,0.3)"
-                        : "none",
-                    border:
-                      selectedNoteId === note._id
-                        ? "2px solid #3b82f6"
-                        : "none",
-
                     backgroundColor:
-                      selectedNoteId === note._id
-                        ? "rgba(59,130,246,0.08)"
+                      highlightId === note._id
+                        ? "rgba(0, 204, 255, 0.09)"
                         : "transparent",
-
+                    boxShadow:
+                      highlightId === note._id
+                        ? "0 0 20px rgba(0,255,204,0.45)"
+                        : "0 0 0 rgba(0,255,204,0)",
+                    border: "2px solid transparent",
                     borderRadius: "8px",
-
                     padding:
-                      selectedNoteId === note._id
+                      highlightId === note._id
                         ? "8px"
                         : "0",
-
                     transition:
-                      "all 0.3s ease"
+                      "background-color 2s ease, box-shadow 2s ease, padding .3s ease"
                   }}
                 >
 

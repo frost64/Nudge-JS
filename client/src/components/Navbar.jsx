@@ -255,11 +255,19 @@ function Navbar() {
             color: darkMode
               ? "#9ca3af"
               : "#6b7280",
-            cursor: "pointer"
+            cursor: "pointer",
+            zIndex: 2,
+            pointerEvents: "auto"
           }}
         />
         <input
           className = "input-glow"
+          style={{
+            position: "relative",
+            zIndex: 1,
+            width: "100%",
+            padding: "10px 12px 10px 38px"
+          }}
           type="search"
           placeholder="Search..."
           value={searchQuery}

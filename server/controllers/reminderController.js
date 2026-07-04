@@ -2,9 +2,7 @@ const Reminder = require("../models/Reminder");
 
 const toggleReminder =
   async (req, res) => {
-
     try {
-
       const reminder =
         await Reminder.findOne({
           _id: req.params.id,

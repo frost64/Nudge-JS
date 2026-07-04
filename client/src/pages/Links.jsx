@@ -16,10 +16,10 @@ const [editingId, setEditingId] =useState(null);
 const [showForm, setShowForm] = useState(false);
 
 const location = useLocation();
-const linkRefs = useRef({});
-
 const searchParams = new URLSearchParams(location.search);
 const selectedLinkId = searchParams.get("linkId");
+const shouldCreate = searchParams.get("create");
+const linkRefs = useRef({});
 
 const fetchLinks =
 async () => {
@@ -139,6 +139,12 @@ useEffect(() => {
     });
     }
 }, [links,selectedLinkId]);
+
+useEffect(() => {
+  if (shouldCreate === "true") {
+    setShowForm(true);
+  }
+}, [shouldCreate]);
 
 return ( 
 <Layout>

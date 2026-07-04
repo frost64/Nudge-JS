@@ -8,7 +8,6 @@ import Card from "../components/Card";
 function Dashboard() {
   const [data, setData] = useState(null);
   const [error, setError] = useState("");
-  useContext(AuthContext); // remove completely if not needed
   const navigate = useNavigate();
   useEffect(() => {
     const fetchDashboard = async () => {
@@ -43,43 +42,40 @@ function Dashboard() {
     <div 
     className="quick-access">
 
-      <h1>
-        ⚡ Quick Access
-      </h1>
+      <h1>Quick Access ⚡</h1>
       
       <button className = "hidden"></button>
       
       <button
         className="glow-button"
-        onClick={() => navigate("/reminders")}
+        onClick={() => navigate("/reminders?create=true")}
       >
         ⏰ New Reminder
       </button>
 
       <button
         className="glow-button"
-        onClick={() => navigate("/notes")}
+        onClick={() => navigate("/notes?create=true")}
       >
         📝 New Note
       </button>
 
       <button
         className="glow-button"
-        onClick={() => navigate("/birthdays")}
+        onClick={() => navigate("/birthdays?create=true")}
       >
         🎂 Add Birthday
       </button>
 
       <button
         className="glow-button"
-        onClick={() => navigate("/links")}
+        onClick={() => navigate("/links?create=true")}
       >
         🔗 Save Link
       </button>
 
     </div>
   );
-
   return (
       <Layout sidebar={quickAccess}>
       <h1>Statistics</h1>
@@ -128,74 +124,94 @@ function Dashboard() {
       
       
       <div  
-        style={{ 
-          display: "flex",
-          flexDirection: "column",
-          gap: "10px",
-        }}
+        className="dashboard-container"
       >
-      <Card>
-        <h2>Recent Notes</h2>
+        <Card>
+          <h2>Favorite Links</h2>
 
-        {data.recentNotes?.length === 0 ? (
-          <p>No notes found</p>
-        ) : (
-          data.recentNotes?.map((note, index) => (
-            <div
-              className="search-result-item" 
-              key={note._id}
-              onClick={() =>
-                navigate(
-                  `/notes?noteId=${note._id}`
-                )
-              }>
-              {index+1}. {note.title}
-            </div>
-          ))
-        )}
-      </Card>
+          {data.favoriteLinks?.length === 0 ? (
+            <p>No favorite links</p>
+          ) : (
+            data.favoriteLinks?.map((link, index) => (
+              <div
+                className="search-result-item" 
+                key={link._id}
+                onClick={() =>
+                  navigate(
+                    `/links?linkId=${link._id}`
+                  )
+                }>
+                {index+1}. {link.title}
+              </div>
+            ))
+          )}
+        </Card>
 
-      <Card>
-        <h2>Favorite Links</h2>
+        <Card>
+          <h2>Upcoming Birthdays</h2>
 
-        {data.favoriteLinks?.length === 0 ? (
-          <p>No favorite links</p>
-        ) : (
-          data.favoriteLinks?.map((link, index) => (
-            <div
-              className="search-result-item" 
-              key={link._id}
-              onClick={() =>
-                navigate(
-                  `/links?linkId=${link._id}`
-                )
-              }>
-              {index+1}. {link.title}
-            </div>
-          ))
-        )}
-      </Card>
+          {data.upcomingBirthdays?.length === 0 ? (
+            <p>No upcoming birthdays</p>
+          ) : (
+            data.upcomingBirthdays?.slice(0, 5).map((birthday, index) => (
+              <div
+                className="search-result-item" 
+                key={birthday._id}
+                onClick={() =>
+                  navigate(
+                    `/birthdays?birthdayId=${birthday._id}`
+                  )
+                }>
+                {index + 1}. {birthday.name} ({new Date(birthday.birthDate).toLocaleDateString()})
+              </div>
+            ))
+          )}
+        </Card>
 
-      <Card>
-        <h2>Pending Reminders</h2>
+        <Card>
+          <h2>⚠️ Overdue Reminders</h2>
 
-        {data.pendingReminders?.length === 0 ? (
-          <p>No pending reminders</p>
-        ) : (
-          data.pendingReminders?.map((reminder, index) => (
-            <div
-              className="search-result-item" 
-              key={reminder._id}
-              onClick={() =>
-                navigate(
-                  `/reminders?reminderId=${reminder._id}`
-                )
-              }>
-              {index+1}. {reminder.title}
-            </div>
-          ))
-        )}
-      </Card>
+          {data.overdueReminders?.length === 0 ? (
+            <p>No overdue reminders 🎉</p>
+          ) : (
+            data.overdueReminders.map((reminder, index) => (
+              <div
+                key={reminder._id}
+                className="search-result-item"
+                style={{
+                  color: "#ff6b6b",
+                  fontWeight: "bold",
+                }}
+                onClick={() =>
+                  navigate(`/reminders?reminderId=${reminder._id}`)
+                }
+              >
+                {index + 1}. {reminder.title}
+              </div>
+            ))
+          )}
+        </Card>
+
+        <Card>
+          <h2>Pending Reminders</h2>
+
+          {data.pendingReminders?.length === 0 ? (
+            <p>No pending reminders</p>
+          ) : (
+            data.pendingReminders?.map((reminder, index) => (
+              <div
+                className="search-result-item" 
+                key={reminder._id}
+                onClick={() =>
+                  navigate(
+                    `/reminders?reminderId=${reminder._id}`
+                  )
+                }>
+                {index+1}. {reminder.title}
+              </div>
+            ))
+          )}
+        </Card>
       </div>
     </Layout>
   );

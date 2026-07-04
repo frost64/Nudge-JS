@@ -153,6 +153,7 @@ button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
+
 .search-input {
   width: 100%;
   padding: 12px 12px 12px 40px;
@@ -396,20 +397,7 @@ button:disabled {
 
 
   /* ----------------------Quick Access Panel---------------- */
-  /* .quick-access {
-  padding: 1.5%;
-  margin-left: 10px;
-  position: fixed;
-  top: 120px;
-  left: 20px;
-  display: flex;
-  flex-direction:column;
-  gap: 12px;
-  width: 250px;
-  z-index: 900;
-  background: linear-gradient(rgba(0, 255, 136, 0.3),rgba(0, 187, 255, 0.5));
-  border-radius: 5%;
-} */
+
 .quick-access {
   position: fixed;
   top: 13%;
@@ -534,4 +522,21 @@ button:disabled {
 
 .glow-top:active {
   transform: scale(0.98);
+}
+
+
+/* --------- dashboard grid -------- */
+.dashboard-container {
+  width: 100%;
+  margin: 10px auto;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 5px;
+}
+
+@media (max-width: 768px) {
+  .dashboard-container {
+    grid-template-columns: 1fr;
+  }
 }

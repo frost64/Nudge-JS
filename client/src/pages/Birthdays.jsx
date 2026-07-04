@@ -4,17 +4,13 @@ import api from "../services/api";
 import Layout from "../components/Layout";
 import Card from "../components/Card";
 
+
 function Birthdays() {
   const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const selectedBirthdayId = searchParams.get("birthdayId");
+  const shouldCreate = searchParams.get("create");
   const birthdayRefs = useRef({});
-  const searchParams =
-      new URLSearchParams(
-        location.search
-      );
-  const selectedBirthdayId =
-    searchParams.get(
-      "birthdayId"
-    );
   const [birthdays, setBirthdays] = useState([]);
   const [upcoming, setUpcoming] = useState([]);
   const [name, setName] = useState("");
@@ -23,7 +19,9 @@ function Birthdays() {
   const [notes, setNotes] = useState("");
   const [editingId, setEditingId] = useState(null);
   const [showForm, setShowForm] = useState(false);
-
+  const [highlightId, setHighlightId] = useState(null);
+  const highlightTimeout = useRef(null);
+  
   const fetchBirthdays = async () => {
     try {
       const res = await api.get("/birthdays");
@@ -123,34 +121,109 @@ function Birthdays() {
     }
   };
 
+  const highlightBirthday = (id) => {
+  setHighlightId(id);
+
+  birthdayRefs.current[id]?.scrollIntoView({
+    behavior: "smooth",
+    block: "center",
+  });
+
+  if (highlightTimeout.current) {
+    clearTimeout(highlightTimeout.current);
+  }
+
+  highlightTimeout.current = setTimeout(() => {
+    setHighlightId(null);
+  }, 2000);
+};
+
   useEffect(() => {
     fetchBirthdays();
     fetchUpcoming();
   }, []);
   
   useEffect(() => {
+    if (shouldCreate === "true") {
+      setShowForm(true);
+    }
+  }, [shouldCreate]);
 
-      if (
-        selectedBirthdayId &&
-        birthdayRefs.current[selectedBirthdayId]
-      ) {
-
-        birthdayRefs.current[
-          selectedBirthdayId
-        ].scrollIntoView({
-          behavior: "smooth",
-          block: "center"
-        });
-
-      }
-
-    }, [
-      birthdays,
-      selectedBirthdayId
-    ]);
+  useEffect(() => {
+  if (
+    selectedBirthdayId &&
+    birthdayRefs.current[selectedBirthdayId]
+  ) {
+    highlightBirthday(selectedBirthdayId);
+  }
+}, [
+  birthdays,
+  selectedBirthdayId
+]);
     
+  const sidebar = (
+  <div
+    style={{
+      userSelect: "none",
+      position: "fixed",
+      top: "15%",
+      left: "2%",
+      width: "20%",
+      height: "70%",
+      padding: "20px",
+      display: "flex",
+      flexDirection: "column",
+    }}
+  >
+    <h1 style={{ textAlign: "center" }}>
+      Upcoming 🎂
+    </h1>
+
+    {/* {upcoming.length === 0 ? (
+      <p style={{ paddingLeft: "20px" }}>
+        No upcoming birthdays
+      </p>
+    ) : (
+      upcoming.slice(0, 5).map((birthday) => (
+        <div
+          key={birthday._id}
+          className="glow-button"
+          style={{
+            paddingLeft: "20px",
+            marginBottom: "10px",
+            cursor: "pointer",
+            borderRadius: "10px",
+          }}
+          onClick={() => highlightBirthday(birthday._id)}
+        >
+          {birthday.name}
+        </div>
+      ))
+    )} */}
+
+    {upcoming?.length === 0 ? (
+            <p>No upcoming birthdays</p>
+          ) : (
+            upcoming?.slice(0, 5).map((birthday) => (
+              <div
+                className="glow-button"
+                style={{
+                  paddingLeft: "20px",
+                  marginBottom: "10px",
+                  cursor: "pointer",
+                  borderRadius: "10px",
+                }} 
+                key={birthday._id}
+                onClick={() => highlightBirthday(birthday._id)}
+                >
+                {birthday.name} ({new Date(birthday.birthDate).toLocaleDateString()})
+              </div>
+            ))
+          )}
+  </div>
+);
   return (
-    <Layout>
+    <Layout sidebar={!showForm ? sidebar : null}>
       {!showForm && (
         <div
           style={{
@@ -177,27 +250,6 @@ function Birthdays() {
           </button>
         </div>
       )}
-
-      <h2>
-        Upcoming Birthdays
-      </h2>
-
-      {upcoming.length === 0 ? (
-        <p>
-          No upcoming birthdays
-        </p>
-      ) : (
-        upcoming.map(
-          (birthday) => (
-            <p
-              key={birthday._id}
-            >
-              🎂 {birthday.name}
-            </p>
-          )
-        )
-      )}
-
          
       
       {showForm && (
@@ -313,29 +365,22 @@ function Birthdays() {
               <Card>
                 <div
                   style={{
-                    boxShadow:
-                      selectedBirthdayId === birthday._id
-                        ? "0 0 15px rgba(59,130,246,0.3)"
-                        : "none",
-                    border:
-                      selectedBirthdayId === birthday._id
-                        ? "2px solid #3b82f6"
-                        : "none",
-
                     backgroundColor:
-                      selectedBirthdayId === birthday._id
-                        ? "rgba(59,130,246,0.08)"
+                      highlightId === birthday._id
+                        ? "rgba(0, 204, 255, 0.09)"
                         : "transparent",
-
+                    boxShadow:
+                      highlightId === birthday._id
+                        ? "0 0 20px rgba(0,255,204,0.45)"
+                        : "0 0 0 rgba(0,255,204,0)",
+                    border: "2px solid transparent",
                     borderRadius: "8px",
-
                     padding:
-                      selectedBirthdayId === birthday._id
+                      highlightId === birthday._id
                         ? "8px"
                         : "0",
-
                     transition:
-                      "all 0.3s ease"
+                      "background-color 2s ease, box-shadow 2s ease, padding .3s ease"
                   }}
                 >
               <h3>

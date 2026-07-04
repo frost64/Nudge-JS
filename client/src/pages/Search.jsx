@@ -6,15 +6,10 @@ import Layout from "../components/Layout";
 import Card from "../components/Card";
 
 function Search() {
-
   const navigate = useNavigate();
-
-  const [loading, setLoading] =
-    useState(false);
-
-  const [results, setResults] =
-    useState(null);
   
+  const [loading, setLoading] = useState(false);
+  const [results, setResults] = useState(null);
   const location = useLocation();
 
   const query =
@@ -24,42 +19,31 @@ function Search() {
 
   const handleSearch =
   async (searchTerm) => {
-
     if (!searchTerm.trim()) {
       return;
     }
-
     setLoading(true);
-
     try {
-
       const res =
         await api.get(
           `/search?q=${searchTerm}`
         );
-
       setResults(
         res.data
       );
-
-    } catch (error) {
-
+    } 
+    catch (error) {
       console.log(error);
-
-    } finally {
-
+    } 
+    finally {
       setLoading(false);
-
     }
-
   };
 
 useEffect(() => {
-
   if (query) {
     handleSearch(query);
   }
-
 }, [query]);
 
   const noResults =
@@ -72,7 +56,6 @@ useEffect(() => {
   return (
     <Layout>
 
-      
 {loading && (
   <p>Searching...</p>
 )}
@@ -84,7 +67,7 @@ useEffect(() => {
     </h2>
 
     <p>
-      Start typing in the navbar search bar to search notes,
+      Start typing in the search bar to search notes,
       reminders, birthdays and links.
     </p>
   </Card>

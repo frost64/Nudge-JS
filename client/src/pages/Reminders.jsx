@@ -14,11 +14,21 @@ const [reminderTime, setReminderTime] = useState("09:00");
 const [priority, setPriority] = useState("");
 const [category, setCategory] = useState("");
 const [showForm, setShowForm] = useState(false);
+const [highlightId, setHighlightId] = useState(null);
 
 const location = useLocation();
-const reminderRefs = useRef({});
 const searchParams = new URLSearchParams(location.search);
-const selectedReminderId = searchParams.get("reminderId");
+const shouldCreate = searchParams.get("create");
+
+const reminderRefs = useRef({});
+const highlightTimeout = useRef(null);
+const selectedReminderId = new URLSearchParams(location.search).get("reminderId");
+const pendingReminders = reminders.filter(reminder => !reminder.completed)
+  .sort(
+    (a, b) =>
+      new Date(a.dueDate) - new Date(b.dueDate)
+  )
+  .slice(0, 5);
 
 const fetchReminders = async () => {
   try {
@@ -141,42 +151,111 @@ responseType: "blob",
 };
 
 const startEdit = (reminder) => {
-setEditingId(reminder._id)
-setShowForm(true);
-setTitle(reminder.title);
-setDueDate(reminder.dueDate.split("T")[0]);
-setReminderTime(reminder.reminderTime || "09:00");
-setPriority(reminder.priority || "");
-setCategory(reminder.category || "");
+  setEditingId(reminder._id)
+  setShowForm(true);
+  setTitle(reminder.title);
+  setDueDate(reminder.dueDate.split("T")[0]);
+  setReminderTime(reminder.reminderTime || "09:00");
+  setPriority(reminder.priority || "");
+  setCategory(reminder.category || "");
 };
 
 const cancelEdit = () => {
-setEditingId(null);
-setTitle("");
-setDueDate("");
-setReminderTime("09:00");
-setPriority("");
-setCategory("");
+  setEditingId(null);
+  setTitle("");
+  setDueDate("");
+  setReminderTime("09:00");
+  setPriority("");
+  setCategory("");
 };
 
-useEffect(() => {
-  fetchReminders();
-}, []);
+
+const highlightReminder = (id) => {
+  setHighlightId(id);
+
+  reminderRefs.current[id]?.scrollIntoView({
+    behavior: "smooth",
+    block: "center",
+  });
+
+  if (highlightTimeout.current) {
+    clearTimeout(highlightTimeout.current);
+  }
+
+  highlightTimeout.current = setTimeout(() => {
+    setHighlightId(null);
+  }, 2000);
+};
 
 useEffect(() => {
   if (
     selectedReminderId &&
     reminderRefs.current[selectedReminderId]
   ) {
-      reminderRefs.current[selectedReminderId].scrollIntoView({
-      behavior: "smooth",
-      block: "center"
-    });
+    highlightReminder(selectedReminderId);
   }
 }, [reminders, selectedReminderId]);
 
+useEffect(() => {
+  return () => {
+    if (highlightTimeout.current) {
+      clearTimeout(highlightTimeout.current);
+    }
+  };
+}, []);
+
+useEffect(() => {
+  if (shouldCreate === "true") {
+    setShowForm(true);
+  }
+}, [shouldCreate]);
+
+useEffect(() => {
+  fetchReminders();
+}, []);
+
+
+const sidebar = (
+  <div 
+    style={{
+      userSelect: "none",
+      position: "fixed",
+      top: "15%",
+      left: "2%",
+      width: "20%",
+      height: "70%",
+      padding: "20px",
+      display: "flex",
+      flexDirection: "column",
+    }}
+  >
+    <h1 style={{textAlign: "center"}}>Pending ⏰</h1>
+    {pendingReminders.length === 0 ? (
+      <p style={{paddingLeft: "20px"}}>No pending reminders</p>
+    ) : (
+      pendingReminders.map((reminder) => (
+        <div
+          key={reminder._id}
+          className="glow-button"
+          style={{
+            paddingLeft: "20px",
+            marginBottom: "10px",
+            content: "center",
+            cursor: "pointer",
+            borderRadius: "10px",
+          }}
+          onClick={() => highlightReminder(reminder._id)}
+        >
+          {reminder.title}
+        </div>
+      ))
+    )}
+  </div>
+);
+
+
 return ( 
-<Layout>  
+  <Layout sidebar={!showForm ? sidebar : null}>
   {showForm && (
   <Card style={{width: "40%", marginLeft: "auto", marginRight: "auto"}}>
   <h2>
@@ -327,7 +406,22 @@ return (
 
     {reminders.length === 0 ? (<p>No reminders found</p>) : 
     (
-      reminders.map((reminder) => (
+      reminders.map((reminder) => {
+        const isOverdue =
+          !reminder.completed &&
+          new Date(reminder.dueDate) < new Date();
+
+        const dueDateObj = new Date(reminder.dueDate);
+
+        const overdueDays = isOverdue
+          ? Math.floor(
+              (new Date() - dueDateObj) /
+              (1000 * 60 * 60 * 24)
+            )
+          : 0;
+
+        return (
+
         <div
           key={reminder._id}
           ref={(el) => {
@@ -339,19 +433,34 @@ return (
           <Card>
             <div
               style={{
-                border:
-                  selectedReminderId === reminder._id
-                    ? "2px solid #3b82f6"
-                    : "none",
                 backgroundColor:
-                  selectedReminderId === reminder._id
-                    ? "rgba(59,130,246,0.08)"
+                  highlightId === reminder._id
+                    ? "rgba(0, 204, 255, 0.09)"
+                    : isOverdue
+                    ? "rgba(255,0,0,.08)" 
                     : "transparent",
-                borderRadius: "8px",
-                padding: 
-                  selectedReminderId === reminder._id 
-                    ? "8px" : "0",
-                transition: "all 0.3s ease"
+
+                boxShadow:
+                  highlightId === reminder._id
+                    ? "0 0 20px rgba(0,255,204,0.45)"
+                    : isOverdue
+                    ? "0 0 20px rgba(255,0,0,.45)"
+                    : "0 0 0 rgba(0,255,204,0)",
+
+                border:
+                  isOverdue
+                    ? "2px solid #ff4d4d"
+                    : "2px solid transparent",
+
+                borderRadius:"8px",
+
+                padding:
+                  highlightId === reminder._id || isOverdue
+                    ? "8px"
+                    : "0",
+
+                transition:
+                  "background-color 2s ease, box-shadow 2s ease, padding .3s ease"
               }}
             >
               <h3><strong>Title: </strong>{reminder.title}</h3>
@@ -382,6 +491,18 @@ return (
                   ? "✅ Completed"
                   : "⏳ Pending"}
               </p>
+
+              {isOverdue && (
+                <p
+                  style={{
+                    color: "#ff4d4d",
+                    fontWeight: "bold",
+                    marginTop: "8px",
+                  }}
+                >
+                  ⚠️ Overdue by {overdueDays} day{overdueDays !== 1 ? "s" : ""}
+                </p>
+              )}
 
               <button
                 className="glow-top"
@@ -415,7 +536,8 @@ return (
             </div>
           </Card>
         </div>
-      ))
+            );
+    })
     )
   }
   </>
