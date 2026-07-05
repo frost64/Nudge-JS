@@ -14,7 +14,11 @@ const [category, setCategory] =useState("");
 const [notes, setNotes] =useState("");
 const [editingId, setEditingId] =useState(null);
 const [showForm, setShowForm] = useState(false);
-
+const favoriteLinks = links
+  .filter((link) => link.favorite)
+  .slice(0, 5);
+const [highlightId, setHighlightId] = useState(null);
+const highlightTimeout = useRef(null);
 const location = useLocation();
 const searchParams = new URLSearchParams(location.search);
 const selectedLinkId = searchParams.get("linkId");
@@ -34,11 +38,34 @@ async () => {
   } 
   catch (error) {
     console.log(error);
+    alert(
+      error.response?.data?.message ||
+      "Failed to load links."
+    );
   }
 };
 
 const handleSave =
-async () => {   
+async () => {  
+  if (!title.trim()) {
+    alert("Title is required");
+    return;
+  }
+
+  if (!url.trim()) {
+    alert("URL is required");
+    return;
+  }
+
+  if (!category.trim()) {
+    alert("Category is required");
+    return;
+  }
+
+  if (!notes.trim()) {
+    alert("Description is required");
+    return;
+  } 
   try {
     const linkData = {
       title,
@@ -68,6 +95,10 @@ async () => {
   } 
   catch (error) {
     console.log(error);
+    alert(
+      error.response?.data?.message ||
+      "Failed to save link."
+    );
   }
 };
 
@@ -90,6 +121,23 @@ const cancelEdit = () => {
   setNotes("");
   setShowForm(false);
 };
+
+const highlightLink = (id) => {
+  setHighlightId(id);
+
+  linkRefs.current[id]?.scrollIntoView({
+    behavior: "smooth",
+    block: "center",
+  });
+
+  if (highlightTimeout.current) {
+    clearTimeout(highlightTimeout.current);
+  }
+
+  highlightTimeout.current = setTimeout(() => {
+    setHighlightId(null);
+  }, 2000);
+};
    
 
 const handleDelete =
@@ -106,6 +154,10 @@ async (id) => {
   } 
   catch (error) {
     console.log(error);
+    alert(
+      error.response?.data?.message ||
+      "Failed to delete link."
+    );
   }
 };
 
@@ -123,22 +175,26 @@ async (id) => {
 };
 
 useEffect(() => {
-  fetchLinks();
-}, []);
-
-useEffect(() => {
   if (
     selectedLinkId &&
     linkRefs.current[selectedLinkId]
   ) {
-    linkRefs.current[
-      selectedLinkId
-    ].scrollIntoView({
-      behavior: "smooth",
-      block: "center"
-    });
+    highlightLink(selectedLinkId);
+  }
+}, [links, selectedLinkId]);
+
+useEffect(() => {
+  return () => {
+    if (highlightTimeout.current) {
+      clearTimeout(highlightTimeout.current);
     }
-}, [links,selectedLinkId]);
+  };
+}, []);
+
+useEffect(() => {
+  fetchLinks();
+}, []);
+
 
 useEffect(() => {
   if (shouldCreate === "true") {
@@ -146,8 +202,50 @@ useEffect(() => {
   }
 }, [shouldCreate]);
 
+const sidebar = (
+  <div
+    style={{
+      userSelect: "none",
+      position: "fixed",
+      top: "15%",
+      left: "2%",
+      width: "20%",
+      height: "70%",
+      padding: "20px",
+      display: "flex",
+      flexDirection: "column",
+    }}
+  >
+    <h1 style={{ textAlign: "center" }}>
+      Favourites ⭐
+    </h1>
+
+    {favoriteLinks.length === 0 ? (
+      <p style={{ paddingLeft: "20px" }}>
+        No favorite links
+      </p>
+    ) : (
+      favoriteLinks.map((link) => (
+        <div
+          key={link._id}
+          className="glow-top left"
+          style={{
+            paddingLeft: "20px",
+            marginBottom: "10px",
+            cursor: "pointer",
+            borderRadius: "10px",
+          }}
+          onClick={() => highlightLink(link._id)}
+        >
+          {link.title}
+        </div>
+      ))
+    )}
+  </div>
+);
+
 return ( 
-<Layout>
+<Layout sidebar={!showForm ? sidebar : null}>
   {!showForm && (
     <div
       style={{
@@ -235,7 +333,7 @@ return (
 
         <textarea
           className="input-glow"
-          placeholder="Notes"
+          placeholder="Description"
           rows="4"
           cols="40"
           value={notes}
@@ -261,7 +359,7 @@ return (
           </button>
 
           <button
-            className="glow-top"
+            className="glow-top delete"
             onClick={cancelEdit}
           >
             Cancel
@@ -275,7 +373,7 @@ return (
   <>
   {
     links.length === 0 ? (
-      <p>No links found</p>
+      <p>Create your first link!</p>
     ) : (
       links.map(
         (link) => (
@@ -290,25 +388,27 @@ return (
             <Card>
               <div
                 style={{
-                  border:
-                    selectedLinkId === link._id
-                      ? "2px solid #3b82f6"
-                      : "none",
-
                   backgroundColor:
-                    selectedLinkId === link._id
-                      ? "rgba(59,130,246,0.08)"
+                    highlightId === link._id
+                      ? "rgba(0,204,255,0.09)"
                       : "transparent",
+
+                  boxShadow:
+                    highlightId === link._id
+                      ? "0 0 20px rgba(0,255,204,0.45)"
+                      : "0 0 0 rgba(0,255,204,0)",
+
+                  border: "2px solid transparent",
 
                   borderRadius: "8px",
 
                   padding:
-                    selectedLinkId === link._id
+                    highlightId === link._id
                       ? "8px"
                       : "0",
 
                   transition:
-                    "all 0.3s ease"
+                    "background-color .5s ease, box-shadow .5s ease, padding .3s ease"
                 }}
               >
                 <h3
@@ -349,7 +449,7 @@ return (
                 </p>
 
                 <p>
-                  <strong>Notes: </strong>
+                  <strong>Description: </strong>
                   {link.notes}
                 </p>
 
@@ -378,7 +478,7 @@ return (
                   </button>
 
                   <button
-                    className="glow-top"
+                    className="glow-top delete"
                     onClick={() =>
                       handleDelete(
                         link._id

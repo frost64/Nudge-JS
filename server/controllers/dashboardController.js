@@ -51,11 +51,43 @@ const getDashboard = async (req, res) => {
         .sort({ dueDate: 1 })
         .limit(5);
 
-        const upcomingBirthdays = await Birthday.find({
-            user: userId
+        const birthdays = await Birthday.find({
+    user: userId
+});
+
+const today = new Date();
+
+const upcomingBirthdays = birthdays
+    .map((birthday) => {
+
+        const birthDate = new Date(birthday.birthDate);
+
+        const nextBirthday = new Date(
+            today.getFullYear(),
+            birthDate.getMonth(),
+            birthDate.getDate()
+        );
+
+        if (nextBirthday < today) {
+            nextBirthday.setFullYear(
+                today.getFullYear() + 1
+            );
+        }
+
+        const daysRemaining = Math.ceil(
+            (nextBirthday - today) /
+            (1000 * 60 * 60 * 24)
+            );
+            return {
+                ...birthday.toObject(),
+                daysRemaining
+            };
         })
-        .sort({ birthDate: 1 })
-        .limit(5);
+        .sort(
+            (a, b) =>
+                a.daysRemaining - b.daysRemaining
+        )
+        .slice(0, 5);
 
         res.status(200).json({
             stats: {

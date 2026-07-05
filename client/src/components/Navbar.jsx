@@ -121,7 +121,7 @@ function Navbar() {
       {/* Logo */}
 
       <Link 
-        className="logo-zoom"
+        className="icon-zoom logo"
         to="/dashboard"
         style={{
           textDecoration: "none",
@@ -184,7 +184,7 @@ function Navbar() {
       >
         
         <Link
-          className="icon-zoom" 
+          className={isActive("/dashboard") ? "active-link" : "icon-zoom"}
           to="/dashboard"
           style={linkStyle("/dashboard")}
         >
@@ -192,7 +192,7 @@ function Navbar() {
         </Link>
 
         <Link 
-          className="icon-zoom" 
+          className={isActive("/reminders") ? "active-link" : "icon-zoom"}
           to="/reminders"
           style={linkStyle("/reminders")}
         >
@@ -200,7 +200,7 @@ function Navbar() {
         </Link>
 
         <Link 
-          className="icon-zoom" 
+          className={isActive("/notes") ? "active-link" : "icon-zoom"}
           to="/notes"
           style={linkStyle("/notes")}
         >
@@ -208,7 +208,7 @@ function Navbar() {
         </Link>
 
         <Link 
-          className="icon-zoom" 
+          className={isActive("/birthdays") ? "active-link" : "icon-zoom"}
           to="/birthdays"
           style={linkStyle("/birthdays")}
         >
@@ -216,7 +216,7 @@ function Navbar() {
         </Link>
 
         <Link 
-          className="icon-zoom" 
+          className={isActive("/links") ? "active-link" : "icon-zoom"}
           to="/links"
           style={linkStyle("/links")}
         >
@@ -226,7 +226,7 @@ function Navbar() {
 
         {user?.role === "admin" && (
           <Link 
-            className="icon-zoom" 
+            className={isActive("/admin") ? "active-link" : "icon-zoom"}
             to="/admin"
             style={linkStyle("/admin")}
           >

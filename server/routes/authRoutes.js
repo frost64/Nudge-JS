@@ -7,10 +7,11 @@ const validate = require("../middleware/validationMiddleware");
 
 
 const {
-  registerUser,
-  loginUser,
-  getMe,
-  updateProfile
+    registerUser,
+    loginUser,
+    getMe,
+    updateProfile,
+    deleteMyAccount
 } = require("../controllers/authController");
 
 router.post(
@@ -54,7 +55,10 @@ router.post(
     loginUser
 );
 
+
+
 router.get("/me", authMiddleware, getMe);   
 router.put("/profile", authMiddleware, updateProfile);
+router.delete("/delete-account",authMiddleware,deleteMyAccount);
 module.exports = router;
 

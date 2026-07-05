@@ -40,7 +40,36 @@ async () => {
   }
 
 };
+const handleRole = async (user) => {
+  const newRole =
+    user.role === "admin"
+      ? "user"
+      : "admin";
 
+  const confirmed = window.confirm(
+    `Change ${user.username}'s role to "${newRole}"?`
+  );
+
+  if (!confirmed) return;
+
+  try {
+    await api.patch(
+      `/admin/users/${user._id}/role`,
+      {
+        role: newRole,
+      }
+    );
+
+    fetchUsers();
+    fetchStats();
+  } catch (error) {
+      console.log(error);
+      alert(
+        error.response?.data?.message ||
+        "Failed to update user role."
+      );
+    }
+};
 const handleDelete =
 async (id) => {
 
@@ -119,29 +148,33 @@ return (
         key={user._id}
       >
 
-        <p>
-          <strong>
-            {user.username}
-          </strong>
-        </p>
+        <p><strong>Username: </strong><strong>{user.username}</strong></p>
+        <p><strong>Email: </strong>{user.email}</p>
+        <p><strong>Role: </strong>{user.role}</p>
 
-        <p>
-          {user.email}
-        </p>
-
-        <p>
-          Role: {user.role}
-        </p>
-
-        <button
-          onClick={() =>
-            handleDelete(
-              user._id
-            )
-          }
+        <div
+          style={{
+            display: "flex",
+            gap: "10px",
+            marginTop: "12px",
+          }}
         >
-          Delete User
-        </button>
+          <button
+            className="glow-top"
+            onClick={() => handleRole(user)}
+          >
+            {user.role === "admin"
+              ? "Make User"
+              : "Make Admin"}
+          </button>
+
+          <button
+            className="glow-top delete"
+            onClick={() => handleDelete(user._id)}
+          >
+            Delete User
+          </button>
+        </div>
 
       </Card>
 

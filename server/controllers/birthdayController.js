@@ -10,22 +10,44 @@ const createBirthday = async (req, res) => {
       notes
     } = req.body;
 
+    if (!name?.trim()) {
+      return res.status(400).json({
+        message: "Name is required."
+      });
+    }
+
+    if (!birthDate) {
+      return res.status(400).json({
+        message: "Date of Birth is required."
+      });
+    }
+
+    if (!relationship?.trim()) {
+      return res.status(400).json({
+        message: "Relationship is required."
+      });
+    }
+
+    if (!notes?.trim()) {
+      return res.status(400).json({
+        message: "Birthday Note is required."
+      });
+    }
+
     const birthday = await Birthday.create({
-      name,
+      name: name.trim(),
       birthDate,
-      relationship,
-      notes,
+      relationship: relationship.trim(),
+      notes: notes?.trim(),
       user: req.user.id
     });
 
     res.status(201).json(birthday);
 
   } catch (error) {
-
     res.status(500).json({
       message: error.message
     });
-
   }
 };
 
@@ -81,14 +103,45 @@ const updateBirthday = async (req, res) => {
       });
     }
 
-    const updatedBirthday =
-      await Birthday.findByIdAndUpdate(
-        req.params.id,
-        req.body,
-        { new: true }
-      );
+    const {
+      name,
+      birthDate,
+      relationship,
+      notes
+    } = req.body;
 
-    res.status(200).json(updatedBirthday);
+    if (!name?.trim()) {
+      return res.status(400).json({
+        message: "Name is required."
+      });
+    }
+
+    if (!birthDate) {
+      return res.status(400).json({
+        message: "Date of Birth is required."
+      });
+    }
+
+    if (!relationship?.trim()) {
+      return res.status(400).json({
+        message: "Relationship is required."
+      });
+    }
+
+    if (!notes?.trim()) {
+      return res.status(400).json({
+        message: "Birthday Note is required."
+      });
+    }
+
+    birthday.name = name.trim();
+    birthday.birthDate = birthDate;
+    birthday.relationship = relationship.trim();
+    birthday.notes = notes?.trim();
+
+    await birthday.save();
+
+    res.status(200).json(birthday);
 
   } catch (error) {
 

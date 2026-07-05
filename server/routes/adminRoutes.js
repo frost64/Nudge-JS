@@ -3,7 +3,8 @@ const router = express.Router();
 const {
     getStats,
     getUsers,
-    deleteUser
+    deleteUser,
+    updateUserRole
 } = require("../controllers/adminController");
 
 
@@ -33,6 +34,13 @@ router.delete(
     authMiddleware,
     adminMiddleware,
     deleteUser
+);
+
+router.patch(
+    "/users/:id/role",
+    authMiddleware,
+    adminMiddleware,
+    updateUserRole
 );
 
 module.exports = router;

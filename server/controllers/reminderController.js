@@ -41,6 +41,18 @@ const createReminder = async (req, res) => {
 
     const { title, description, dueDate, reminderTime, priority, category} = req.body;
 
+    if (
+      !title?.trim() ||
+      !dueDate ||
+      !reminderTime ||
+      !priority ||
+      !category?.trim()
+    ) {
+      return res.status(400).json({
+        message: "Please fill in all required fields."
+      });
+    }
+
     const reminder = await Reminder.create({
       title,
       description,

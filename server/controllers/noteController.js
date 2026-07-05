@@ -2,28 +2,45 @@ const Note = require("../models/Note");
 
 const createNote = async (req, res) => {
   try {
-
     const {
       title,
       content,
       tags
     } = req.body;
 
+    if (!title?.trim()) {
+      return res.status(400).json({
+        message: "Title is required."
+      });
+    }
+
+    if (!content?.trim()) {
+      return res.status(400).json({
+        message: "Description is required."
+      });
+    }
+
+    if (
+      !Array.isArray(tags) ||
+      tags.filter(tag => tag.trim()).length === 0
+    ) {
+      return res.status(400).json({
+        message: "Please add at least one tag."
+      });
+    }
     const note = await Note.create({
-      title,
-      content,
-      tags,
+      title: title.trim(),
+      content: content.trim(),
+      tags: tags.map(tag => tag.trim()).filter(Boolean),
       user: req.user.id
     });
 
     res.status(201).json(note);
 
   } catch (error) {
-
     res.status(500).json({
       message: error.message
     });
-
   }
 };
 
@@ -80,21 +97,45 @@ const updateNote = async (req, res) => {
       });
     }
 
-    const updatedNote =
-      await Note.findByIdAndUpdate(
-        req.params.id,
-        req.body,
-        { new: true }
-      );
+    const {
+      title,
+      content,
+      tags
+    } = req.body;
 
-    res.status(200).json(updatedNote);
+    if (!title?.trim()) {
+      return res.status(400).json({
+        message: "Title is required."
+      });
+    }
+
+    if (!content?.trim()) {
+      return res.status(400).json({
+        message: "Description is required."
+      });
+    }
+
+    if (
+      !Array.isArray(tags) ||
+      tags.filter(tag => tag.trim()).length === 0
+    ) {
+      return res.status(400).json({
+        message: "Please add at least one tag."
+      });
+    }
+
+    note.title = title.trim();
+    note.content = content.trim();
+    note.tags = tags.map(tag => tag.trim()).filter(Boolean);
+
+    await note.save();
+
+    res.status(200).json(note);
 
   } catch (error) {
-
     res.status(500).json({
       message: error.message
     });
-
   }
 };
 

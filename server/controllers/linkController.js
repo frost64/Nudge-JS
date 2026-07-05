@@ -5,11 +5,43 @@ const createLink = async (req, res) => {
 
         const { title, url, category, notes } = req.body;
 
+        if (!title?.trim()) {
+            return res.status(400).json({
+                message: "Title is required."
+            });
+        }
+
+        if (!url?.trim()) {
+            return res.status(400).json({
+                message: "URL is required."
+            });
+        }
+
+        if (!category?.trim()) {
+            return res.status(400).json({
+                message: "Category is required."
+            });
+        }
+
+        if (!notes?.trim()) {
+            return res.status(400).json({
+                message: "Description is required."
+            });
+        }
+
+        try {
+            new URL(url);
+        } catch {
+            return res.status(400).json({
+                message: "Please enter a valid URL."
+            });
+        }
+
         const link = await Link.create({
-            title,
-            url,
-            category,
-            notes,
+            title: title.trim(),
+            url: url.trim(),
+            category: category.trim(),
+            notes: notes.trim(),
             user: req.user.id
         });
 
@@ -76,13 +108,53 @@ const updateLink = async (req, res) => {
             });
         }
 
-        const updatedLink = await Link.findByIdAndUpdate(
-            req.params.id,
-            req.body,
-            { new: true }
-        );
+        const {
+            title,
+            url,
+            category,
+            notes
+        } = req.body;
 
-        res.status(200).json(updatedLink);
+        if (!title?.trim()) {
+            return res.status(400).json({
+                message: "Title is required."
+            });
+        }
+
+        if (!url?.trim()) {
+            return res.status(400).json({
+                message: "URL is required."
+            });
+        }
+
+        if (!category?.trim()) {
+            return res.status(400).json({
+                message: "Category is required."
+            });
+        }
+
+        if (!notes?.trim()) {
+            return res.status(400).json({
+                message: "Description is required."
+            });
+        }
+
+        try {
+            new URL(url);
+        } catch {
+            return res.status(400).json({
+                message: "Please enter a valid URL."
+            });
+        }
+
+        link.title = title.trim();
+        link.url = url.trim();
+        link.category = category.trim();
+        link.notes = notes.trim();
+
+        await link.save();
+
+        res.status(200).json(link);
 
     } catch (error) {
 

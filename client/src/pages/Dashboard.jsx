@@ -47,28 +47,28 @@ function Dashboard() {
       <button className = "hidden"></button>
       
       <button
-        className="glow-button"
+        className="glow-top left"
         onClick={() => navigate("/reminders?create=true")}
       >
         ⏰ New Reminder
       </button>
 
       <button
-        className="glow-button"
+        className="glow-top left"
         onClick={() => navigate("/notes?create=true")}
       >
         📝 New Note
       </button>
 
       <button
-        className="glow-button"
+        className="glow-top left"
         onClick={() => navigate("/birthdays?create=true")}
       >
         🎂 Add Birthday
       </button>
 
       <button
-        className="glow-button"
+        className="glow-top left"
         onClick={() => navigate("/links?create=true")}
       >
         🔗 Save Link
@@ -132,7 +132,7 @@ function Dashboard() {
           {data.favoriteLinks?.length === 0 ? (
             <p>No favorite links</p>
           ) : (
-            data.favoriteLinks?.map((link, index) => (
+            data.favoriteLinks?.map((link) => (
               <div
                 className="search-result-item" 
                 key={link._id}
@@ -141,7 +141,7 @@ function Dashboard() {
                     `/links?linkId=${link._id}`
                   )
                 }>
-                {index+1}. {link.title}
+                {link.title}
               </div>
             ))
           )}
@@ -153,7 +153,7 @@ function Dashboard() {
           {data.upcomingBirthdays?.length === 0 ? (
             <p>No upcoming birthdays</p>
           ) : (
-            data.upcomingBirthdays?.slice(0, 5).map((birthday, index) => (
+            data.upcomingBirthdays?.slice(0, 5).map((birthday) => (
               <div
                 className="search-result-item" 
                 key={birthday._id}
@@ -162,7 +162,11 @@ function Dashboard() {
                     `/birthdays?birthdayId=${birthday._id}`
                   )
                 }>
-                {index + 1}. {birthday.name} ({new Date(birthday.birthDate).toLocaleDateString()})
+                {birthday.name}{" "}
+                {birthday.daysRemaining === 0
+                  ? "🎉 Today!"
+                  : `(${birthday.daysRemaining} day${birthday.daysRemaining !== 1 ? "s" : ""} left)`
+                }
               </div>
             ))
           )}
@@ -174,7 +178,7 @@ function Dashboard() {
           {data.overdueReminders?.length === 0 ? (
             <p>No overdue reminders 🎉</p>
           ) : (
-            data.overdueReminders.map((reminder, index) => (
+            data.overdueReminders.map((reminder) => (
               <div
                 key={reminder._id}
                 className="search-result-item"
@@ -186,7 +190,7 @@ function Dashboard() {
                   navigate(`/reminders?reminderId=${reminder._id}`)
                 }
               >
-                {index + 1}. {reminder.title}
+                {reminder.title}
               </div>
             ))
           )}
@@ -198,7 +202,7 @@ function Dashboard() {
           {data.pendingReminders?.length === 0 ? (
             <p>No pending reminders</p>
           ) : (
-            data.pendingReminders?.map((reminder, index) => (
+            data.pendingReminders?.map((reminder) => (
               <div
                 className="search-result-item" 
                 key={reminder._id}
@@ -207,7 +211,7 @@ function Dashboard() {
                     `/reminders?reminderId=${reminder._id}`
                   )
                 }>
-                {index+1}. {reminder.title}
+                {reminder.title}
               </div>
             ))
           )}

@@ -26,8 +26,14 @@ function Birthdays() {
     try {
       const res = await api.get("/birthdays");
       setBirthdays(res.data.data);
-    } catch (error) {
+    } 
+    catch (error) {
       console.log(error);
+
+      alert(
+        error.response?.data?.message ||
+        "Failed to load birthdays."
+      );
     }
   };
 
@@ -37,12 +43,28 @@ function Birthdays() {
       setUpcoming(res.data);
     } catch (error) {
       console.log(error);
+      alert(
+        error.response?.data?.message ||
+        "Failed to load upcoming birthdays."
+      );
     }
   };
 
   const handleSave = async () => {
-    if (!name.trim() || !birthDate) {
-      alert("Name and Birth Date are required");
+    if (!name.trim()) {
+      alert("Name is required");
+      return;
+    }
+    else if (!birthDate) {
+      alert("Date of Birth is required");
+      return;
+    }
+    else if (!relationship) {
+      alert("Relationship is required");
+      return;
+    }
+    else if (!notes.trim()) {
+      alert("Birthday Note is required");
       return;
     }
     try {
@@ -74,8 +96,13 @@ function Birthdays() {
 
       fetchBirthdays();
       fetchUpcoming();
-    } catch (error) {
+    } 
+    catch (error) {
       console.log(error);
+      alert(
+        error.response?.data?.message ||
+        "Failed to save birthday."
+      );
     }
   };
 
@@ -117,26 +144,27 @@ function Birthdays() {
       fetchBirthdays();
       fetchUpcoming();
     } catch (error) {
-      console.log(error);
-    }
+        console.log(error);
+        alert(
+          error.response?.data?.message ||
+          "Failed to delete birthday."
+        );
+      }
   };
 
   const highlightBirthday = (id) => {
-  setHighlightId(id);
-
-  birthdayRefs.current[id]?.scrollIntoView({
-    behavior: "smooth",
-    block: "center",
-  });
-
-  if (highlightTimeout.current) {
-    clearTimeout(highlightTimeout.current);
-  }
-
-  highlightTimeout.current = setTimeout(() => {
-    setHighlightId(null);
-  }, 2000);
-};
+    setHighlightId(id);
+      birthdayRefs.current[id]?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+      if (highlightTimeout.current) {
+        clearTimeout(highlightTimeout.current);
+      }
+      highlightTimeout.current = setTimeout(() => {
+        setHighlightId(null);
+      }, 2000);
+  };
 
   useEffect(() => {
     fetchBirthdays();
@@ -161,6 +189,30 @@ function Birthdays() {
   selectedBirthdayId
 ]);
     
+const relationshipOptions = [
+  "Father",
+  "Mother",
+  "Brother",
+  "Sister",
+  "Son",
+  "Daughter",
+  "Grandfather",
+  "Grandmother",
+  "Uncle",
+  "Aunt",
+  "Cousin",
+  "Friend",
+  "Best Friend",
+  "Husband",
+  "Wife",
+  "Boyfriend",
+  "Girlfriend",
+  "Fiancé",
+  "Fiancée",
+  "Colleague",
+  "Myself",
+  "Other",
+];
   const sidebar = (
   <div
     style={{
@@ -178,35 +230,12 @@ function Birthdays() {
     <h1 style={{ textAlign: "center" }}>
       Upcoming 🎂
     </h1>
-
-    {/* {upcoming.length === 0 ? (
-      <p style={{ paddingLeft: "20px" }}>
-        No upcoming birthdays
-      </p>
-    ) : (
-      upcoming.slice(0, 5).map((birthday) => (
-        <div
-          key={birthday._id}
-          className="glow-button"
-          style={{
-            paddingLeft: "20px",
-            marginBottom: "10px",
-            cursor: "pointer",
-            borderRadius: "10px",
-          }}
-          onClick={() => highlightBirthday(birthday._id)}
-        >
-          {birthday.name}
-        </div>
-      ))
-    )} */}
-
     {upcoming?.length === 0 ? (
             <p>No upcoming birthdays</p>
           ) : (
             upcoming?.slice(0, 5).map((birthday) => (
               <div
-                className="glow-button"
+                className="glow-top left"
                 style={{
                   paddingLeft: "20px",
                   marginBottom: "10px",
@@ -216,7 +245,11 @@ function Birthdays() {
                 key={birthday._id}
                 onClick={() => highlightBirthday(birthday._id)}
                 >
-                {birthday.name} ({new Date(birthday.birthDate).toLocaleDateString()})
+                {birthday.name}{" "}
+                {birthday.daysRemaining === 0
+                  ? "🎉 Today!"
+                  : `(${birthday.daysRemaining} day${birthday.daysRemaining !== 1 ? "s" : ""} left)`
+                }
               </div>
             ))
           )}
@@ -296,22 +329,26 @@ function Birthdays() {
             }
           />
 
-          <input
+          <select
             className="input-glow"
-            type="text"
-            placeholder="Relationship"
             value={relationship}
-            onChange={(e) =>
-              setRelationship(
-                e.target.value
-              )
-            }
-          />
+            onChange={(e) => setRelationship(e.target.value)}
+          >
+            <option value="">
+              Select Relationship
+            </option>
+
+            {relationshipOptions.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
 
           <textarea
             className="input-glow"
             rows="4"
-            placeholder="Notes"
+            placeholder="Birthday Note"
             value={notes}
             onChange={(e) =>
               setNotes(
@@ -335,7 +372,7 @@ function Birthdays() {
             </button>
 
             <button
-              className="glow-top"
+              className="glow-top delete"
               onClick={cancelEdit}
             >
               Cancel
@@ -349,7 +386,7 @@ function Birthdays() {
       <>
       {birthdays.length === 0 ? (
         <p>
-          No birthdays found
+          Add your first birthday!
         </p>
       ) : (
         birthdays.map(
@@ -388,7 +425,7 @@ function Birthdays() {
               </h3>
 
               <p>
-                <strong>Birth Date: </strong>  
+                <strong>Date of Birth: </strong>  
                 {new Date(
                   birthday.birthDate
                 ).toLocaleDateString()}
@@ -400,7 +437,7 @@ function Birthdays() {
               </p>
 
               <p>
-                <strong>Notes: </strong>
+                <strong>Birthday Note: </strong>
                 {birthday.notes}
               </p>
 
@@ -416,7 +453,7 @@ function Birthdays() {
               </button> 
               
               <button
-                className="glow-top"
+                className="glow-top delete"
                 onClick={() =>
                   handleDelete(
                     birthday._id

@@ -41,6 +41,16 @@ const fetchReminders = async () => {
 };
 
 const handleSave = async () => {
+  if (
+    !title.trim() ||
+    !dueDate ||
+    !reminderTime ||
+    !priority ||
+    !category.trim()
+  ) {
+    alert("Please fill in all fields.");
+    return;
+  }
   try {
     const reminderData = {
       title,
@@ -72,6 +82,10 @@ const handleSave = async () => {
   } 
   catch (error) {
     console.log(error);
+    alert(
+      error.response?.data?.message ||
+      "Failed to save reminder."
+    );
   }
 };
 
@@ -236,7 +250,7 @@ const sidebar = (
       pendingReminders.map((reminder) => (
         <div
           key={reminder._id}
-          className="glow-button"
+          className="glow-top left"
           style={{
             paddingLeft: "20px",
             marginBottom: "10px",
@@ -357,7 +371,7 @@ return (
     </button>
 
     <button
-      className="glow-top"
+      className="glow-top delete"
       type="button"
       onClick={() => {
         if (editingId) {
@@ -404,7 +418,7 @@ return (
       </button>
     </div>
 
-    {reminders.length === 0 ? (<p>No reminders found</p>) : 
+    {reminders.length === 0 ? (<p>Create your first reminder!</p>) : 
     (
       reminders.map((reminder) => {
         const isOverdue =
@@ -437,7 +451,7 @@ return (
                   highlightId === reminder._id
                     ? "rgba(0, 204, 255, 0.09)"
                     : isOverdue
-                    ? "rgba(255,0,0,.08)" 
+                    ? "rgba(255, 236, 128, 0.08)" 
                     : "transparent",
 
                 boxShadow:
@@ -449,7 +463,7 @@ return (
 
                 border:
                   isOverdue
-                    ? "2px solid #ff4d4d"
+                    ? "2px solid #ffffff00"
                     : "2px solid transparent",
 
                 borderRadius:"8px",
@@ -522,16 +536,16 @@ return (
 
               <button
                 className="glow-top"
-                onClick={() => handleDelete(reminder._id)}
-              >
-                Delete
-              </button>
-
-              <button
-                className="glow-top"
                 onClick={() => handleExport(reminder._id)}
               >
                 Export Calendar
+              </button>
+
+              <button
+                className="glow-top delete"
+                onClick={() => handleDelete(reminder._id)}
+              >
+                Delete
               </button>
             </div>
           </Card>

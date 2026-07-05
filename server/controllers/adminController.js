@@ -71,7 +71,13 @@ const deleteUser = async (req, res) => {
                 message: "User not found"
             });
         }
+        // Delete all data belonging to the user
+        await Note.deleteMany({ user: user._id });
+        await Reminder.deleteMany({ user: user._id });
+        await Birthday.deleteMany({ user: user._id });
+        await Link.deleteMany({ user: user._id });
 
+        // Finally delete the user
         await user.deleteOne();
 
         res.json({
@@ -88,9 +94,51 @@ const deleteUser = async (req, res) => {
     }
 };
 
+const updateUserRole = async (req, res) => {
+  try {
+    const { role } = req.body;
+
+    // Only allow these two roles
+    if (!["user", "admin"].includes(role)) {
+      return res.status(400).json({
+        message: "Invalid role",
+      });
+    }
+
+    const user = await User.findById(req.params.id);
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+    // Prevent an admin from changing their own role
+    if (req.user.id === user._id.toString()) {
+    return res.status(400).json({
+        message: "You cannot change your own role.",
+    });
+    }
+
+    user.role = role;
+
+    await user.save();
+
+    res.json({
+      message: "Role updated successfully",
+      user,
+    });
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      message: "Server Error",
+    });
+  }
+};
 
 module.exports = {
     getStats,
     getUsers,
-    deleteUser
+    deleteUser,
+    updateUserRole
 };  

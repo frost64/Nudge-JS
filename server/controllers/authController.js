@@ -1,4 +1,8 @@
 const User = require("../models/User");
+const Note = require("../models/Note");
+const Reminder = require("../models/Reminder");
+const Birthday = require("../models/Birthday");
+const Link = require("../models/Link");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
@@ -157,9 +161,50 @@ const updateProfile = async (req, res) => {
   }
 };
 
+const deleteMyAccount = async (req, res) => {
+  try {
+
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found"
+      });
+    }
+
+    if (user.role !== "user") {
+      return res.status(403).json({
+        message: "Admins cannot delete their own accounts."
+      });
+    }
+
+    await Promise.all([
+      Note.deleteMany({ user: user._id }),
+      Reminder.deleteMany({ user: user._id }),
+      Birthday.deleteMany({ user: user._id }),
+      Link.deleteMany({ user: user._id })
+    ]);
+
+    await user.deleteOne();
+
+    res.status(200).json({
+      success: true,
+      message: "Account deleted successfully."
+    });
+
+  } catch (error) {
+
+    res.status(500).json({
+      message: error.message
+    });
+
+  }
+};
+
 module.exports = {
   registerUser,
   loginUser,
   getMe,
-  updateProfile
+  updateProfile,
+  deleteMyAccount
 }; 

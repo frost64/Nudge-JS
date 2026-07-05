@@ -62,6 +62,18 @@ function Notes() {
 
   const handleSave =
     async () => {
+      if (!title.trim()) {
+        alert("Title is required");
+        return;
+      }
+      if (!content.trim()) {
+        alert("Description is required");
+        return;
+      }
+      if (!tags.trim()) {
+        alert("Please add at least one tag");
+        return;
+      }
       try {
         const noteData = {
           title,
@@ -92,7 +104,13 @@ function Notes() {
         setShowForm(false);
         fetchNotes();
       } 
-      catch (error) {console.log(error);}
+      catch (error) {
+        console.log(error);
+        alert(
+          error.response?.data?.message ||
+          "Failed to save note."
+        );
+      }
     };
 
   const startEdit =
@@ -131,16 +149,17 @@ function Notes() {
       catch (error) {console.log(error);}
     };
 
-  const handlePin =
-    async (id) => {
-      try {
-        await api.patch(
-          `/notes/${id}/pin`
-        );
-        fetchNotes();
-      } 
-      catch (error) {console.log(error);}
-    };
+  const handlePin = async (id) => {
+    try {
+      await api.patch(`/notes/${id}/pin`);
+
+      await fetchNotes();
+      highlightNote(id);
+
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   const handleFavorite =
     async (id) => {
@@ -205,7 +224,7 @@ function Notes() {
       recentNotes.map((note) => (
         <div
           key={note._id}
-          className="glow-button"
+          className="glow-top left"
           style={{
             paddingLeft: "20px",
             marginBottom: "10px",
@@ -336,7 +355,7 @@ function Notes() {
           </button>
 
           <button
-            className="glow-top"
+            className="glow-top delete"
             onClick={cancelEdit}
           >
             Cancel
@@ -352,7 +371,7 @@ function Notes() {
       {
         notes.length === 0 ? (
           <p>
-            No notes found
+            Create your first note!
           </p>
 
         ) : (
@@ -369,23 +388,32 @@ function Notes() {
             >
               <Card>
                 <div
-                  style={{
+                  style={{                  
                     backgroundColor:
                       highlightId === note._id
-                        ? "rgba(0, 204, 255, 0.09)"
+                        ? note.pinned
+                          ? "rgba(255,215,0,.16)"
+                          : "rgba(0,204,255,.09)"
                         : "transparent",
+
                     boxShadow:
                       highlightId === note._id
-                        ? "0 0 20px rgba(0,255,204,0.45)"
-                        : "0 0 0 rgba(0,255,204,0)",
+                        ? note.pinned
+                          ? "0 0 28px rgba(255,215,0,.65)"
+                          : "0 0 20px rgba(0,255,204,.45)"
+                        : "none",
                     border: "2px solid transparent",
-                    borderRadius: "8px",
                     padding:
                       highlightId === note._id
                         ? "8px"
                         : "0",
+                    transform:
+                      highlightId === note._id
+                        ? "scale(1.015)"
+                        : "scale(1)",
                     transition:
-                      "background-color 2s ease, box-shadow 2s ease, padding .3s ease"
+                      "background-color 1.2s ease, box-shadow 1.2s ease, transform .45s ease, padding .3s ease",
+                    
                   }}
                 >
 
@@ -410,7 +438,16 @@ function Notes() {
                 <p><strong>Description: </strong>{note.content}</p>
 
                 <p><strong>Tags: </strong>{note.tags.join(", ")}</p>
-
+                <p>
+                  <strong>Created On: </strong>
+                  {new Date(note.createdAt).toLocaleString("en-GB", {
+                    day: "2-digit",
+                    month: "long",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </p>
                   <button
                     className="glow-top"
                     onClick={() =>
@@ -453,7 +490,7 @@ function Notes() {
                   </button>
 
                   <button
-                    className="glow-top"
+                    className="glow-top delete"
                     onClick={() =>
                       handleDelete(
                         note._id

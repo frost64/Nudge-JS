@@ -125,6 +125,30 @@ function Profile() {
     }
   };
 
+  const handleDeleteAccount = async () => {
+    const confirmed = window.confirm(
+      "Are you sure you want to permanently delete your account and all your saved data? This action cannot be undone."
+    );
+
+    if (!confirmed) return;
+
+    try {
+      await api.delete("/auth/delete-account");
+
+      logout();
+
+      navigate("/");
+
+    } catch (error) {
+      console.log(error);
+
+      alert(
+        error.response?.data?.message ||
+        "Failed to delete account."
+      );
+    }
+  };
+
   if (!profile) {
     return (
       <Layout>
@@ -298,6 +322,7 @@ function Profile() {
           <br />
 
           <button
+          className="glow-top"
             onClick={handleSave}
           >
             Save Profile
@@ -306,11 +331,7 @@ function Profile() {
           <hr />
 
           <button
-            style={{
-              backgroundColor:
-                "#dc2626",
-              color: "#fff"
-            }}
+            className="glow-top delete"
             onClick={() => {
               logout();
               navigate("/");
@@ -318,6 +339,19 @@ function Profile() {
           >
             Logout
           </button>
+
+          {profile.role === "user" && (
+            <>
+              <hr />
+
+              <button
+                className="glow-top delete"
+                onClick={handleDeleteAccount}
+              >
+                Delete Account
+              </button>
+            </>
+          )}
 
         </div>
 
