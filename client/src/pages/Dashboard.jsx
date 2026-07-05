@@ -8,6 +8,30 @@ import Card from "../components/Card";
 function Dashboard() {
   const [data, setData] = useState(null);
   const [error, setError] = useState("");
+  
+  const getGreeting = () => {
+  const hour = new Date().getHours();
+    if (hour < 12) {
+      return "Good Morning";
+    }
+    if (hour < 17) {
+      return "Good Afternoon";
+    }
+    return "Good Evening";
+  };
+
+  const getGreetingMessage = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) {
+      return "Let's get your day organized. Your nudges are waiting! 🌅";
+    }
+    if (hour < 17) {
+      return "Hope your day is going well. Stay on top of today's nudges. ☀️";
+    }
+    return "Time to wrap things up. Here's what's still left for today. 🌙";
+  };
+
+  const { user } = useContext(AuthContext);
   const navigate = useNavigate();
   useEffect(() => {
     const fetchDashboard = async () => {
@@ -77,9 +101,38 @@ function Dashboard() {
     </div>
   );
   return (
-      <Layout sidebar={quickAccess}>
+  <Layout sidebar={quickAccess}>
+      <div
+        style={{
+          marginBottom: "35px",
+        }}
+      >
+        <h1
+          style={{
+            margin: 0,
+            fontSize: "2.0rem",
+            fontWeight: "700",
+            color: "#0b5b82",
+          }}
+        >
+          👋 {getGreeting()}, {user?.username}
+        </h1>
+
+        <p
+          style={{
+            marginTop: "10px",
+            fontSize: "1.1rem",
+            opacity: 0.75,
+          }}
+        >
+          {getGreetingMessage()}
+        </p>
+      </div>
+
       <h1>Statistics</h1>
-      <div style={{
+
+      <div
+        style={{
           display: "grid",
           gridTemplateColumns: "repeat(4, 1fr)",
           gap: "30px",
