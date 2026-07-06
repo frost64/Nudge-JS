@@ -5,6 +5,7 @@ import api from "../services/api";
 import Layout from "../components/Layout";
 import Card from "../components/Card";
 
+import defaultAvatar from "../assets/avatars/defaultAvatar.png";
 import avatar1 from "../assets/avatars/avatar1.png";
 import avatar2 from "../assets/avatars/avatar2.png";
 import avatar3 from "../assets/avatars/avatar3.png";
@@ -180,9 +181,8 @@ function Profile() {
           <img
             src={
               avatars.find(
-                (a) =>
-                  a.id === avatar
-              )?.image || avatar1
+                (a) => a.id === avatar
+              )?.image || defaultAvatar
             }
             alt="Selected Avatar"
             style={{

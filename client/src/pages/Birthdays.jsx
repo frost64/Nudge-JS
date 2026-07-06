@@ -1,11 +1,20 @@
 import { useEffect, useState, useRef} from "react";
 import { useLocation } from "react-router-dom";
+import { useContext } from "react";
+import { AuthContext } from "../context/AuthContext";
 import api from "../services/api";
 import Layout from "../components/Layout";
 import Card from "../components/Card";
+import birthdayLightBg from "../assets/backgrounds/birthday-light.png";
+import birthdayDarkBg from "../assets/backgrounds/birthday-dark.png";
 
 
 function Birthdays() {
+  const { user } = useContext(AuthContext);
+  const darkMode = user?.theme === "dark";
+  const formBackground = darkMode
+  ? birthdayDarkBg
+  : birthdayLightBg;
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const selectedBirthdayId = searchParams.get("birthdayId");
@@ -258,7 +267,7 @@ const relationshipOptions = [
   return (
     <Layout sidebar={!showForm ? sidebar : null}>
       {!showForm && (
-        <div
+      <div
           style={{
             display: "flex",
             justifyContent: "space-between",
@@ -286,6 +295,22 @@ const relationshipOptions = [
          
       
       {showForm && (
+        <div
+          style={{
+            minHeight: "100vh",
+            width: "100%",
+            backgroundImage: `url(${formBackground})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat",
+
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+
+            position: "relative",
+          }}
+        >
         <Card
           style={{
             width: "40%",
@@ -380,6 +405,7 @@ const relationshipOptions = [
           </div>
         </div>
       </Card>
+      </div>
       )}
 
       {!showForm && (

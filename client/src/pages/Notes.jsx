@@ -1,11 +1,19 @@
 import { useEffect, useState, useRef } from "react";
 import { useLocation } from "react-router-dom";
+import { useContext } from "react";
+import { AuthContext } from "../context/AuthContext";
 import api from "../services/api";
 import Layout from "../components/Layout";
 import Card from "../components/Card";
+import noteLightBg from "../assets/backgrounds/note-light.png";
+import noteDarkBg from "../assets/backgrounds/note-dark.png";
 
 function Notes() {
-
+  const { user } = useContext(AuthContext);
+  const darkMode = user?.theme === "dark";
+  const formBackground = darkMode
+  ? noteDarkBg
+  : noteLightBg;
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const shouldCreate = searchParams.get("create");  
@@ -245,7 +253,7 @@ function Notes() {
   return (
     <Layout sidebar={!showForm ? sidebar : null}>
       {!showForm && (
-  <div
+   <div
     style={{
       display: "flex",
       justifyContent: "space-between",
@@ -271,6 +279,22 @@ function Notes() {
   </div>
 )}
       {showForm && (
+        <div
+          style={{
+            minHeight: "100vh",
+            width: "100%",
+            backgroundImage: `url(${formBackground})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat",
+
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+
+            position: "relative",
+          }}
+        >
       <Card
         style={{
           width: "40%",
@@ -361,13 +385,12 @@ function Notes() {
             Cancel
           </button>
         </div>
-
       </Card>
+      </div>
 )}
 
       {!showForm && (
       <>
-
       {
         notes.length === 0 ? (
           <p>

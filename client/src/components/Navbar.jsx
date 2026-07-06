@@ -7,6 +7,7 @@ import { useState, useEffect, useRef } from "react";
 import api from "../services/api";
 import logo from "../assets/Logo.svg";
 
+import defaultAvatar from "../assets/avatars/defaultAvatar.png";
 import avatar1 from "../assets/avatars/avatar1.png";
 import avatar2 from "../assets/avatars/avatar2.png";
 import avatar3 from "../assets/avatars/avatar3.png";
@@ -466,7 +467,7 @@ function Navbar() {
           src={
             avatarMap[
               user?.avatar
-            ] || avatar1
+            ] || defaultAvatar
           }
           alt="Profile"
           style={{

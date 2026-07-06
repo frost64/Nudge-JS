@@ -1,11 +1,18 @@
 import { useEffect, useState, useRef } from "react";
 import { useLocation } from "react-router-dom";
+import { useContext } from "react";
+import { AuthContext } from "../context/AuthContext";
+
 import api from "../services/api";
 import Layout from "../components/Layout";
-import Card from "../components/Card";
+import GlassModal from "../components/GlassModal";
 
 function Reminders() {
-
+const { user } = useContext(AuthContext);
+const darkMode = user?.theme === "dark";
+const formBackground = darkMode
+  ? reminderDarkBg
+  : reminderLightBg;
 const [reminders, setReminders] = useState([]);
 const [title, setTitle] = useState("");
 const [dueDate, setDueDate] = useState("");
@@ -271,120 +278,115 @@ const sidebar = (
 return ( 
   <Layout sidebar={!showForm ? sidebar : null}>
   {showForm && (
-  <Card style={{width: "40%", marginLeft: "auto", marginRight: "auto"}}>
-  <h2>
-    {editingId
-      ? "Edit Reminder"
-      : "New Reminder"}
-  </h2>
-  <div
-  style={{
-    display: "flex",
-    flexDirection: "column",
-    gap: "15px"
-  }}
->
-
-  <input
-  className="input-glow"
-  type="text"
-  placeholder="Reminder Title"
-  value={title}
-  onChange={(e) =>
-    setTitle(e.target.value)
-  }
-  />
-
-  <input
-    className="input-glow"
-    type="date"
-    value={dueDate}
-    onChange={(e) =>
-      setDueDate(e.target.value)
-    }
-  />
-
-  <input
-    className="input-glow"
-    type="time"
-    value={reminderTime}
-    onChange={(e) =>
-      setReminderTime(
-        e.target.value
-      )
-    }
-  />
-
-  <select
-    className="input-glow"
-    value={priority}
-    onChange={(e) =>
-      setPriority(
-        e.target.value
-      )
-    }
+  <GlassModal
+    backgroundImage={formBackground}
+    darkMode={darkMode}
+    width="40%"
   >
-    <option
-      value=""
-      disabled
-    >
-      Priority
-    </option>
-    <option value="low">
-      Low
-    </option>
+    <h2>
+      {editingId
+        ? "Edit Reminder"
+        : "New Reminder"}
+    </h2>
 
-    <option value="medium">
-      Medium
-    </option>
-
-    <option value="high">
-      High
-    </option>
-  </select>
-
-  <input
-  className="input-glow"
-  type="text"
-  placeholder="Category"
-  value={category}
-  onChange={(e) =>
-    setCategory(
-      e.target.value
-    )
-  }
-/>
-
-  <div
-    style={{
-      display: "flex",
-      padding:"1%",
-      gap: "10px"
-
-    }}
-  >
-    <button
-      className="glow-top"
-      onClick={handleSave}
-    >
-      {editingId ? "Update Reminder" : "Add Reminder"}
-    </button>
-
-    <button
-      className="glow-top delete"
-      type="button"
-      onClick={() => {
-        if (editingId) {
-          cancelEdit();
-        }
-        setShowForm(false);
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: "15px",
       }}
     >
-      Cancel
-    </button>
-  </div>
-</div>
-</Card>
+      <input
+        className="input-glow"
+        type="text"
+        placeholder="Reminder Title"
+        value={title}
+        onChange={(e) =>
+          setTitle(e.target.value)
+        }
+      />
+
+      <input
+        className="input-glow"
+        type="date"
+        value={dueDate}
+        onChange={(e) =>
+          setDueDate(e.target.value)
+        }
+      />
+
+      <input
+        className="input-glow"
+        type="time"
+        value={reminderTime}
+        onChange={(e) =>
+          setReminderTime(e.target.value)
+        }
+      />
+
+      <select
+        className="input-glow"
+        value={priority}
+        onChange={(e) =>
+          setPriority(e.target.value)
+        }
+      >
+        <option value="" disabled>
+          Priority
+        </option>
+
+        <option value="low">
+          Low
+        </option>
+
+        <option value="medium">
+          Medium
+        </option>
+
+        <option value="high">
+          High
+        </option>
+      </select>
+
+      <input
+        className="input-glow"
+        type="text"
+        placeholder="Category"
+        value={category}
+        onChange={(e) =>
+          setCategory(e.target.value)
+        }
+      />
+
+      <div
+        style={{
+          display: "flex",
+          gap: "10px",
+        }}
+      >
+        <button
+          className="glow-top"
+          onClick={handleSave}
+        >
+          {editingId
+            ? "Update Reminder"
+            : "Add Reminder"}
+        </button>
+
+        <button
+          className="glow-top delete"
+          onClick={() => {
+            if (editingId) {
+              cancelEdit();
+            }
+            setShowForm(false);
+          }}
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  </GlassModal>
 )}
 
 {!showForm && (
@@ -400,8 +402,7 @@ return (
     >
       <h1 style={{ 
           margin: 0,
-          fontSize: "2.5rem",
-          margin: 0 
+          fontSize: "2.5rem"
         }}>
         Reminders
       </h1>

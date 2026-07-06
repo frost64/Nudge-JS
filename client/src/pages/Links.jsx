@@ -4,9 +4,17 @@ import Layout from "../components/Layout";
 import Card from "../components/Card";
 import { useLocation } from "react-router-dom";
 import { useRef } from "react";
+import { useContext } from "react";
+import { AuthContext } from "../context/AuthContext";
+import linkLightBg from "../assets/backgrounds/link-light.png";
+import linkDarkBg from "../assets/backgrounds/link-dark.png";
 
 function Links() {
-
+const { user } = useContext(AuthContext);
+const darkMode = user?.theme === "dark";
+const formBackground = darkMode
+  ? linkDarkBg
+  : linkLightBg;
 const [links, setLinks] = useState([]);
 const [title, setTitle] = useState("");
 const [url, setUrl] =useState("");
@@ -273,6 +281,22 @@ return (
     </div>
   )}
   {showForm && (
+    <div
+    style={{
+      minHeight: "100vh",
+      width: "100%",
+      backgroundImage: `url(${formBackground})`,
+      backgroundSize: "cover",
+      backgroundPosition: "center",
+      backgroundRepeat: "no-repeat",
+
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+
+      position: "relative",
+    }}
+  >
     <Card
       style={{
         width: "40%",
@@ -367,6 +391,7 @@ return (
         </div>
       </div>
     </Card>
+    </div>
   )}
 
   {!showForm && (
