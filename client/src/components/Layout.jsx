@@ -1,8 +1,18 @@
 import Navbar from "./Navbar";
 import { useContext, useEffect } from "react";
 import { AuthContext } from "../context/AuthContext";
+import { createContext } from "react";
+export const LayoutContext = createContext({
+  cardVariant: "solid",
+});
 
-function Layout({ children, sidebar }) {
+function Layout({
+  children,
+  sidebar,
+  backgroundImage = null,
+  blurBackground = false,
+  cardVariant = "solid",
+}) {
   const { user } = useContext(AuthContext);
 
   const darkMode =
@@ -24,19 +34,47 @@ function Layout({ children, sidebar }) {
     <div
       style={{
         minHeight: "100vh",
-        backgroundColor:
-          darkMode
-            ? "#111827"
-            : "#f8fafc",
+        backgroundColor: !backgroundImage
+          ? (darkMode ? "#111827" : "#f8fafc")
+          : undefined,
+        backgroundImage: backgroundImage
+          ? `url(${backgroundImage})`
+          : undefined,
+        backgroundSize: "100% 100%",
+        backgroundAttachment: "fixed",
         color:
-          darkMode
-            ? "#f9fafb"
-            : "#111827",
-        transition: "0.3s"
+            darkMode
+                ? "#f9fafb"
+                : "#111827",
+        transition: "0.3s",
+        position: "relative",
       }}
     >
       <Navbar />
-
+      <div
+        id="layout-content"
+        inert={blurBackground ? "" : undefined}
+        aria-hidden={blurBackground}
+      >
+        {blurBackground && (
+          <div
+            style={{
+              display: "flex",
+              gap: "30px",
+              alignItems: "flex-start",
+              position: "fixed",
+              inset: 0,
+              zIndex: 1000,
+              background: darkMode
+                ? "rgba(0,0,0,.18)"
+                : "rgba(255,255,255,.08)",
+              backdropFilter: "blur(8px)",
+              WebkitBackdropFilter: "blur(8px)",
+              pointerEvents: "none",
+              transition: "opacity .35s ease",
+            }}
+          />
+        )}
       <div
         style={{
           maxWidth: "1400px",
@@ -44,10 +82,11 @@ function Layout({ children, sidebar }) {
           padding: "20px",
           display: "flex",
           gap: "30px",
-          alignItems: "flex-start"
+          alignItems: "flex-start",
+          position: "relative",
         }}
       >
-
+    <LayoutContext.Provider value={{ cardVariant }}>
         {/* Sidebar */}
         {sidebar && (
           <aside
@@ -59,8 +98,6 @@ function Layout({ children, sidebar }) {
               display: "flex",
               alignItems: "center",
               flexWrap: "nowrap",
-              height: "1%",
-              minHeight: "1%",
               overflow: "visible",
               justifyContent: "space-between",
               gap: "20px",
@@ -72,16 +109,17 @@ function Layout({ children, sidebar }) {
         )}
 
         {/* Main Content */}
-        <main
-          style={{
-            flex: 1,
-            minWidth: 0
-          }}
-        >
-          {children}
-        </main>
-
+          <main
+            style={{
+              flex: 1,
+              minWidth: 0,
+            }}
+          >
+            {children}
+          </main>
+        </LayoutContext.Provider>
       </div>
+    </div>
     </div>
   );
 }

@@ -2,10 +2,11 @@ import { useEffect, useState, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import { useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
-
 import api from "../services/api";
 import Layout from "../components/Layout";
-import GlassModal from "../components/GlassModal";
+import Card from "../components/Card";
+import reminderLightBg from "../assets/backgrounds/reminder-light.png";
+import reminderDarkBg from "../assets/backgrounds/reminder-dark.png";
 
 function Reminders() {
 const { user } = useContext(AuthContext);
@@ -205,7 +206,7 @@ const highlightReminder = (id) => {
 
   highlightTimeout.current = setTimeout(() => {
     setHighlightId(null);
-  }, 2000);
+  }, 1200);
 };
 
 useEffect(() => {
@@ -234,20 +235,41 @@ useEffect(() => {
 useEffect(() => {
   fetchReminders();
 }, []);
+useEffect(() => {
+    if (showForm) {
+        document.body.style.overflow = "hidden";
+    } else {
+        document.body.style.overflow = "";
+    }
 
+    return () => {
+        document.body.style.overflow = "";
+    };
+}, [showForm]);
+const defaultCardShadow = undefined;
 
+const highlightShadow = `
+  0 0 25px rgba(0,255,204,.45),
+  0 0 70px rgba(0,255,204,.18),
+  0 20px 60px rgba(0,0,0,.45)
+`;
+
+const overdueShadow = `
+  0 0 25px rgba(255,70,70,.45),
+  0 0 70px rgba(255,70,70,.18),
+  0 20px 60px rgba(0,0,0,.45)
+`;
 const sidebar = (
-  <div 
+  <Card
+    variant="glass"
     style={{
-      userSelect: "none",
       position: "fixed",
       top: "15%",
       left: "2%",
       width: "20%",
-      height: "70%",
-      padding: "20px",
-      display: "flex",
-      flexDirection: "column",
+      minHeight: "65%",
+      padding: "24px",
+      borderRadius: "22px",
     }}
   >
     <h1 style={{textAlign: "center"}}>Pending ⏰</h1>
@@ -271,18 +293,48 @@ const sidebar = (
         </div>
       ))
     )}
-  </div>
+  </Card>
 );
 
 
 return ( 
-  <Layout sidebar={!showForm ? sidebar : null}>
-  {showForm && (
-  <GlassModal
+  <Layout
+    sidebar={sidebar}
     backgroundImage={formBackground}
-    darkMode={darkMode}
-    width="40%"
+    blurBackground={showForm}
+    cardVariant="glass"
   >
+  {showForm && (
+    <div
+      style={{
+          
+          position: "fixed",
+          inset: 0,
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          zIndex: 1100,
+      }}
+    >
+    <Card
+      variant="glass"
+      style={{
+          width: "100%",
+          maxWidth: "400px",
+          borderRadius: "24px",
+          boxShadow: darkMode
+            ? `
+                0 0 35px rgba(0,255,204,.22),
+                0 0 90px rgba(0,160,255,.14),
+                0 30px 80px rgba(0,0,0,.55)
+              `
+            : `
+                0 0 30px rgba(0,180,255,.18),
+                0 0 70px rgba(0,255,200,.14),
+                0 25px 70px rgba(0,0,0,.18)
+              `,
+      }}
+    >
     <h2>
       {editingId
         ? "Edit Reminder"
@@ -386,11 +438,18 @@ return (
         </button>
       </div>
     </div>
-  </GlassModal>
+    </Card>
+    </div>
 )}
 
-{!showForm && (
-  <>
+  <div
+    style={{
+      display: "flex",
+      flexDirection: "column",
+      gap: "28px",
+      padding: "10px 10px 40px",
+    }}
+  >
     <div
       style={{
         display: "flex",
@@ -445,39 +504,23 @@ return (
             ] = el;
           }}
         >
-          <Card>
-            <div
-              style={{
-                backgroundColor:
-                  highlightId === reminder._id
-                    ? "rgba(0, 204, 255, 0.09)"
-                    : isOverdue
-                    ? "rgba(255, 236, 128, 0.08)" 
-                    : "transparent",
+          <Card
+            variant="glass"
+            style={{
+              boxShadow:
+                highlightId === reminder._id
+                  ? highlightShadow
+                  : isOverdue
+                  ? overdueShadow
+                  : defaultCardShadow,
 
-                boxShadow:
-                  highlightId === reminder._id
-                    ? "0 0 20px rgba(0,255,204,0.45)"
-                    : isOverdue
-                    ? "0 0 20px rgba(255,0,0,.45)"
-                    : "0 0 0 rgba(0,255,204,0)",
+              border: isOverdue
+                ? "2px solid transparent"
+                : undefined,
 
-                border:
-                  isOverdue
-                    ? "2px solid #ffffff00"
-                    : "2px solid transparent",
-
-                borderRadius:"8px",
-
-                padding:
-                  highlightId === reminder._id || isOverdue
-                    ? "8px"
-                    : "0",
-
-                transition:
-                  "background-color 2s ease, box-shadow 2s ease, padding .3s ease"
-              }}
-            >
+              transition: "box-shadow .35s ease"
+            }}
+          >
               <h3><strong>Title: </strong>{reminder.title}</h3>
         
               <p>
@@ -548,15 +591,13 @@ return (
               >
                 Delete
               </button>
-            </div>
           </Card>
         </div>
-            );
+      );
     })
     )
   }
-  </>
-)}
+  </div>
 </Layout>
 );} 
 export default Reminders;

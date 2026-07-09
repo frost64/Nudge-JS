@@ -5,7 +5,9 @@ const createBirthday = async (req, res) => {
 
     const {
       name,
-      birthDate,
+      birthDay,
+      birthMonth,
+      birthYear,
       relationship,
       notes
     } = req.body;
@@ -16,9 +18,15 @@ const createBirthday = async (req, res) => {
       });
     }
 
-    if (!birthDate) {
+    if (!birthDay) {
       return res.status(400).json({
-        message: "Date of Birth is required."
+        message: "Birth day is required."
+      });
+    }
+
+    if (!birthMonth) {
+      return res.status(400).json({
+        message: "Birth Month is required."
       });
     }
 
@@ -36,7 +44,9 @@ const createBirthday = async (req, res) => {
 
     const birthday = await Birthday.create({
       name: name.trim(),
-      birthDate,
+      birthDay,
+      birthMonth,
+      birthYear,
       relationship: relationship.trim(),
       notes: notes?.trim(),
       user: req.user.id
@@ -63,7 +73,8 @@ const getBirthdays = async (req, res) => {
       user: req.user.id
     })
       .sort({
-        birthDate: 1
+        birthMonth: 1,
+        birthDay: 1
       })
       .skip(skip)
       .limit(limit);
@@ -105,7 +116,9 @@ const updateBirthday = async (req, res) => {
 
     const {
       name,
-      birthDate,
+      birthDay,
+      birthMonth,
+      birthYear,
       relationship,
       notes
     } = req.body;
@@ -116,9 +129,15 @@ const updateBirthday = async (req, res) => {
       });
     }
 
-    if (!birthDate) {
+    if (!birthDay) {
       return res.status(400).json({
-        message: "Date of Birth is required."
+        message: "Birth Day is required."
+      });
+    }
+
+    if (!birthMonth) {
+      return res.status(400).json({
+        message: "Birth Month is required."
       });
     }
 
@@ -135,7 +154,9 @@ const updateBirthday = async (req, res) => {
     }
 
     birthday.name = name.trim();
-    birthday.birthDate = birthDate;
+    birthday.birthDay = birthDay;
+    birthday.birthMonth = birthMonth;
+    birthday.birthYear = birthYear || null;
     birthday.relationship = relationship.trim();
     birthday.notes = notes?.trim();
 
@@ -190,37 +211,35 @@ const getUpcomingBirthdays = async (req, res) => {
         });
 
         const today = new Date();
+          today.setHours(0, 0, 0, 0);
 
-        const upcoming = birthdays.map(birthday => {
+          const upcoming = birthdays.map((birthday) => {
+              const nextBirthday = new Date(
+                today.getFullYear(),
+                birthday.birthMonth - 1,
+                birthday.birthDay
+            );
 
-            const nextBirthday = new Date(birthday.birthDate);
+              nextBirthday.setFullYear(today.getFullYear());
+              nextBirthday.setHours(0, 0, 0, 0);
 
-            nextBirthday.setFullYear(today.getFullYear());
+              if (nextBirthday < today) {
+                  nextBirthday.setFullYear(today.getFullYear() + 1);
+              }
 
-            if (nextBirthday < today) {
-                nextBirthday.setFullYear(today.getFullYear() + 1);
-            }
+              const diffTime = nextBirthday - today;
 
-            const diffTime =
-                nextBirthday.getTime() - today.getTime();
+              const daysRemaining = Math.round(
+                  diffTime / (1000 * 60 * 60 * 24)
+              );
 
-            const daysRemaining =
-                Math.ceil(
-                    diffTime / (1000 * 60 * 60 * 24)
-                );
-
-            return {
-                ...birthday.toObject(),
-                daysRemaining
-            };
-
-        })
-        .filter(birthday => birthday.daysRemaining <= 30  )
-        .sort(
-            (a, b) =>
-                a.daysRemaining - b.daysRemaining
-        );
-
+              return {
+                  ...birthday.toObject(),
+                  daysRemaining,
+              };
+          })
+          .filter((birthday) => birthday.daysRemaining <= 30)
+          .sort((a, b) => a.daysRemaining - b.daysRemaining);
         res.status(200).json(upcoming);
 
     } catch (error) {

@@ -56,17 +56,18 @@ const getDashboard = async (req, res) => {
 });
 
 const today = new Date();
+today.setHours(0, 0, 0, 0);
 
 const upcomingBirthdays = birthdays
     .map((birthday) => {
 
-        const birthDate = new Date(birthday.birthDate);
-
         const nextBirthday = new Date(
             today.getFullYear(),
-            birthDate.getMonth(),
-            birthDate.getDate()
+            birthday.birthMonth - 1,
+            birthday.birthDay
         );
+
+        nextBirthday.setHours(0, 0, 0, 0);
 
         if (nextBirthday < today) {
             nextBirthday.setFullYear(
@@ -74,21 +75,18 @@ const upcomingBirthdays = birthdays
             );
         }
 
-        const daysRemaining = Math.ceil(
+        const daysRemaining = Math.round(
             (nextBirthday - today) /
             (1000 * 60 * 60 * 24)
-            );
-            return {
-                ...birthday.toObject(),
-                daysRemaining
-            };
-        })
-        .sort(
-            (a, b) =>
-                a.daysRemaining - b.daysRemaining
-        )
-        .slice(0, 5);
+        );
 
+        return {
+            ...birthday.toObject(),
+            daysRemaining
+        };
+    })
+    .sort((a, b) => a.daysRemaining - b.daysRemaining)
+    .slice(0, 5);
         res.status(200).json({
             stats: {
                 totalReminders,

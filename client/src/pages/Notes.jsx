@@ -50,7 +50,7 @@ function Notes() {
 
   highlightTimeout.current = setTimeout(() => {
     setHighlightId(null);
-  }, 2000);
+  }, 1200);
 };
 
   const fetchNotes =
@@ -205,21 +205,30 @@ function Notes() {
       }
     };
   }, []);
+useEffect(() => {
+    if (showForm) {
+        document.body.style.overflow = "hidden";
+    } else {
+        document.body.style.overflow = "";
+    }
 
+    return () => {
+        document.body.style.overflow = "";
+    };
+}, [showForm]);
   const sidebar = (
-  <div
-    style={{
-      userSelect: "none",
-      position: "fixed",
-      top: "15%",
-      left: "2%",
-      width: "20%",
-      height: "70%",
-      padding: "20px",
-      display: "flex",
-      flexDirection: "column",
-    }}
-  >
+  <Card
+  variant="glass"
+  style={{
+    position: "fixed",
+    top: "15%",
+    left: "2%",
+    width: "20%",
+    minHeight: "65%",
+    padding: "24px",
+    borderRadius: "22px",
+  }}
+>
     <h1 style={{ textAlign: "center" }}>
       Recent 📝
     </h1>
@@ -245,63 +254,48 @@ function Notes() {
         </div>
       ))
     )}
-  </div>
+  </Card>
 );
 
 
 
   return (
-    <Layout sidebar={!showForm ? sidebar : null}>
-      {!showForm && (
-   <div
-    style={{
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-      marginBottom: "30px"
-    }}
-  >
-    <h1
-      style={{
-        margin: 0,
-        fontSize: "2.5rem"
-      }}
+    <Layout 
+      sidebar={sidebar}
+      backgroundImage={formBackground}
+      blurBackground={showForm}
+      cardVariant="glass"
     >
-      Notes
-    </h1>
-
-    <button
-      className="glow-top"
-      onClick={() => setShowForm(true)}
-    >
-      📝 Create Note
-    </button>
-  </div>
-)}
       {showForm && (
-        <div
-          style={{
-            minHeight: "100vh",
-            width: "100%",
-            backgroundImage: `url(${formBackground})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-            backgroundRepeat: "no-repeat",
-
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-
-            position: "relative",
-          }}
-        >
-      <Card
+      <div
         style={{
-          width: "40%",
-          marginLeft: "auto",
-          marginRight: "auto"
+          position: "fixed",
+          inset: 0,
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          zIndex: 1100,
         }}
       >
+        <Card
+          variant="glass"
+          style={{
+              width: "100%",
+              maxWidth: "400px",
+              borderRadius: "24px",
+              boxShadow: darkMode
+                ? `
+                    0 0 35px rgba(0,255,204,.22),
+                    0 0 90px rgba(0,160,255,.14),
+                    0 30px 80px rgba(0,0,0,.55)
+                  `
+                : `
+                    0 0 30px rgba(0,180,255,.18),
+                    0 0 70px rgba(0,255,200,.14),
+                    0 25px 70px rgba(0,0,0,.18)
+                  `,
+          }}
+        >
         <h2>
           {
             editingId
@@ -389,57 +383,75 @@ function Notes() {
       </div>
 )}
 
-      {!showForm && (
-      <>
-      {
-        notes.length === 0 ? (
-          <p>
-            Create your first note!
-          </p>
+{/* ------------------------ Content ------------------------- */}
+<div
+  style={{
+    display: "flex",
+    flexDirection: "column",
+    gap: "28px",
+    padding: "10px 10px 40px",
+  }}
+>
+<div
+  style={{
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: "30px",
+    width: "100%"
+  }}
+>
+  <h1
+    style={{
+      margin: 0,
+      fontSize: "2.5rem",
+    }}
+  >
+    Notes
+  </h1>
 
+    <button
+      className="glow-top"
+      style={{
+          padding: "12px 22px",
+          fontSize: "1rem"
+        }}
+      onClick={() => setShowForm(true)}
+    >
+      📝 Create Note
+    </button>
+</div>
+
+      {notes.length === 0 ? (
+          <p>Create your first note!</p>
         ) : (
-
           notes.map(
             (note) => (
-            <div
-              key={note._id}
-              ref={(el) =>{
-                noteRefs.current[
-                  note._id
-                ] = el;
-              }}
-            >
-              <Card>
-                <div
-                  style={{                  
-                    backgroundColor:
-                      highlightId === note._id
-                        ? note.pinned
-                          ? "rgba(255,215,0,.16)"
-                          : "rgba(0,204,255,.09)"
-                        : "transparent",
+              <Card
+                key={note._id}
+                ref={(el) => {
+                  noteRefs.current[note._id] = el;
+                }}
+                variant="glass"
+                style={{
+                  boxShadow:
+                    highlightId === note._id
+                      ? note.pinned
+                        ? `
+                            0 0 25px rgba(255,215,0,.45),
+                            0 0 70px rgba(255,215,0,.18),
+                            0 20px 60px rgba(0,0,0,.45)
+                          `
+                        : `
+                            0 0 25px rgba(0,255,204,.45),
+                            0 0 70px rgba(0,255,204,.18),
+                            0 20px 60px rgba(0,0,0,.45)
+                          `
+                      : undefined,
 
-                    boxShadow:
-                      highlightId === note._id
-                        ? note.pinned
-                          ? "0 0 28px rgba(255,215,0,.65)"
-                          : "0 0 20px rgba(0,255,204,.45)"
-                        : "none",
-                    border: "2px solid transparent",
-                    padding:
-                      highlightId === note._id
-                        ? "8px"
-                        : "0",
-                    transform:
-                      highlightId === note._id
-                        ? "scale(1.015)"
-                        : "scale(1)",
-                    transition:
-                      "background-color 1.2s ease, box-shadow 1.2s ease, transform .45s ease, padding .3s ease",
-                    
-                  }}
-                >
-
+                  transition: "box-shadow .35s ease",
+                }}
+              >
                 <h3
                   style={{
                     display: "flex",
@@ -522,17 +534,11 @@ function Notes() {
                   >
                     Delete
                   </button>
-              </div>
               </Card>
-            </div>
-          
             )
           )
-
-        )
-      }
-  </>
-)}
+        )}
+      </div>
     </Layout>
   );}
 export default Notes;

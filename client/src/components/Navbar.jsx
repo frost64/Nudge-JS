@@ -3,7 +3,7 @@ import { useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { FiSearch } from "react-icons/fi";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import api from "../services/api";
 import logo from "../assets/Logo.svg";
 
@@ -16,29 +16,30 @@ import avatar5 from "../assets/avatars/avatar5.png";
 import avatar6 from "../assets/avatars/avatar6.png";
 import avatar7 from "../assets/avatars/avatar7.png";
 
+const avatarMap = {avatar1, avatar2, avatar3, avatar4, avatar5, avatar6, avatar7};
 function Navbar() {
-  const avatarMap = {avatar1, avatar2, avatar3, avatar4, avatar5, avatar6, avatar7};
   const { user } = useContext(AuthContext);
   const darkMode = user?.theme === "dark";
   const location = useLocation();
   const isActive = (path) => location.pathname === path;
-  const linkStyle = (path) => ({
+  const linkStyle = useCallback(
+  (path) => ({
     padding: "8px 14px",
     borderRadius: "8px",
     textDecoration: "none",
     fontWeight: "600",
     color: isActive(path)
       ? "#ffffff"
-      : (
-          darkMode
-            ? "#d1d5db"
-            : "#374151"
-        ),
+      : darkMode
+      ? "#d1d5db"
+      : "#374151",
     backgroundColor: isActive(path)
       ? "#067ea9"
       : "transparent",
-    transition: "0.2s"
-  });
+    transition: "0.15s",
+  }),
+  [location.pathname, darkMode]
+);
 
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
@@ -46,10 +47,11 @@ function Navbar() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const searchRef = useRef(null);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
-  const handleSearch = () => {
 
-  if (!searchQuery.trim()) {return;} 
-    navigate(`/search?q=${encodeURIComponent(searchQuery)}`);};
+  const handleSearch = useCallback(() => {
+    if (!searchQuery.trim()) return;
+      navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
+    }, [searchQuery, navigate]);
 
   useEffect(() => {
     const timeout = setTimeout(
@@ -91,31 +93,101 @@ function Navbar() {
     setHighlightedIndex(-1);
   }, [suggestions]);
 
-  const handleSuggestionSelect = (item) => {
-    if (item.type === "reminder"){
-      navigate(`/reminders?reminderId=${item.id}`);
-    } 
-    else if (item.type === "note"){
-      navigate(`/notes?noteId=${item.id}`);
-    } 
-    else if (item.type === "birthday"){
-      navigate(`/birthdays?birthdayId=${item.id}`);
-    } 
-    else if (item.type === "link"){
-      navigate(`/links?linkId=${item.id}`);
-    }
-    setShowSuggestions(false);
-    setSearchQuery("");
-    setHighlightedIndex(-1);
-  };
+  const handleSuggestionSelect = useCallback((item) => {
+  if (item.type === "reminder") {
+    navigate(`/reminders?reminderId=${item.id}`);
+  } else if (item.type === "note") {
+    navigate(`/notes?noteId=${item.id}`);
+  } else if (item.type === "birthday") {
+    navigate(`/birthdays?birthdayId=${item.id}`);
+  } else if (item.type === "link") {
+    navigate(`/links?linkId=${item.id}`);
+  }
 
+  setShowSuggestions(false);
+  setSearchQuery("");
+  setHighlightedIndex(-1);
+}, [navigate]);
+
+const suggestionList = useMemo(() => {
+  return suggestions.map((item, index) => (
+    <div
+      key={`${item.type}-${item.id}`}
+      onClick={() => handleSuggestionSelect(item)}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.backgroundColor =
+          darkMode ? "#4b5563" : "#f3f4f6";
+        e.currentTarget.style.transform = "translateX(4px)";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.backgroundColor = "transparent";
+        e.currentTarget.style.transform = "translateX(0)";
+      }}
+      style={{
+        padding: "12px 16px",
+        cursor: "pointer",
+        transition: "background .12s ease, transform .12s ease",
+      }}
+    >
+      <strong>
+        {item.type === "note"
+          ? "📝 "
+          : item.type === "reminder"
+          ? "⏰ "
+          : item.type === "birthday"
+          ? "🎂 "
+          : "🔗 "}
+        {item.label}
+      </strong>
+
+      <div
+        style={{
+          fontSize: "12px",
+          opacity: .7,
+          marginTop: "4px",
+          textTransform: "capitalize",
+        }}
+      >
+        {item.type}
+      </div>
+    </div>
+  ));
+}, [
+  suggestions,
+  highlightedIndex,
+  darkMode,
+  handleSuggestionSelect,
+]);
   return (
     <nav
       className = "nav-style"
       style={{
-        backgroundColor: darkMode ? "#1f2937" : "#ffffff",
-        borderBottom: darkMode ? "1px solid #374151" : "1px solid #e5e7eb",
-        boxShadow: "0 2px 10px rgba(0,0,0,0.05)"
+        background: darkMode
+          ? "rgba(17,24,39,.40)"
+          : "rgba(255,255,255,.18)",
+
+        backgroundImage: darkMode
+          ? "linear-gradient(160deg, rgba(255,255,255,.12), rgba(255,255,255,.03) 35%, transparent)"
+          : "linear-gradient(160deg, rgba(255,255,255,.45), rgba(255,255,255,.08) 35%, transparent)",
+
+        borderBottom: darkMode
+          ? "1px solid rgba(255,255,255,.10)"
+          : "1px solid rgba(255,255,255,.25)",
+
+        backdropFilter: "blur(10px)",
+        WebkitBackdropFilter: "blur(10px)",
+
+        boxShadow: darkMode
+          ? `
+              0 0 20px rgba(0,255,204,.12),
+              0 10px 30px rgba(0,0,0,.35)
+            `
+          : `
+              0 0 16px rgba(0,180,255,.10),
+              0 8px 25px rgba(0,0,0,.12)
+            `,
+
+        transition: "background .25s ease",
       }}
     >
       
@@ -193,6 +265,14 @@ function Navbar() {
         </Link>
 
         <Link 
+          className={isActive("/birthdays") ? "active-link" : "icon-zoom"}
+          to="/birthdays"
+          style={linkStyle("/birthdays")}
+        >
+          Birthdays
+        </Link>
+
+        <Link 
           className={isActive("/reminders") ? "active-link" : "icon-zoom"}
           to="/reminders"
           style={linkStyle("/reminders")}
@@ -206,14 +286,6 @@ function Navbar() {
           style={linkStyle("/notes")}
         >
           Notes
-        </Link>
-
-        <Link 
-          className={isActive("/birthdays") ? "active-link" : "icon-zoom"}
-          to="/birthdays"
-          style={linkStyle("/birthdays")}
-        >
-          Birthdays
         </Link>
 
         <Link 
@@ -263,12 +335,6 @@ function Navbar() {
         />
         <input
           className = "input-glow"
-          style={{
-            position: "relative",
-            zIndex: 1,
-            width: "100%",
-            padding: "10px 12px 10px 38px"
-          }}
           type="search"
           placeholder="Search..."
           value={searchQuery}
@@ -336,10 +402,10 @@ function Navbar() {
             border: darkMode
               ? "1px solid #4b5563"
               : "1px solid #d1d5db",
-            backgroundColor:
+            background:
               darkMode
-                ? "#374151"
-                : "#ffffff",
+                ? "rgba(255,255,255,0.06)"
+                : "rgba(255,255,255,0.18)",
             color:
               darkMode
                 ? "#f9fafb"
@@ -374,80 +440,7 @@ function Navbar() {
             "0 8px 20px rgba(0,0,0,0.15)"
         }}
       >
-          {
-            suggestions.map(
-              (item, index) => (
-
-                <div
-                  key={`${item.type}-${item.id}`}
-                  onClick={() => {handleSuggestionSelect(item);}}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor =
-                      darkMode
-                        ? "#4b5563"
-                        : "#f3f4f6";
-                    e.currentTarget.style.transform =
-                      "translateX(4px)";
-                  }}
-
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor =
-                      "transparent";
-                    e.currentTarget.style.transform =
-                      "translateX(0)";
-                  }}
-
-                  style={{
-                    padding: "12px 14px",
-                    transition: "all 0.2s ease",
-                    cursor: "pointer",
-                    borderBottom:
-                      darkMode
-                        ? "1px solid #4b5563"
-                        : "1px solid #e5e7eb",
-                    backgroundColor:
-                      highlightedIndex === index
-                        ? (
-                            darkMode
-                              ? "#4b5563"
-                              : "#f3f4f6"
-                          )
-                        : "transparent",
-                    transform:
-                      highlightedIndex === index
-                        ? "translateX(4px)"
-                        : "translateX(0)",
-                  }}
-                >
-                  <strong>
-                    {
-                      item.type === "note"
-                        ? "📝 "
-                        : item.type === "reminder"
-                        ? "⏰ "
-                        : item.type === "birthday"
-                        ? "🎂 "
-                        : "🔗 "
-                    }
-                    {item.label}
-                  </strong>
-
-                  <div
-                    style={{
-                      fontSize: "12px",
-                      opacity: 0.7,
-                      marginTop: "4px",
-                      textTransform: "capitalize"
-                    }}
-                  >
-                    {item.type}
-                  </div>
-                </div>
-
-              )
-            )
-          }
-
+            {suggestionList}
         </div>
 
       )

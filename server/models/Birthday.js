@@ -8,9 +8,19 @@ const birthdaySchema = new mongoose.Schema(
         trim: true
     },
 
-    birthDate: {
-        type: Date,
-        required: true
+    birthDay: {
+        type: Number,
+        required: true,
+    },
+
+    birthMonth: {
+        type: Number,
+        required: true,
+    },
+
+    birthYear: {
+        type: Number,
+        default: null,
     },
 
     relationship: {

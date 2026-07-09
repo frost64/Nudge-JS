@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
-import api from "../services/api";
-import Layout from "../components/Layout";
-import Card from "../components/Card";
 import { useLocation } from "react-router-dom";
 import { useRef } from "react";
 import { useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
+import api from "../services/api";
+import Layout from "../components/Layout";
+import Card from "../components/Card";
 import linkLightBg from "../assets/backgrounds/link-light.png";
 import linkDarkBg from "../assets/backgrounds/link-dark.png";
 
@@ -209,6 +209,18 @@ useEffect(() => {
     setShowForm(true);
   }
 }, [shouldCreate]);
+
+useEffect(() => {
+    if (showForm) {
+        document.body.style.overflow = "hidden";
+    } else {
+        document.body.style.overflow = "";
+    }
+
+    return () => {
+        document.body.style.overflow = "";
+    };
+}, [showForm]);
 
 const sidebar = (
   <div
