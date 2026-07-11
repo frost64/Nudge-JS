@@ -2,6 +2,8 @@ import { useEffect, useState, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import { useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
+import { useConfirm } from "../context/ConfirmContext";
+import toast from "react-hot-toast";
 import api from "../services/api";
 import Layout from "../components/Layout";
 import Card from "../components/Card";
@@ -10,6 +12,7 @@ import reminderDarkBg from "../assets/backgrounds/reminder-dark.png";
 
 function Reminders() {
 const { user } = useContext(AuthContext);
+const confirm = useConfirm();
 const darkMode = user?.theme === "dark";
 const formBackground = darkMode
   ? reminderDarkBg
@@ -45,6 +48,10 @@ const fetchReminders = async () => {
   } 
   catch (error) {
     console.log(error);
+    toast.error(
+      error.response?.data?.message ||
+      "Failed to load reminders."
+    );
   }
 };
 
@@ -56,119 +63,179 @@ const handleSave = async () => {
     !priority ||
     !category.trim()
   ) {
-    alert("Please fill in all fields.");
+    toast.error("Please fill in all fields.");
     return;
   }
   try {
-    const reminderData = {
-      title,
-      dueDate,
-      reminderTime,
-      priority,
-      category,
-    };
-    if (editingId) {
-      await api.put(
-        `/reminders/${editingId}`,
-        reminderData
-      );
-    } 
-    else {
-      await api.post(
-        "/reminders",
-        reminderData
-      );
-    }
-    setTitle("");
-    setDueDate("");
-    setReminderTime("09:00");
-    setPriority("");
-    setCategory("");
-    setEditingId(null);
-    setShowForm(false);
-    fetchReminders();
-  } 
-  catch (error) {
-    console.log(error);
-    alert(
-      error.response?.data?.message ||
-      "Failed to save reminder."
+
+  const reminderData = {
+    title,
+    dueDate,
+    reminderTime,
+    priority,
+    category,
+  };
+
+  if (editingId) {
+
+    await api.put(
+      `/reminders/${editingId}`,
+      reminderData
     );
+
+    toast.success(
+      "Reminder updated successfully."
+    );
+
+  } else {
+
+    await api.post(
+      "/reminders",
+      reminderData
+    );
+
+    toast.success(
+      "Reminder added successfully."
+    );
+
   }
+
+  setTitle("");
+  setDueDate("");
+  setReminderTime("09:00");
+  setPriority("");
+  setCategory("");
+  setEditingId(null);
+  setShowForm(false);
+
+  fetchReminders();
+
+} catch (error) {
+
+  console.log(error);
+
+  toast.error(
+    error.response?.data?.message ||
+    "Failed to save reminder."
+  );
+}
 };
 
 const handleDelete = async (id) => {
-const confirmed = window.confirm(
-"Delete this reminder?"
-);
 
-   
-if (!confirmed) {
-  return;
-}
+  const confirmed = await confirm({
+    title: "Delete Reminder",
+    message:
+      "Are you sure you want to delete this reminder?",
+    confirmText: "Delete",
+    cancelText: "Cancel",
+  });
 
-try {
-  await api.delete(
-    `/reminders/${id}`
-  );
+  if (!confirmed) return;
 
-  fetchReminders();
-} catch (error) {
-  console.log(error);
-}
-   
+  try {
 
+    await api.delete(
+      `/reminders/${id}`
+    );
+
+    toast.success(
+      "Reminder deleted successfully."
+    );
+
+    fetchReminders();
+
+  } catch (error) {
+
+    console.log(error);
+
+    toast.error(
+      error.response?.data?.message ||
+      "Failed to delete reminder."
+    );
+
+  }
 };
 
 const handleToggle = async (id) => {
-try {
-await api.patch(
-`/reminders/${id}/toggle`
-);
 
-   
-  fetchReminders();
-} catch (error) {
-  console.log(error);
-}
-   
+  try {
+
+    await api.patch(
+      `/reminders/${id}/toggle`
+    );
+
+    fetchReminders();
+
+    const reminder = reminders.find(
+      (r) => r._id === id
+    );
+
+    toast.success(
+      reminder?.completed
+        ? "Reminder marked as pending."
+        : "Reminder marked as completed."
+    );
+
+  } catch (error) {
+
+    console.log(error);
+
+    toast.error(
+      error.response?.data?.message ||
+      "Failed to update reminder."
+    );
+
+  }
 
 };
 
 const handleExport = async (id) => {
-try {
-const response = await api.get(
-`/calendar/reminder/${id}`,
-{
-responseType: "blob",
-}
-);
 
-   
-  const fileURL =
-    window.URL.createObjectURL(
-      new Blob([response.data])
+  try {
+
+    const response = await api.get(
+      `/calendar/reminder/${id}`,
+      {
+        responseType: "blob",
+      }
     );
 
-  const link =
-    document.createElement("a");
+    const fileURL =
+      window.URL.createObjectURL(
+        new Blob([response.data])
+      );
 
-  link.href = fileURL;
+    const link =
+      document.createElement("a");
 
-  link.setAttribute(
-    "download",
-    "reminder.ics"
-  );
+    link.href = fileURL;
 
-  document.body.appendChild(link);
+    link.setAttribute(
+      "download",
+      "reminder.ics"
+    );
 
-  link.click();
+    document.body.appendChild(link);
 
-  link.remove();
-} catch (error) {
-  console.log(error);
-}
-   
+    link.click();
+
+    link.remove();
+
+    toast.success(
+      "Calendar exported successfully."
+    );
+
+  } catch (error) {
+
+    console.log(error);
+
+    toast.error(
+      error.response?.data?.message ||
+      "Failed to export calendar."
+    );
+
+  }
 
 };
 

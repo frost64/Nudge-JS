@@ -7,21 +7,42 @@ function GlassModal({ children }) {
   const darkMode = user?.theme === "dark";
 
   return (
-    <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 1000,
+    <>
+      {/* Background Blur */}
+      <div
+        style={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 1998,
 
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
+          background: darkMode
+            ? "rgba(0,0,0,.18)"
+            : "rgba(255,255,255,.08)",
 
-        padding: "40px",
-      }}
-    >
-      {children}
-    </div>
+          backdropFilter: "blur(12px)",
+          WebkitBackdropFilter: "blur(12px)",
+
+          transition: "all .25s ease",
+        }}
+      />
+
+      {/* Modal */}
+      <div
+        style={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 2000,
+
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+
+          padding: "40px",
+        }}
+      >
+        {children}
+      </div>
+    </>
   );
 }
 

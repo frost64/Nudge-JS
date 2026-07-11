@@ -3,6 +3,8 @@ import { useLocation } from "react-router-dom";
 import { useRef } from "react";
 import { useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
+import { useConfirm } from "../context/ConfirmContext";
+import toast from "react-hot-toast";
 import api from "../services/api";
 import Layout from "../components/Layout";
 import Card from "../components/Card";
@@ -11,6 +13,7 @@ import linkDarkBg from "../assets/backgrounds/link-dark.png";
 
 function Links() {
 const { user } = useContext(AuthContext);
+const confirm = useConfirm();
 const darkMode = user?.theme === "dark";
 const formBackground = darkMode
   ? linkDarkBg
@@ -46,7 +49,7 @@ async () => {
   } 
   catch (error) {
     console.log(error);
-    alert(
+    toast.error(
       error.response?.data?.message ||
       "Failed to load links."
     );
@@ -56,22 +59,22 @@ async () => {
 const handleSave =
 async () => {  
   if (!title.trim()) {
-    alert("Title is required");
+    toast.error("Title is required");
     return;
   }
 
   if (!url.trim()) {
-    alert("URL is required");
+    toast.error("URL is required");
     return;
   }
 
   if (!category.trim()) {
-    alert("Category is required");
+    toast.error("Category is required");
     return;
   }
 
   if (!notes.trim()) {
-    alert("Description is required");
+    toast.error("Description is required");
     return;
   } 
   try {
@@ -93,6 +96,11 @@ async () => {
         linkData
       );
     }
+    toast.success(
+      editingId
+        ? "Link updated successfully."
+        : "Link added successfully."
+    );
     setTitle("");
     setUrl("");
     setCategory("");
@@ -103,7 +111,7 @@ async () => {
   } 
   catch (error) {
     console.log(error);
-    alert(
+    toast.error(
       error.response?.data?.message ||
       "Failed to save link."
     );
@@ -144,25 +152,32 @@ const highlightLink = (id) => {
 
   highlightTimeout.current = setTimeout(() => {
     setHighlightId(null);
-  }, 2000);
+  }, 1200);
 };
    
 
 const handleDelete =
 async (id) => {
-  const confirmed = window.confirm("Delete this link?");
-  if (!confirmed) {
-    return;
-  }
+  const confirmed = await confirm({
+    title: "Delete Link",
+    message:
+      "Are you sure you want to delete this link? This action cannot be undone.",
+    confirmText: "Delete",
+    cancelText: "Cancel",
+  });
+  if (!confirmed) return;
+  
+  
   try {
     await api.delete(
       `/links/${id}`
     );
+    toast.success("Link deleted successfully.");
     fetchLinks();
   } 
   catch (error) {
     console.log(error);
-    alert(
+    toast.error(
       error.response?.data?.message ||
       "Failed to delete link."
     );
@@ -179,6 +194,11 @@ async (id) => {
   } 
   catch (error) {
     console.log(error);
+
+    toast.error(
+      error.response?.data?.message ||
+      "Failed to update favorite."
+    );
   }
 };
 
@@ -221,19 +241,25 @@ useEffect(() => {
         document.body.style.overflow = "";
     };
 }, [showForm]);
+const defaultCardShadow = undefined;
+
+const highlightShadow = `
+  0 0 25px rgba(0,255,204,.45),
+  0 0 70px rgba(0,255,204,.18),
+  0 20px 60px rgba(0,0,0,.45)
+`;
 
 const sidebar = (
-  <div
+  <Card
+    variant="glass"
     style={{
-      userSelect: "none",
       position: "fixed",
       top: "15%",
       left: "2%",
       width: "20%",
-      height: "70%",
-      padding: "20px",
-      display: "flex",
-      flexDirection: "column",
+      minHeight: "65%",
+      padding: "24px",
+      borderRadius: "22px",
     }}
   >
     <h1 style={{ textAlign: "center" }}>
@@ -261,59 +287,43 @@ const sidebar = (
         </div>
       ))
     )}
-  </div>
+  </Card>
 );
 
 return ( 
-<Layout sidebar={!showForm ? sidebar : null}>
-  {!showForm && (
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        marginBottom: "30px"
-      }}
-    >
-      <h1
-        style={{
-          margin: 0,
-          fontSize: "2.5rem"
-        }}
-      >
-        Links
-      </h1>
-
-      <button
-        className="glow-top"
-        onClick={() => setShowForm(true)}
-      >
-        🔗 Create Link
-      </button>
-    </div>
-  )}
-  {showForm && (
+<Layout
+    sidebar={sidebar}
+    backgroundImage={formBackground}
+    blurBackground={showForm}
+    cardVariant="glass"
+  >
+   {showForm && (
     <div
     style={{
-      minHeight: "100vh",
-      width: "100%",
-      backgroundImage: `url(${formBackground})`,
-      backgroundSize: "cover",
-      backgroundPosition: "center",
-      backgroundRepeat: "no-repeat",
-
-      display: "flex",
-      justifyContent: "center",
-      alignItems: "center",
-
-      position: "relative",
-    }}
+          position: "fixed",
+          inset: 0,
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          zIndex: 1100,
+        }}
   >
     <Card
       style={{
-        width: "40%",
-        marginLeft: "auto",
-        marginRight: "auto"
+        width:"100%",
+        maxWidth:"400px",
+        borderRadius:"24px",
+        boxShadow: darkMode
+              ? `
+                  0 0 35px rgba(0,255,204,.22),
+                  0 0 90px rgba(0,160,255,.14),
+                  0 30px 80px rgba(0,0,0,.55)
+                `
+              : `
+                  0 0 30px rgba(0,180,255,.18),
+                  0 0 70px rgba(0,255,200,.14),
+                  0 25px 70px rgba(0,0,0,.18)
+                `,
       }}
     >
       <h2>
@@ -406,10 +416,43 @@ return (
     </div>
   )}
 
-  {!showForm && (
-  <>
-  {
-    links.length === 0 ? (
+<div
+    style={{
+      display: "flex",
+      flexDirection: "column",
+      gap: "28px",
+      padding: "10px 10px 40px",
+    }}
+  >
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: "30px",
+        width: "100%"
+      }}
+    >
+      <h1 style={{ 
+          margin: 0,
+          fontSize: "2.5rem"
+        }}>
+        Links
+      </h1>
+
+      <button
+        className="glow-top"
+        style={{
+          padding: "12px 22px",
+          fontSize: "1rem"
+        }}
+        onClick={() => setShowForm(true)}
+      >
+        🔗 Create Link
+      </button>
+    </div>
+
+  {links.length === 0 ? (
       <p>Create your first link!</p>
     ) : (
       links.map(
@@ -422,32 +465,16 @@ return (
               ] = el;
             }}
           >
-            <Card>
-              <div
-                style={{
-                  backgroundColor:
-                    highlightId === link._id
-                      ? "rgba(0,204,255,0.09)"
-                      : "transparent",
-
+            <Card 
+              variant="glass"
+              style={{
                   boxShadow:
                     highlightId === link._id
-                      ? "0 0 20px rgba(0,255,204,0.45)"
-                      : "0 0 0 rgba(0,255,204,0)",
-
-                  border: "2px solid transparent",
-
-                  borderRadius: "8px",
-
-                  padding:
-                    highlightId === link._id
-                      ? "8px"
-                      : "0",
-
+                      ? highlightShadow
+                      : defaultCardShadow,
                   transition:
-                    "background-color .5s ease, box-shadow .5s ease, padding .3s ease"
-                }}
-              >
+                    "box-shadow .35s ease"
+                }}>
                 <h3
                   style={{
                     display: "flex",
@@ -524,18 +551,14 @@ return (
                   >
                     Delete
                   </button>
-              </div>
             </Card>
           </div>
         )
       )
     )
   }
-</>
-)}
+  </div>
 </Layout>
-   
-
 );
 }
 

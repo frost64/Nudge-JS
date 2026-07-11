@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import api from "../services/api";
-
+import toast from "react-hot-toast";
 import Card from "../components/Card";
 import logo from "../assets/Logo.svg";
 
@@ -21,71 +21,58 @@ function Register() {
   const [loading, setLoading] =
     useState(false);
 
-  const [error, setError] =
-    useState("");
+  
 
-  const handleSubmit =
-    async () => {
+  const handleSubmit = async () => {
+  if (loading) return;
+  if (
+    !username.trim() ||
+    !email.trim() ||
+    !password.trim()
+  ) {
+    toast.error("Please fill all fields.");
+    return;
+  }
 
-      if (
-        !username.trim() ||
-        !email.trim() ||
-        !password.trim()
-      ) {
-        setError(
-          "Please fill all fields"
-        );
-        return;
+  try {
+
+    setLoading(true);
+
+    await api.post(
+      "/auth/register",
+      {
+        username,
+        email,
+        password,
       }
+    );
 
-      try {
+    toast.success(
+      "Registration successful!"
+    );
 
-        setLoading(true);
-        setError("");
+    navigate("/", {
+      state: {
+        message:
+          "Registration successful. Please login.",
+      },
+    });
 
-        await api.post(
-          "/auth/register",
-          {
-            username,
-            email,
-            password
-          }
-        );
+  } catch (error) {
 
-        navigate("/", {
-          state: {
-            message:
-              "Registration successful. Please login."
-          }
-        });
+    console.log(error);
 
-      } catch (error) {
+    toast.error(
+      error.response?.data?.message ||
+      "Cannot connect to backend server."
+    );
 
-        if (
-          error.response
-        ) {
+  } finally {
 
-          setError(
-            error.response
-              .data
-              .message
-          );
+    setLoading(false);
 
-        } else {
-
-          setError(
-            "Cannot connect to backend server"
-          );
-
-        }
-
-      } finally {
-
-        setLoading(false);
-
-      }
-
-    };
+  }
+};
 
   return (
     <div
@@ -147,23 +134,11 @@ function Register() {
             }}
           >
 
-            {error && (
-              <p
-                style={{
-                  color:
-                    "#dc2626",
-                  marginBottom:
-                    "15px"
-                }}
-              >
-                {error}
-              </p>
-            )}
-
             <input
               type="text"
               placeholder="Username"
               value={username}
+              disabled={loading}
               onChange={(e) =>
                 setUsername(
                   e.target.value
@@ -178,6 +153,7 @@ function Register() {
               type="email"
               placeholder="Email"
               value={email}
+              disabled={loading}
               onChange={(e) =>
                 setEmail(
                   e.target.value
@@ -192,6 +168,7 @@ function Register() {
               type="password"
               placeholder="Password"
               value={password}
+              disabled={loading}
               onChange={(e) =>
                 setPassword(
                   e.target.value

@@ -127,28 +127,75 @@ const getMe = async (req, res) => {
 
   }
 };
-
 const updateProfile = async (req, res) => {
   try {
 
     const {
       bio,
       avatar,
-      theme
+      theme,
     } = req.body;
 
-    const user =
-      await User.findByIdAndUpdate(
-        req.user.id,
-        {
-          bio,
-          avatar,
-          theme
-        },
-        {
-          new: true
-        }
-      ).select("-password");
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    if (bio !== undefined) {
+      user.bio = bio;
+    }
+
+    if (avatar !== undefined) {
+      user.avatar = avatar;
+    }
+
+    if (theme !== undefined) {
+      user.theme = theme;
+    }
+
+    await user.save();
+
+    res.status(200).json(user);
+
+  } catch (error) {
+
+    res.status(500).json({
+      message: error.message,
+    });
+
+  }
+};
+
+const updateUsername = async (req, res) => {
+  try {
+
+    const { username } = req.body;
+
+    if (!username) {
+      return res.status(400).json({
+        message: "Username is required."
+      });
+    }
+
+    const existingUser = await User.findOne({
+      username,
+      _id: { $ne: req.user.id }
+    });
+
+    if (existingUser) {
+      return res.status(400).json({
+        message: "Username already taken."
+      });
+    }
+
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
+      { username },
+      { new: true }
+    ).select("-password");
 
     res.status(200).json(user);
 
@@ -159,6 +206,134 @@ const updateProfile = async (req, res) => {
     });
 
   }
+};
+
+const updateEmail = async (req, res) => {
+  try {
+
+    const { email } = req.body;
+
+    if (!email || !email.trim()) {
+      return res.status(400).json({
+        message: "Email is required.",
+      });
+    }
+
+    const existingUser = await User.findOne({
+      email,
+      _id: { $ne: req.user.id },
+    });
+
+    if (existingUser) {
+      return res.status(400).json({
+        message: "Email already in use.",
+      });
+    }
+
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found.",
+      });
+    }
+
+    user.email = email;
+
+    await user.save();
+
+    res.status(200).json(user);
+
+  } catch (error) {
+
+    res.status(500).json({
+      message: error.message,
+    });
+
+  }
+};
+
+const updatePassword = async (req, res) => {
+
+  try {
+
+    const {
+      currentPassword,
+      newPassword,
+      confirmPassword,
+    } = req.body;
+
+    if (
+      !currentPassword ||
+      !newPassword ||
+      !confirmPassword
+    ) {
+
+      return res.status(400).json({
+        message: "Please fill all password fields.",
+      });
+
+    }
+
+    if (newPassword !== confirmPassword) {
+
+      return res.status(400).json({
+        message: "Passwords do not match.",
+      });
+
+    }
+
+    if (newPassword.length < 6) {
+
+      return res.status(400).json({
+        message: "Password must be at least 6 characters.",
+      });
+
+    }
+
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+
+      return res.status(404).json({
+        message: "User not found.",
+      });
+
+    }
+
+    const isMatch = await bcrypt.compare(
+      currentPassword,
+      user.password
+    );
+
+    if (!isMatch) {
+
+      return res.status(400).json({
+        message: "Current password is incorrect.",
+      });
+
+    }
+
+    user.password = await bcrypt.hash(
+      newPassword,
+      10
+    );
+
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Password updated successfully.",
+    });
+
+  } catch (error) {
+
+    res.status(500).json({
+      message: error.message,
+    });
+
+  }
+
 };
 
 const deleteMyAccount = async (req, res) => {
@@ -206,5 +381,9 @@ module.exports = {
   loginUser,
   getMe,
   updateProfile,
-  deleteMyAccount
-}; 
+  updateUsername,
+  updateEmail,
+  updatePassword,
+  deleteMyAccount,
+};
+

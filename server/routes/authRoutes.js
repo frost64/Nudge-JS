@@ -1,64 +1,106 @@
 const express = require("express");
 const router = express.Router();
+
 const authMiddleware = require("../middleware/authMiddleware");
 const { body } = require("express-validator");
 const validate = require("../middleware/validationMiddleware");
 
-
-
 const {
-    registerUser,
-    loginUser,
-    getMe,
-    updateProfile,
-    deleteMyAccount
+  registerUser,
+  loginUser,
+  getMe,
+  updateProfile,
+  updateUsername,
+  updateEmail,
+  updatePassword,
+  deleteMyAccount,
 } = require("../controllers/authController");
 
-router.post(
-    "/register",
-
-    [
-        body("username")
-            .notEmpty()
-            .withMessage("Username is required"),
-
-        body("email")
-            .isEmail()
-            .withMessage("Invalid email"),
-
-        body("password")
-            .isLength({ min: 6 })
-            .withMessage("Password must be at least 6 characters")
-    ],
-
-    validate,
-
-    registerUser
-);
-
+// =======================
+// Register
+// =======================
 
 router.post(
-    "/login",
+  "/register",
+  [
+    body("username")
+      .notEmpty()
+      .withMessage("Username is required"),
 
-    [
-        body("email")
-            .isEmail()
-            .withMessage("Invalid email"),
+    body("email")
+      .isEmail()
+      .withMessage("Invalid email"),
 
-        body("password")
-            .notEmpty()
-            .withMessage("Password is required")
-    ],
-
-    validate,
-
-    loginUser
+    body("password")
+      .isLength({ min: 6 })
+      .withMessage("Password must be at least 6 characters"),
+  ],
+  validate,
+  registerUser
 );
 
+// =======================
+// Login
+// =======================
 
+router.post(
+  "/login",
+  [
+    body("email")
+      .isEmail()
+      .withMessage("Invalid email"),
 
-router.get("/me", authMiddleware, getMe);   
-router.put("/profile", authMiddleware, updateProfile);
-router.delete("/delete-account",authMiddleware,deleteMyAccount);
+    body("password")
+      .notEmpty()
+      .withMessage("Password is required"),
+  ],
+  validate,
+  loginUser
+);
+
+// =======================
+// Profile
+// =======================
+
+router.get(
+  "/me",
+  authMiddleware,
+  getMe
+);
+
+// Avatar + Bio only
+router.put(
+  "/profile",
+  authMiddleware,
+  updateProfile
+);
+
+// Username only
+router.put(
+  "/username",
+  authMiddleware,
+  updateUsername
+);
+
+// Email only
+router.put(
+  "/email",
+  authMiddleware,
+  updateEmail
+);
+
+// Password only
+router.put(
+  "/password",
+  authMiddleware,
+  updatePassword
+);
+
+// Delete account
+router.delete(
+  "/delete-account",
+  authMiddleware,
+  deleteMyAccount
+);
+
 module.exports = router;
-

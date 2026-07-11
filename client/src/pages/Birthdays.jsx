@@ -2,15 +2,18 @@ import { useEffect, useState, useRef} from "react";
 import { useLocation } from "react-router-dom";
 import { useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
+import { useConfirm } from "../context/ConfirmContext";
 import api from "../services/api";
 import Layout from "../components/Layout";
 import Card from "../components/Card";
 import birthdayLightBg from "../assets/backgrounds/birthday-light.png";
 import birthdayDarkBg from "../assets/backgrounds/birthday-dark.png";
+import toast from "react-hot-toast";
 
 
 function Birthdays() {
   const { user } = useContext(AuthContext);
+  const confirm = useConfirm();
   const darkMode = user?.theme === "dark";
   const formBackground = darkMode
   ? birthdayDarkBg
@@ -41,7 +44,7 @@ function Birthdays() {
     catch (error) {
       console.log(error);
 
-      alert(
+      toast.error(
         error.response?.data?.message ||
         "Failed to load birthdays."
       );
@@ -54,7 +57,7 @@ function Birthdays() {
       setUpcoming(res.data);
     } catch (error) {
       console.log(error);
-      alert(
+      toast.error(
         error.response?.data?.message ||
         "Failed to load upcoming birthdays."
       );
@@ -63,23 +66,23 @@ function Birthdays() {
 
   const handleSave = async () => {
     if (!name.trim()) {
-      alert("Name is required");
+      toast.error("Name is required");
       return;
     }
     else if (!birthDay) {
-      alert("Birth Day is required");
+      toast.error("Birth Day is required");
       return;
     }
     else if (!birthMonth) {
-      alert("Birth Month is required");
+      toast.error("Birth Month is required");
       return;
     }
     else if (!relationship) {
-      alert("Relationship is required");
+      toast.error("Relationship is required");
       return;
     }
     else if (!notes.trim()) {
-      alert("Birthday Note is required");
+      toast.error("Birthday Note is required");
       return;
     }
     try {
@@ -103,6 +106,11 @@ function Birthdays() {
           birthdayData
         );
       }
+      toast.success(
+          editingId
+            ? "Birthday updated successfully."
+            : "Birthday added successfully."
+        );
 
       setName("");
       setBirthDay("");
@@ -118,7 +126,7 @@ function Birthdays() {
     } 
     catch (error) {
       console.log(error);
-      alert(
+      toast.error(
         error.response?.data?.message ||
         "Failed to save birthday."
       );
@@ -148,25 +156,26 @@ function Birthdays() {
   };
 
   const handleDelete = async (id) => {
-    const confirmed =
-      window.confirm(
-        "Delete this birthday?"
-      );
+    const confirmed = await confirm({
+      title: "Delete Birthday",
+      message:
+        "Are you sure you want to delete this birthday? This action cannot be undone.",
+      confirmText: "Delete",
+      cancelText: "Cancel",
+    });
 
-    if (!confirmed) {
-      return;
-    }
+    if (!confirmed) return;
 
     try {
       await api.delete(
         `/birthdays/${id}`
       );
-
+      toast.success("Birthday deleted successfully.");
       fetchBirthdays();
       fetchUpcoming();
     } catch (error) {
         console.log(error);
-        alert(
+        toast.error(
           error.response?.data?.message ||
           "Failed to delete birthday."
         );
@@ -405,35 +414,37 @@ const relationshipOptions = [
               }
             />
 
-          <input
-            className="input-glow"
-            type="number"
-            placeholder="Day"
-            min="1"
-            max="31"
-            value={birthDay}
-            onChange={(e) => setBirthDay(e.target.value)}
-          />
+          <div className="birthday-date-row">
+            <input
+              className="input-glow"
+              type="number"
+              placeholder="Day"
+              min="1"
+              max="31"
+              value={birthDay}
+              onChange={(e) => setBirthDay(e.target.value)}
+            />
 
-          <input
-            className="input-glow"
-            type="number"
-            placeholder="Month"
-            min="1"
-            max="12"
-            value={birthMonth}
-            onChange={(e) => setBirthMonth(e.target.value)}
-          />
+            <input
+              className="input-glow"
+              type="number"
+              placeholder="Month"
+              min="1"
+              max="12"
+              value={birthMonth}
+              onChange={(e) => setBirthMonth(e.target.value)}
+            />
 
-          <input
-            className="input-glow"
-            type="number"
-            placeholder="Year (Optional)"
-            min="1900"
-            max={new Date().getFullYear()}
-            value={birthYear}
-            onChange={(e) => setBirthYear(e.target.value)}
-          />
+            <input
+              className="input-glow"
+              type="number"
+              placeholder="Year(Optional)"
+              min="1900"
+              max={new Date().getFullYear()}
+              value={birthYear}
+              onChange={(e) => setBirthYear(e.target.value)}
+            />
+          </div>
 
           <select
             className="input-glow"

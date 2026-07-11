@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 
 import { AuthContext } from "../context/AuthContext";
 import api from "../services/api";
+import toast from "react-hot-toast";
 
 import Card from "../components/Card";
 import logo from "../assets/Logo.svg";
@@ -48,21 +49,17 @@ async (e) => {
 
     if (error.response) {
 
-      alert(
-        error.response.data.message ||
-        "Login failed"
-      );
+    toast.error(
+      error.response?.data?.message ||
+      "Login failed."
+    );
 
     } else {
-
-      alert(
-        "Cannot connect to backend server"
+      toast.error(
+        "Cannot connect to backend server."
       );
-
     }
-
   }
-
 };
  
 

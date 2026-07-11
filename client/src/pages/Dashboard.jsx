@@ -4,6 +4,11 @@ import api from "../services/api";
 import { AuthContext } from "../context/AuthContext";
 import Layout from "../components/Layout";
 import Card from "../components/Card";
+import dashboardLightBg from "../assets/backgrounds/dashboard-light.png";
+import dashboardDarkBg from "../assets/backgrounds/dashboard-dark.png";
+import toast from "react-hot-toast";
+
+
 
 function Dashboard() {
   const [data, setData] = useState(null);
@@ -32,6 +37,13 @@ function Dashboard() {
   };
 
   const { user } = useContext(AuthContext);
+  const darkMode = user?.theme === "dark";
+  const dashboardBackground = darkMode
+    ? dashboardDarkBg
+    : dashboardLightBg;
+
+
+
   const navigate = useNavigate();
   useEffect(() => {
     const fetchDashboard = async () => {
@@ -39,21 +51,28 @@ function Dashboard() {
         const res = await api.get("/dashboard");
         setData(res.data);
       } catch (error) {
-        console.log(error);
-        setError("Failed to load dashboard");
-      }
+          console.log(error);
+          const message =
+            error.response?.data?.message ||
+            "Failed to load dashboard.";
+          toast.error(message);
+          setError(message);
+        }
     };
 
     fetchDashboard();
   }, []);
 
-  if (error) {
-    return (
-      <Layout>
-        <h2>{error}</h2>
-      </Layout>
-    );
-  }
+ if (error) {
+  return (
+    <Layout>
+      <Card variant="glass">
+        <h2>Unable to load dashboard</h2>
+        <p>{error}</p>
+      </Card>
+    </Layout>
+  );
+}
 
   if (!data) {
     return (
@@ -63,45 +82,72 @@ function Dashboard() {
     );
   }
   const quickAccess = (
-    <div 
-    className="quick-access">
+  <Card
+    variant="glass"
+    style={{
+      position: "fixed",
+      top: "15%",
+      left: "2%",
+      width: "20%",
+      minHeight: "65%",
+      padding: "24px",
+      borderRadius: "22px",
 
-      <h1>Quick Access ⚡</h1>
+      display: "flex",
+      flexDirection: "column",
+      gap: "16px",
       
-      <button className = "hidden"></button>
-      
-      <button
-        className="glow-top left"
-        onClick={() => navigate("/reminders?create=true")}
-      >
-        ⏰ New Reminder
-      </button>
+    }}
+  >
+    <h1
+      style={{
+        whiteSpace: "nowrap",
+        textAlign: "center",
+        marginBottom: "10px",
+      }}
+    >
+      Quick Access ⚡
+    </h1>
 
-      <button
-        className="glow-top left"
-        onClick={() => navigate("/notes?create=true")}
-      >
-        📝 New Note
-      </button>
+    <button
+      className="glow-top left"
+      style={{ width: "100%" }}
+      onClick={() => navigate("/reminders?create=true")}
+    >
+      ⏰ New Reminder
+    </button>
 
-      <button
-        className="glow-top left"
-        onClick={() => navigate("/birthdays?create=true")}
-      >
-        🎂 Add Birthday
-      </button>
+    <button
+      className="glow-top left"
+      style={{ width: "100%" }}
+      onClick={() => navigate("/notes?create=true")}
+    >
+      📝 New Note
+    </button>
 
-      <button
-        className="glow-top left"
-        onClick={() => navigate("/links?create=true")}
-      >
-        🔗 Save Link
-      </button>
+    <button
+      className="glow-top left"
+      style={{ width: "100%" }}
+      onClick={() => navigate("/birthdays?create=true")}
+    >
+      🎂 Add Birthday
+    </button>
 
-    </div>
+    <button
+      className="glow-top left"
+      style={{ width: "100%" }}
+      onClick={() => navigate("/links?create=true")}
+    >
+      🔗 Save Link
+    </button>
+  </Card>
   );
   return (
-  <Layout sidebar={quickAccess}>
+  <Layout
+    sidebar={quickAccess}
+    backgroundImage={dashboardBackground}
+    cardVariant="glass"
+  >
       <div
         style={{
           marginBottom: "35px",
@@ -112,7 +158,7 @@ function Dashboard() {
             margin: 0,
             fontSize: "2.0rem",
             fontWeight: "700",
-            color: "#0b5b82",
+            color: darkMode ? "#f9fafb" : "#0b5b82",
           }}
         >
           👋 {getGreeting()}, {user?.username}
@@ -134,11 +180,13 @@ function Dashboard() {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(4, 1fr)",
-          gap: "30px",
+          gridTemplateColumns: "repeat(auto-fit, minmax(220px,1fr))",
+          gap: "24px",
+          marginBottom: "35px",
           width: "100%",
-        }}>
-        <Card>
+        }}
+      >
+        <Card variant="glass">
           <h3
           className="underline"
           onClick={() =>
@@ -147,7 +195,7 @@ function Dashboard() {
           <h1 style={{userSelect: "none"}}>{data.stats?.totalReminders ?? 0}</h1>
         </Card>
         
-        <Card>
+        <Card variant="glass">
           <h3
           className="underline"
           onClick={() =>
@@ -156,7 +204,7 @@ function Dashboard() {
           <h1 style={{userSelect: "none"}}>{data.stats?.totalNotes ?? 0}</h1>
         </Card>
 
-        <Card>
+        <Card variant="glass">
           <h3
           className="underline"
           onClick={() =>
@@ -165,7 +213,7 @@ function Dashboard() {
           <h1 style={{userSelect: "none"}}>{data.stats?.totalBirthdays ?? 0}</h1>
         </Card>
 
-        <Card>
+        <Card variant="glass">
           <h3
           className="underline"
           onClick={() =>
@@ -179,7 +227,7 @@ function Dashboard() {
       <div  
         className="dashboard-container"
       >
-        <Card>
+        <Card variant="glass">
           <h2>Favorite Links</h2>
 
           {data.favoriteLinks?.length === 0 ? (
@@ -200,7 +248,7 @@ function Dashboard() {
           )}
         </Card>
 
-        <Card>
+        <Card variant="glass">
           <h2>Upcoming Birthdays</h2>
 
           {data.upcomingBirthdays?.length === 0 ? (
@@ -225,7 +273,7 @@ function Dashboard() {
           )}
         </Card>
 
-        <Card>
+        <Card variant="glass">
           <h2>⚠️ Overdue Reminders</h2>
 
           {data.overdueReminders?.length === 0 ? (
@@ -249,7 +297,7 @@ function Dashboard() {
           )}
         </Card>
 
-        <Card>
+        <Card variant="glass">
           <h2>Pending Reminders</h2>
 
           {data.pendingReminders?.length === 0 ? (

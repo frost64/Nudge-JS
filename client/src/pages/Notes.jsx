@@ -2,6 +2,8 @@ import { useEffect, useState, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import { useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
+import { useConfirm } from "../context/ConfirmContext";
+import toast from "react-hot-toast";
 import api from "../services/api";
 import Layout from "../components/Layout";
 import Card from "../components/Card";
@@ -10,6 +12,7 @@ import noteDarkBg from "../assets/backgrounds/note-dark.png";
 
 function Notes() {
   const { user } = useContext(AuthContext);
+  const confirm = useConfirm();
   const darkMode = user?.theme === "dark";
   const formBackground = darkMode
   ? noteDarkBg
@@ -64,22 +67,27 @@ function Notes() {
           res.data.data
         );
       } catch (error) {
-        console.log(error);
-      }
+          console.log(error);
+
+          toast.error(
+            error.response?.data?.message ||
+            "Failed to load notes."
+          );
+        }
     };
 
   const handleSave =
     async () => {
       if (!title.trim()) {
-        alert("Title is required");
+        toast.error("Title is required.");
         return;
       }
       if (!content.trim()) {
-        alert("Description is required");
+        toast.error("Description is required");
         return;
       }
       if (!tags.trim()) {
-        alert("Please add at least one tag");
+        toast.error("Please add at least one tag");
         return;
       }
       try {
@@ -99,11 +107,13 @@ function Notes() {
             `/notes/${editingId}`,
             noteData
           );
+          toast.success("Note updated successfully.");
         } else {
           await api.post(
             "/notes",
             noteData
           );
+          toast.success("Note added successfully.");
         }
         setTitle("");
         setContent("");
@@ -114,7 +124,7 @@ function Notes() {
       } 
       catch (error) {
         console.log(error);
-        alert(
+        toast.error(
           error.response?.data?.message ||
           "Failed to save note."
         );
@@ -139,33 +149,46 @@ function Notes() {
       setShowForm(false);
     };
 
-  const handleDelete =
-    async (id) => {
-      const confirmed =
-        window.confirm(
-          "Delete this note?"
-        );
-      if (!confirmed) {
-        return;
-      }
-      try {
-        await api.delete(
-          `/notes/${id}`
-        );
-        fetchNotes();
-      } 
-      catch (error) {console.log(error);}
-    };
+  const handleDelete = async (id) => {
+    const confirmed = await confirm({
+      title: "Delete Note",
+      message:
+        "Are you sure you want to delete this note? This action cannot be undone.",
+      confirmText: "Delete",
+      cancelText: "Cancel",
+    });
+
+    if (!confirmed) return;
+
+    try {
+      await api.delete(`/notes/${id}`);
+
+      toast.success("Note deleted successfully.");
+
+      fetchNotes();
+    } catch (error) {
+      console.log(error);
+
+      toast.error(
+        error.response?.data?.message ||
+        "Failed to delete note."
+      );
+    }
+  };
 
   const handlePin = async (id) => {
     try {
       await api.patch(`/notes/${id}/pin`);
-
+      toast.success("Pin updated.");
       await fetchNotes();
       highlightNote(id);
 
     } catch (error) {
       console.log(error);
+      toast.error(
+        error.response?.data?.message ||
+        "Failed to update note."
+      );
     }
   };
 
@@ -175,9 +198,16 @@ function Notes() {
         await api.patch(
           `/notes/${id}/favorite`
         );
+        toast.success("Favorite updated.");
         fetchNotes();
       } 
-      catch (error) {console.log(error);}
+      catch (error) {
+        console.log(error);
+        toast.error(
+          error.response?.data?.message ||
+          "Failed to update favorite."
+        );
+      }
     };
 
   useEffect(() => {fetchNotes();}, []);

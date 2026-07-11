@@ -128,15 +128,6 @@ body.dark a {
   color: #60a5fa;
 }
 
-.dark-input::placeholder {
-  color: #ffffff;
-  opacity: 1;
-}
-
-.dark-input:focus {
-  outline: none;
-}
-
 .action-buttons {
   display: flex;
   gap: 10px;
@@ -201,8 +192,7 @@ button:disabled {
   border-radius: 14px;
 
   backdrop-filter: blur(10px);
-  border: 1px solid rgb(0, 255, 225);
-
+  border: 1px solid rgba(107, 0, 160, 0.546);
   transition: all 0.4s ease;
 }
 
@@ -228,7 +218,7 @@ button:disabled {
 
 .search-result-item:hover {
   transform: translateY(-4px) scale(1.02);
-  border-color: rgba(59,130,246,0.5);
+  border-color: rgba(59, 246, 159, 0.5);
   box-shadow:
     0 0 15px rgba(59,130,246,0.25),
     0 0 35px rgba(59,130,246,0.15);
@@ -239,139 +229,163 @@ button:disabled {
   transform: rotate(-45deg) translateY(100%);
 } 
 
+/* ===========================
+   Glass Inputs
+=========================== */
 
-
-
-
-
-
-.search-section-title {
-  font-size: 1.5rem;
-  color: inherit;
-  position: relative;
-  display: inline-block;
-  cursor: pointer;
-  margin-bottom: 12px;
-}
-
-.search-section-title::after,
-.search-section-title::before {
-  content: "";
-  position: absolute;
-  width: 100%;
-  height: 2px;
-  background: linear-gradient(
-    to right,
-    #ff0000,
-    #00ffff
-  );
-  left: 0;
-  transform: scaleX(0);
-  transition: transform 0.4s ease-out;
-}
-
-.search-section-title::before {
-  top: -4px;
-  transform-origin: left;
-}
-
-.search-section-title::after {
-  bottom: -4px;
-  transform-origin: right;
-}
-
-.search-section-title:hover::before,
-.search-section-title:hover::after {
-  transform: scaleX(1);
-}
-
-
-.input-glow { 
+.input-glow {
   width: 100%;
   padding: 12px 16px;
 
-  color: inherit;
-
-  border: 1px solid rgba(255,255,255,0.18);
-  border-radius: 12px;
-
-  outline: none;
   box-sizing: border-box;
+  border-radius: 12px;
+  outline: none;
 
   transition: all 0.25s ease;
+
+  color: #111827;
+
+  background: rgba(255,255,255,.72);
+  border: 1px solid rgba(0,0,0,.08);
+
+  /* Soft floating effect */
+  box-shadow:
+    0 3px 10px rgba(15,23,42,.06),
+    0 0 0 1px rgba(0,0,0,.04);
 }
+
+/* ---------- Dark Mode ---------- */
+
+body.dark .input-glow {
+  color: #f9fafb;
+  background: rgba(255,255,255,.03);
+  border: 1px solid rgba(255,255,255,.18);
+
+  box-shadow: none;
+}
+
+/* ---------- Hover ---------- */
 
 .input-glow:hover {
   transform: translateY(-1px);
-  box-shadow: 0 0 12px rgba(37, 99, 235, 0.20);
+
+  box-shadow:
+    0 6px 16px rgba(15,23,42,.08),
+    0 0 12px rgba(37,99,235,.12);
 }
 
-.input-glow::placeholder {
-  color: rgba(255,255,255,0.55);
+body.dark .input-glow:hover {
+  background: rgba(255,255,255,.04);
+
+  box-shadow:
+    0 0 12px rgba(59,130,246,.35);
 }
 
-
-.dark .input-glow:hover {
-  box-shadow: 0 0 12px rgba(59, 130, 246, 0.35);
-}
+/* ---------- Focus ---------- */
 
 .input-glow:focus {
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+  background: rgba(255,255,255,.82);
+
+  box-shadow:
+    0 8px 18px rgba(15,23,42,.10),
+    0 0 0 3px rgba(37,99,235,.15);
 }
 
-.dark .input-glow:focus {
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+body.dark .input-glow:focus {
+  background: rgba(255,255,255,.05);
+
+  box-shadow:
+    0 0 0 3px rgba(59,130,246,.25);
 }
 
-.input-glow,
-.input-glow:focus,
-.input-glow:hover {
-  background: rgba(255,255,255,0.04);
+/* ---------- Placeholder ---------- */
+
+.input-glow::placeholder {
+  color: #6b7280;
 }
 
-body.dark .input-glow,
-body.dark .input-glow:focus,
-body.dark .input-glow:hover {
-  background: rgba(255,255,255,0.03);
+body.dark .input-glow::placeholder {
+  color: rgba(255,255,255,.55);
 }
+
+/* ---------- Textarea ---------- */
+
+textarea.input-glow {
+  color: #111827;
+}
+
+body.dark textarea.input-glow {
+  color: #f9fafb;
+}
+
+textarea.input-glow::placeholder {
+  color: #6b7280;
+}
+
+body.dark textarea.input-glow::placeholder {
+  color: rgba(255,255,255,.55);
+}
+
+/* ---------- Select ---------- */
+
+select.input-glow {
+  color: #111827;
+  background: rgba(255,255,255,.75);
+}
+
+body.dark select.input-glow {
+  color: #f9fafb;
+  background: rgba(255,255,255,.04);
+}
+
+/* ---------- Dropdown Options ---------- */
+
+body:not(.dark) select.input-glow option {
+  color: #111827;
+  background: #ffffff;
+}
+
+body.dark select.input-glow option {
+  color: #f9fafb;
+  background: #1f2937;
+}
+
+/* ---------- Autofill ---------- */
 
 .input-glow:-webkit-autofill,
 .input-glow:-webkit-autofill:hover,
 .input-glow:-webkit-autofill:focus {
-  -webkit-box-shadow: 0 0 0px 1000px transparent inset;
   -webkit-text-fill-color: inherit;
+  -webkit-box-shadow: 0 0 0 1000px transparent inset;
   transition: background-color 9999s ease-in-out 0s;
 }
 /* ---------------------Buttons----------------------------- */
-.hidden{
-  padding: 0;
-  opacity: 0;
-  border: none;
-}
+
 
 /* ------------------Nav Buttons---------------- */
 
 /* ------------------profile avatar-------------------- */
-.icon-zoom {
-  transition: transform 0.25s;
+.icon-zoom{
+  transition:
+    transform .3s ease,
+    filter .3s ease,
+    text-shadow .3s ease;
 }
 
-.icon-zoom:hover {
-  -ms-transform: scale(1.3); /* IE 9 */
-  -webkit-transform: scale(1.3); /* Safari 3-8 */
-  transform: scale(1.3); 
-  }
+.icon-zoom:hover{
 
-.active-link {
-  transform: scale(1.08);
-  box-shadow: 0 0 15px rgba(59,130,246,0.35),
-    0 0 35px rgba(59,130,246,0.2);
+  filter: brightness(1.15);
+  text-shadow:
+    0 0 8px rgba(0, 255, 204, 0.45),
+    0 0 18px rgba(59,130,246,.25);
 }
+
+
 
 /* -------------------------logo zoom--------------------------- */
 
 .icon-zoom.logo:hover {
+  text-shadow: none;
   -ms-transform: scale(1.08); /* IE 9 */
   -webkit-transform: scale(1.08); /* Safari 3-8 */
   transform: scale(1.08); }
@@ -379,43 +393,23 @@ body.dark .input-glow:hover {
 
   /* ----------------------Quick Access Panel---------------- */
 
-.quick-access {
-  position: fixed;
-  top: 13%;
-  left: 2%;
-  width: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  padding: 25px;
-  border-radius: 30px;
-}
-
-.quick-access .glow-button {
-  width: 100%;
-}
-
-.btn-icon {
-  width: 40px;
-  text-align: center;
-  flex-shrink: 0;
-}
 
 /* -----------------nav style----------------- */
+
 .nav-style{
     position: sticky;
-    top: 0;
+    top: 10px;
+    gap: 20px;
+    width: calc(100% - 20px);
+    margin: 0 auto;
     display: flex;
     align-items: center;
-    flex-wrap: nowrap;
-    height: 80px;
-    min-height: 80px;
-    overflow: visible;
     justify-content: space-between;
-    gap: 20px;
+    height: 80px;
     z-index: 1000;
     padding: 15px 25px;
 }
+/* ----------------- Navbar Selected icon ----------------- */
 
 
 /* ----------------- Underline ------------- */
@@ -448,97 +442,271 @@ body.dark .input-glow:hover {
   transform: scaleX(1);
 }
 
-/* ----------------- Glow button top ------------------ */
+/* ===========================================================
+   GLASS GLOW BUTTON
+=========================================================== */
+
 .glow-top {
   margin-right: 5px;
-  width: relative;
   position: relative;
   overflow: hidden;
+
   padding: 10px 14px;
-  border: none;
+
   border-radius: 15px;
-  background: linear-gradient(
-    135deg,
-    #009e81b0,
-    #067ea9b0
-  );
-  backdrop-filter: blur(4px);
-  color: white;
-  font-weight: 600;
-  font-size: 15px;
   cursor: pointer;
-  transition: all 0.3s ease;
+
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+
+  appearance: none;
+  -webkit-appearance: none;
+
+  outline: none;
+
+  font-size: 15px;
+  font-weight: 600;
+
+  transition:
+    transform .35s ease,
+    background .35s ease,
+    border-color .35s ease,
+    box-shadow .35s ease,
+    color .35s ease;
 }
 
+/* ===========================================================
+   LIGHT MODE
+=========================================================== */
+
+body:not(.dark) .glow-top {
+
+  color: #00be9f;
+
+  border: 1px solid rgba(0,180,255,.35);
+
+  background: linear-gradient(
+    135deg,
+    rgba(255,255,255,.55),
+    rgba(255,255,255,.30)
+  );
+
+  box-shadow:
+    inset 0 1px 4px rgba(255,255,255,.65),
+    0 0 12px rgba(0,180,255,.15),
+    0 0 28px rgba(0,255,200,.08);
+}
+
+/* ===========================================================
+   DARK MODE
+=========================================================== */
+
+body.dark .glow-top {
+
+  color: #ffffff;
+
+  border: 1px solid rgba(255,255,255,.18);
+
+  background: linear-gradient(
+    135deg,
+    rgba(0,158,129,.20),
+    rgba(6,126,169,.20)
+  );
+
+  box-shadow:
+    inset 0 1px 4px rgba(255,255,255,.06),
+    0 0 15px rgba(0,255,204,.20),
+    0 0 35px rgba(0,140,255,.10);
+}
+
+/* ===========================================================
+   SHIMMER
+=========================================================== */
+
 .glow-top::before {
+
   content: "";
+
   position: absolute;
+
   top: -50%;
   left: -50%;
+
   width: 200%;
   height: 200%;
+
+  opacity: 0;
+
+  transform: rotate(-45deg);
+
+  transition: all .6s ease;
+
+  pointer-events: none;
+}
+
+/* Light */
+
+body:not(.dark) .glow-top::before {
+
   background: linear-gradient(
     0deg,
     transparent,
     transparent 30%,
-    rgba(255,255,255,0.25)
+    rgba(45,153,137,.12)
   );
-  transform: rotate(-45deg);
-  opacity: 0;
-  transition: all 0.6s ease;
 }
 
-.glow-top:hover {
-  transform: translateY(5px);
-  box-shadow:
-    0 0 15px rgba(59,130,246,0.35),
-    0 0 35px rgba(59,130,246,0.2);
+/* Dark */
+
+body.dark .glow-top::before {
+
   background: linear-gradient(
-    135deg,
-    #067ea9,
-    #009e81ad
+    0deg,
+    transparent,
+    transparent 30%,
+    rgba(255,255,255,.25)
   );
 }
+
+/* ===========================================================
+   GLOW (ALL BUTTONS)
+=========================================================== */
+
+body:not(.dark) .glow-top:hover {
+
+  background: rgba(255,255,255,.08);
+
+  border-color: rgba(0,180,255,.55);
+
+  box-shadow:
+    inset 0 1px 6px rgba(0,255,238,.55),
+    0 0 18px rgba(0,180,255,.30),
+    0 0 40px rgba(0,255,200,.18);
+}
+
+body.dark .glow-top:hover {
+
+  background: transparent;
+
+  border-color: rgba(255,255,255,.28);
+
+  box-shadow:
+    inset 0 1px 6px rgba(255,255,255,.08),
+    0 0 22px rgba(0,255,204,.35),
+    0 0 55px rgba(0,140,255,.18);
+}
+
+/* ===========================================================
+   SHIMMER ANIMATION
+=========================================================== */
 
 .glow-top:hover::before {
+
   opacity: 1;
+
   transform:
     rotate(-45deg)
     translateY(100%);
 }
 
-.glow-top:active {
-  transform: scale(0.98);
+/* ===========================================================
+   MOVEMENT
+=========================================================== */
+
+body:not(.dark) .glow-top:not(.left):hover,
+body.dark .glow-top:not(.left):hover {
+
+  transform: translateY(-2px);
 }
 
-.glow-top.left{
-  user-select: none;
-  padding: 12px 20px;
-  border-radius: 12px;
-  background: linear-gradient(
-    135deg,
-    #009e81b0,
-    #067ea9b0
-  );
-}
+body:not(.dark) .glow-top.left:hover,
+body.dark .glow-top.left:hover {
 
-.glow-top.left:hover {
   transform: translateX(5px);
 }
 
-.glow-top.delete {
-  background: linear-gradient(
-    135deg,
-   #dc3546b0,
-  #b02a37b0
-    
-  );
-}
-.glow-top.delete:hover {
-  background: linear-gradient(135deg, #b02a37, #dc3545);
-  box-shadow: 0 0 20px rgba(255, 0, 0, 0.45);
+/* ===========================================================
+   ACTIVE
+=========================================================== */
+
+.glow-top:active {
+
+  transform: scale(.97);
 }
 
+/* ===========================================================
+   SIDEBAR VERSION
+=========================================================== */
+
+.glow-top.left {
+
+  user-select: none;
+
+  padding: 12px 20px;
+
+  border-radius: 12px;
+}
+
+/* ===========================================================
+   DELETE BUTTON
+=========================================================== */
+
+body:not(.dark) .glow-top.delete {
+
+  color: #b91c1c;
+
+  border-color: rgba(220,53,69,.35);
+
+  background: linear-gradient(
+    135deg,
+    rgba(255,240,240,.60),
+    rgba(255,225,225,.35)
+  );
+
+  box-shadow:
+    inset 0 1px 4px rgba(255,255,255,.65),
+    0 0 12px rgba(255,70,70,.15);
+}
+
+body:not(.dark) .glow-top.delete:hover {
+
+  background: rgba(255,240,240,.12);
+
+  border-color: rgba(220,53,69,.60);
+
+  box-shadow:
+    inset 0 1px 4px rgba(255,0,0,.65),
+    0 0 18px rgba(255,70,70,.28),
+    0 0 40px rgba(255,70,70,.15);
+}
+
+body.dark .glow-top.delete {
+
+  color: #c60000;
+
+  border-color: rgba(255,80,80,.35);
+
+  background: linear-gradient(
+    135deg,
+    rgba(220,53,69,.20),
+    rgba(176,42,55,.20)
+  );
+
+  box-shadow:
+    0 0 12px rgba(255,70,70,.18);
+}
+
+body.dark .glow-top.delete:hover {
+
+  background: transparent;
+
+  border-color: rgba(255,90,90,.65);
+
+  box-shadow:
+    inset 0 1px 4px rgba(255,0,0,.65),
+    0 0 20px rgba(255,70,70,.35),
+    0 0 45px rgba(255,70,70,.18);
+}
 /* --------- dashboard grid -------- */
 .dashboard-container {
   width: 100%;
@@ -553,4 +721,89 @@ body.dark .input-glow:hover {
   .dashboard-container {
     grid-template-columns: 1fr;
   }
+}
+
+/* ------------------------------------------------------------------------------------- */
+
+.birthday-date-row {
+    display: flex;
+    gap: 12px;
+}
+
+.birthday-date-row .input-glow:nth-child(1) {
+    flex: 0.6;
+}
+
+.birthday-date-row .input-glow:nth-child(2) {
+    flex: 0.8;
+}
+
+.birthday-date-row .input-glow:nth-child(3) {
+    flex: 1.5;
+}
+
+/* ----------------------------------------------------------------------------- */
+.scroll-top-btn {
+    position: fixed;
+    right: 30px;
+    bottom: 30px;
+
+    width: 52px;
+    height: 52px;
+
+    border: none;
+    border-radius: 50%;
+
+    cursor: pointer;
+
+    z-index: 1200;
+
+    backdrop-filter: blur(14px);
+    background: rgba(255,255,255,.18);
+    border: 1px solid rgba(255,255,255,.28);
+
+    color: #00bcd4;
+    font-size: 24px;
+    font-weight: bold;
+
+    box-shadow:
+        0 0 18px rgba(0,255,255,.25),
+        0 10px 30px rgba(0,0,0,.2);
+
+    transition: .25s;
+}
+
+.scroll-top-btn:hover {
+    transform: translateY(-3px);
+    box-shadow:
+        0 0 28px rgba(0,255,255,.45),
+        0 14px 35px rgba(0,0,0,.3);
+}
+
+/* --------------------------------------------------------------------- */
+
+.theme-toggle{
+    width:35px;
+    height:35px;
+
+    border-radius:50%;
+
+    border:1px solid rgba(255,255,255,.18);
+
+    background:rgba(255,255,255,.12);
+
+    backdrop-filter:blur(12px);
+
+    cursor:pointer;
+
+    font-size:22px;
+
+    transition:.25s;
+}
+
+.theme-toggle:hover{
+    transform:translateY(-2px) scale(1.06);
+
+    box-shadow:
+    0 0 18px rgba(56,189,248,.35);
 }

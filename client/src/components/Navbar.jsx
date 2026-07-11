@@ -6,6 +6,7 @@ import { FiSearch } from "react-icons/fi";
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import api from "../services/api";
 import logo from "../assets/Logo.svg";
+import toast from "react-hot-toast";
 
 import defaultAvatar from "../assets/avatars/defaultAvatar.png";
 import avatar1 from "../assets/avatars/avatar1.png";
@@ -18,25 +19,57 @@ import avatar7 from "../assets/avatars/avatar7.png";
 
 const avatarMap = {avatar1, avatar2, avatar3, avatar4, avatar5, avatar6, avatar7};
 function Navbar() {
-  const { user } = useContext(AuthContext);
+
+  const { user, setUser, } = useContext(AuthContext);
   const darkMode = user?.theme === "dark";
   const location = useLocation();
   const isActive = (path) => location.pathname === path;
   const linkStyle = useCallback(
   (path) => ({
-    padding: "8px 14px",
-    borderRadius: "8px",
+    padding: "10px 16px",
+    borderRadius: "15px",
     textDecoration: "none",
     fontWeight: "600",
+    position: "relative",
+    overflow: "hidden",
     color: isActive(path)
-      ? "#ffffff"
+      ? darkMode
+        ? "#ffffff"
+        : "#565656"
       : darkMode
-      ? "#d1d5db"
-      : "#374151",
-    backgroundColor: isActive(path)
-      ? "#067ea9"
+        ? "#d1d5db"
+        : "#374151",
+
+    background: isActive(path)
+      ? darkMode
+        ? "linear-gradient(135deg, rgba(0,158,129,.20), rgba(6,126,169,.20))"
+        : "linear-gradient(135deg, rgba(64, 0, 255, 0.31), rgba(0, 255, 51, 0.31))"
       : "transparent",
-    transition: "0.15s",
+
+    border: isActive(path)
+      ? darkMode
+        ? "1px solid rgba(255,255,255,.18)"
+        : "1px solid rgba(0,180,255,.30)"
+      : "1px solid rgba(0,180,255,.30)",
+
+    boxShadow: isActive(path)
+      ? darkMode
+        ? `
+          inset 0 1px 4px rgba(255,255,255,.05),
+          0 0 15px rgba(0,255,204,.20),
+          0 0 35px rgba(0,140,255,.10)
+        `
+        : `
+          inset 0 1px 4px rgba(255,255,255,.65),
+          0 0 12px rgba(0,180,255,.15),
+          0 0 28px rgba(0,255,200,.08)
+        `
+      : "none",
+
+    backdropFilter: "blur(4px)",
+    WebkitBackdropFilter: "blur(4px)",
+
+    transition: "all .3s ease",
   }),
   [location.pathname, darkMode]
 );
@@ -52,6 +85,43 @@ function Navbar() {
     if (!searchQuery.trim()) return;
       navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
     }, [searchQuery, navigate]);
+
+  const toggleTheme = async () => {
+
+  const newTheme =
+    darkMode ? "light" : "dark";
+
+  try {
+
+    const res = await api.put(
+      "/auth/profile",
+      {
+        theme: newTheme,
+        avatar: user.avatar,
+        bio: user.bio,
+      }
+    );
+
+    setUser(res.data);
+
+    localStorage.setItem(
+      "user",
+      JSON.stringify(res.data)
+    );
+
+  } catch (error) {
+
+    console.log(error);
+
+    toast.error(
+      error.response?.data?.message ||
+      "Couldn't change theme."
+    );
+
+  }
+
+};
+
 
   useEffect(() => {
     const timeout = setTimeout(
@@ -162,6 +232,7 @@ const suggestionList = useMemo(() => {
     <nav
       className = "nav-style"
       style={{
+        borderRadius: "50px",
         background: darkMode
           ? "rgba(17,24,39,.40)"
           : "rgba(255,255,255,.18)",
@@ -179,10 +250,12 @@ const suggestionList = useMemo(() => {
 
         boxShadow: darkMode
           ? `
+              inset 0 1px 4px rgba(0, 255, 136, 0.65),
               0 0 20px rgba(0,255,204,.12),
               0 10px 30px rgba(0,0,0,.35)
             `
           : `
+              inset 0 1px 4px rgba(0, 133, 113, 0.65),
               0 0 16px rgba(0,180,255,.10),
               0 8px 25px rgba(0,0,0,.12)
             `,
@@ -257,7 +330,7 @@ const suggestionList = useMemo(() => {
       >
         
         <Link
-          className={isActive("/dashboard") ? "active-link" : "icon-zoom"}
+          className="icon-zoom"
           to="/dashboard"
           style={linkStyle("/dashboard")}
         >
@@ -265,7 +338,7 @@ const suggestionList = useMemo(() => {
         </Link>
 
         <Link 
-          className={isActive("/birthdays") ? "active-link" : "icon-zoom"}
+          className="icon-zoom"
           to="/birthdays"
           style={linkStyle("/birthdays")}
         >
@@ -273,7 +346,7 @@ const suggestionList = useMemo(() => {
         </Link>
 
         <Link 
-          className={isActive("/reminders") ? "active-link" : "icon-zoom"}
+          className="icon-zoom"
           to="/reminders"
           style={linkStyle("/reminders")}
         >
@@ -281,7 +354,7 @@ const suggestionList = useMemo(() => {
         </Link>
 
         <Link 
-          className={isActive("/notes") ? "active-link" : "icon-zoom"}
+          className="icon-zoom"
           to="/notes"
           style={linkStyle("/notes")}
         >
@@ -289,7 +362,7 @@ const suggestionList = useMemo(() => {
         </Link>
 
         <Link 
-          className={isActive("/links") ? "active-link" : "icon-zoom"}
+          className="icon-zoom"
           to="/links"
           style={linkStyle("/links")}
         >
@@ -299,7 +372,7 @@ const suggestionList = useMemo(() => {
 
         {user?.role === "admin" && (
           <Link 
-            className={isActive("/admin") ? "active-link" : "icon-zoom"}
+            className="icon-zoom"
             to="/admin"
             style={linkStyle("/admin")}
           >
@@ -446,10 +519,19 @@ const suggestionList = useMemo(() => {
       )
     }
       </div>
+
+
+      <button
+        className="theme-toggle"
+        onClick={toggleTheme}
+      >
+        {darkMode ? "☀️" : "🌙"}
+      </button>
+
       {/* Profile Avatar */}
 
       <Link
-        className="icon-zoom"
+        className="icon-zoom logo"
         to="/profile"
         style={{
           textDecoration: "none",
