@@ -7,6 +7,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import api from "../services/api";
 import logo from "../assets/Logo.svg";
 import toast from "react-hot-toast";
+import highlightText from "../utils/highlightText";
 
 import defaultAvatar from "../assets/avatars/defaultAvatar.png";
 import avatar1 from "../assets/avatars/avatar1.png";
@@ -31,19 +32,18 @@ function Navbar() {
     textDecoration: "none",
     fontWeight: "600",
     position: "relative",
-    overflow: "hidden",
     color: isActive(path)
       ? darkMode
         ? "#ffffff"
-        : "#565656"
+        : "#000000"
       : darkMode
         ? "#d1d5db"
-        : "#374151",
+        : "#000000",
 
     background: isActive(path)
       ? darkMode
         ? "linear-gradient(135deg, rgba(0,158,129,.20), rgba(6,126,169,.20))"
-        : "linear-gradient(135deg, rgba(64, 0, 255, 0.31), rgba(0, 255, 51, 0.31))"
+        : "linear-gradient(135deg, rgba(37, 99, 235, 0.20), rgba(6, 182, 212, 0.18))"
       : "transparent",
 
     border: isActive(path)
@@ -53,18 +53,26 @@ function Navbar() {
       : "1px solid rgba(0,180,255,.30)",
 
     boxShadow: isActive(path)
-      ? darkMode
-        ? `
-          inset 0 1px 4px rgba(255,255,255,.05),
-          0 0 15px rgba(0,255,204,.20),
-          0 0 35px rgba(0,140,255,.10)
-        `
-        : `
-          inset 0 1px 4px rgba(255,255,255,.65),
-          0 0 12px rgba(0,180,255,.15),
-          0 0 28px rgba(0,255,200,.08)
-        `
-      : "none",
+  ? darkMode
+    ? `
+        inset 0 1px 5px rgba(255,255,255,.08),
+        0 0 18px rgba(0,255,204,.35),
+        0 0 40px rgba(0,140,255,.20)
+      `
+    : `
+        inset 0 1px 5px rgba(255,255,255,.8),
+        0 0 18px rgba(0,180,255,.30),
+        0 0 35px rgba(0,255,200,.18)
+      `
+  : darkMode
+    ? `
+        inset 0 1px 3px rgba(255,255,255,.05),
+        0 0 10px rgba(0,255,204,.15)
+      `
+    : `
+        inset 0 1px 3px rgba(255,255,255,.45),
+        0 0 10px rgba(0,180,255,.15)
+      `,
 
     backdropFilter: "blur(4px)",
     WebkitBackdropFilter: "blur(4px)",
@@ -180,53 +188,83 @@ function Navbar() {
 }, [navigate]);
 
 const suggestionList = useMemo(() => {
-  return suggestions.map((item, index) => (
-    <div
-      key={`${item.type}-${item.id}`}
-      onClick={() => handleSuggestionSelect(item)}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.backgroundColor =
-          darkMode ? "#4b5563" : "#f3f4f6";
-        e.currentTarget.style.transform = "translateX(4px)";
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.backgroundColor = "transparent";
-        e.currentTarget.style.transform = "translateX(0)";
-      }}
-      style={{
-        padding: "12px 16px",
-        cursor: "pointer",
-        transition: "background .12s ease, transform .12s ease",
-      }}
-    >
-      <strong>
-        {item.type === "note"
-          ? "📝 "
-          : item.type === "reminder"
-          ? "⏰ "
-          : item.type === "birthday"
-          ? "🎂 "
-          : "🔗 "}
-        {item.label}
-      </strong>
+  return suggestions.map((item, index) => {
+    const selected = highlightedIndex === index;
 
+    return (
       <div
+        key={`${item.type}-${item.id}`}
+        onClick={() => handleSuggestionSelect(item)}
+        onMouseEnter={() => setHighlightedIndex(index)}
+        className="search-suggestion"
         style={{
-          fontSize: "12px",
-          opacity: .7,
-          marginTop: "4px",
-          textTransform: "capitalize",
+          padding: "10px 14px",
+          cursor: "pointer",
+          transition: "all .25s ease",
+          borderBottom:
+            index !== suggestions.length - 1
+              ? "1px solid rgba(255,255,255,.08)"
+              : "none",
+
+          background: selected
+            ? darkMode
+              ? "linear-gradient(135deg, rgba(0,158,129,.20), rgba(6,126,169,.20))"
+              : "linear-gradient(135deg, rgba(64,0,255,.18), rgba(0,255,150,.18))"
+            : "transparent",
+
+          transform: selected
+            ? "translateX(3px)"
+            : "translateX(0)",
         }}
       >
-        {item.type}
+        <div
+          style={{
+            fontWeight: 700,
+            display: "flex",
+            alignItems: "center",
+            gap: "6px",
+          }}
+        >
+          <span
+            style={{
+              width: "22px",
+              textAlign: "center",
+              fontSize: "17px",
+              flexShrink: 0,
+            }}
+          >
+            {item.type === "note"
+              ? "📝"
+              : item.type === "reminder"
+              ? "⏰"
+              : item.type === "birthday"
+              ? "🎂"
+              : "🔗"}
+          </span>
+
+          {highlightText(item.label, searchQuery)}
+        </div>
+
+        <div
+          style={{
+            fontSize: "11px",
+            marginTop: "2px",
+            paddingLeft: "28px",
+            opacity: 0.6,
+            textTransform: "capitalize",
+          }}
+        >
+          {item.type}
+        </div>
       </div>
-    </div>
-  ));
+    );
+  });
 }, [
   suggestions,
   highlightedIndex,
   darkMode,
   handleSuggestionSelect,
+  searchQuery,
 ]);
   return (
     <nav
@@ -323,8 +361,6 @@ const suggestionList = useMemo(() => {
           justifyContent: "center",
           gap: "10px",
           flex: 1,
-          overflowX: "auto",
-          overflowY: "hidden",
           scrollbarWidth: "none"
         }}
       >
@@ -501,16 +537,30 @@ const suggestionList = useMemo(() => {
           overflowX: "hidden",
           overflowY: "auto",
 
-          backgroundColor:
-            darkMode
-              ? "#374151"
-              : "#ffffff",
+          background: darkMode
+            ? "rgba(17,24,39,.55)"
+            : "rgba(255,255,255,.25)",
+
+          backgroundImage: darkMode
+            ? "linear-gradient(160deg, rgba(255,255,255,.08), transparent)"
+            : "linear-gradient(160deg, rgba(255,255,255,.45), transparent)",
+
+          backdropFilter: "blur(18px)",
+          WebkitBackdropFilter: "blur(18px)",
+
           border: darkMode
-            ? "1px solid #4b5563"
-            : "1px solid #d1d5db",
-          borderRadius: "10px",
-          boxShadow:
-            "0 8px 20px rgba(0,0,0,0.15)"
+            ? "1px solid rgba(255,255,255,.10)"
+            : "1px solid rgba(255,255,255,.45)",
+
+          boxShadow: darkMode
+            ? `
+                inset 0 1px 3px rgba(255,255,255,.05),
+                0 10px 30px rgba(0,0,0,.45)
+              `
+            : `
+                inset 0 1px 3px rgba(255,255,255,.6),
+                0 10px 25px rgba(0,0,0,.12)
+              `,
         }}
       >
             {suggestionList}

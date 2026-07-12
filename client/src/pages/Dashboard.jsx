@@ -7,7 +7,7 @@ import Card from "../components/Card";
 import dashboardLightBg from "../assets/backgrounds/dashboard-light.png";
 import dashboardDarkBg from "../assets/backgrounds/dashboard-dark.png";
 import toast from "react-hot-toast";
-
+import WeatherWidget from "../components/WeatherWidget";
 
 
 function Dashboard() {
@@ -89,7 +89,7 @@ function Dashboard() {
       top: "15%",
       left: "2%",
       width: "20%",
-      minHeight: "65%",
+      minHeight: "75%",
       padding: "24px",
       borderRadius: "22px",
 
@@ -148,32 +148,84 @@ function Dashboard() {
     backgroundImage={dashboardBackground}
     cardVariant="glass"
   >
-      <div
+      <Card variant="glass">
+  <div
+    style={{
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      gap: "30px",
+      flexWrap: "wrap",
+    }}
+  >
+    {/* Left Side */}
+    <div
+      style={{
+        flex: 1,
+        minWidth: "280px",
+      }}
+    >
+      <h1
         style={{
-          marginBottom: "35px",
+          margin: 0,
+          fontSize: "2rem",
+          fontWeight: "800",
+          letterSpacing: "-1px",
+          userSelect: "none",
         }}
       >
-        <h1
+        👋{" "}
+        <span
           style={{
-            margin: 0,
-            fontSize: "2.0rem",
-            fontWeight: "700",
-            color: darkMode ? "#f9fafb" : "#0b5b82",
+            background:
+              "linear-gradient(90deg, #8d7cff 0%, #7d8dff 22%, #6da6ff 55%, #7fb9ff 100%)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            backgroundClip: "text",
+            color: "transparent",
           }}
         >
-          👋 {getGreeting()}, {user?.username}
-        </h1>
+          {getGreeting()}
+        </span>
+        , {user?.username}
+      </h1>
 
-        <p
-          style={{
-            marginTop: "10px",
-            fontSize: "1.1rem",
-            opacity: 0.75,
-          }}
-        >
-          {getGreetingMessage()}
-        </p>
+      <p
+        style={{
+          marginTop: "10px",
+          fontSize: "1.1rem",
+          opacity: 0.75,
+        }}
+      >
+        {getGreetingMessage()}
+      </p>
+    </div>
+
+    {/* Right Side */}
+    <div
+      style={{
+        minWidth: "220px",
+        textAlign: "right",
+      }}
+    >
+      <div
+        style={{
+          fontSize: "1rem",
+          fontWeight: "600",
+          marginBottom: "12px",
+          opacity: 0.85,
+        }}
+      >
+        {new Date().toLocaleDateString(undefined, {
+          weekday: "long",
+          month: "long",
+          day: "numeric"
+        })}
       </div>
+      <WeatherWidget />
+    </div>
+  </div>
+</Card>
 
       <h1>Statistics</h1>
 

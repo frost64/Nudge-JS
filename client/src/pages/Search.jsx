@@ -8,6 +8,8 @@ import api from "../services/api";
 import Layout from "../components/Layout";
 import Card from "../components/Card";
 import toast from "react-hot-toast";
+import highlightText from "../utils/highlightText";
+
 
 function Search() {
   const navigate = useNavigate();
@@ -19,6 +21,7 @@ function Search() {
 
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState(null);
+  const [selectedCategory, setSelectedCategory] = useState("all");
 
   const location = useLocation();
 
@@ -46,6 +49,7 @@ function Search() {
       setResults(
         res.data
       );
+      setSelectedCategory("all");
 
       toast.dismiss(
         loadingToast
@@ -93,7 +97,7 @@ function Search() {
       top: "15%",
       left: "2%",
       width: "20%",
-      minHeight: "65%",
+      minHeight: "75%",
       padding: "24px",
       borderRadius: "22px",
     }}
@@ -103,7 +107,7 @@ function Search() {
         textAlign: "center",
       }}
     >
-      Search 🔍
+      Search By 🔍
     </h1>
 
     {!query ? (
@@ -118,10 +122,25 @@ function Search() {
       <>
         <div
           className="glow-top left"
+          onClick={() => setSelectedCategory("all")}
           style={{
             paddingLeft: "20px",
             marginBottom: "10px",
             borderRadius: "10px",
+            cursor: "pointer",
+          }}
+        >
+          📋 All Results
+        </div>
+        
+        <div
+          className="glow-top left"
+          onClick={() => setSelectedCategory("notes")}
+          style={{
+            paddingLeft: "20px",
+            marginBottom: "10px",
+            borderRadius: "10px",
+            cursor: "pointer",
           }}
         >
           📝 Notes: {results?.notes?.length || 0}
@@ -129,10 +148,12 @@ function Search() {
 
         <div
           className="glow-top left"
+          onClick={() => setSelectedCategory("reminders")}
           style={{
             paddingLeft: "20px",
             marginBottom: "10px",
             borderRadius: "10px",
+            cursor: "pointer",
           }}
         >
           ⏰ Reminders: {results?.reminders?.length || 0}
@@ -140,10 +161,12 @@ function Search() {
 
         <div
           className="glow-top left"
+          onClick={() => setSelectedCategory("birthdays")}
           style={{
             paddingLeft: "20px",
             marginBottom: "10px",
             borderRadius: "10px",
+            cursor: "pointer",
           }}
         >
           🎂 Birthdays: {results?.birthdays?.length || 0}
@@ -151,9 +174,11 @@ function Search() {
 
         <div
           className="glow-top left"
+          onClick={() => setSelectedCategory("links")}
           style={{
             paddingLeft: "20px",
             borderRadius: "10px",
+            cursor: "pointer",
           }}
         >
           🔗 Links: {results?.links?.length || 0}
@@ -251,8 +276,12 @@ function Search() {
         </div>
       )}
 
+
+
       {results && !noResults && (
         <>
+          {(selectedCategory === "all" ||
+            selectedCategory === "reminders") && (
           <Card variant="glass">
             <h2
               className="underline"
@@ -280,14 +309,19 @@ function Search() {
                     }
                   >
                     <strong>
-                      {item.title}
+                      {highlightText(item.title, query)}
                     </strong>
                   </div>
                 )
               )
             )}
           </Card>
+            )}
 
+          
+          
+          {(selectedCategory === "all" ||
+            selectedCategory === "notes") && (
           <Card variant="glass">
             <h2
               className="underline"
@@ -315,18 +349,24 @@ function Search() {
                     }
                   >
                     <strong>
-                      {item.title}
+                      {highlightText(item.title, query)}
                     </strong>
 
                     <p>
-                      {item.content}
+                      {highlightText(item.content, query)}
                     </p>
                   </div>
                 )
               )
             )}
           </Card>
+          )}
 
+
+
+
+          {(selectedCategory === "all" ||
+            selectedCategory === "birthdays") && (
           <Card variant="glass">
             <h2
               className="underline"
@@ -353,13 +393,19 @@ function Search() {
                       )
                     }
                   >
-                    {item.name}
+                    {highlightText(item.name, query)}
                   </div>
                 )
               )
             )}
           </Card>
+          )}
 
+
+
+
+          {(selectedCategory === "all" ||
+            selectedCategory === "links") && (
           <Card variant="glass">
             <h2
               className="underline"
@@ -387,7 +433,7 @@ function Search() {
                     }
                   >
                     <strong>
-                      {item.title}
+                      {highlightText(item.title, query)}
                     </strong>
 
                     <p>
@@ -407,6 +453,7 @@ function Search() {
               )
             )}
           </Card>
+          )}
         </>
       )}
     </div>

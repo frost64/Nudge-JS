@@ -365,21 +365,42 @@ body.dark select.input-glow option {
 /* ------------------Nav Buttons---------------- */
 
 /* ------------------profile avatar-------------------- */
-.icon-zoom{
+.icon-zoom {
   transition:
-    transform .3s ease,
-    filter .3s ease,
-    text-shadow .3s ease;
+    transform 0.25s ease,
+    filter 0.25s ease,
+    box-shadow 0.25s ease;
 }
 
-.icon-zoom:hover{
+.icon-zoom:hover {
+  transform: translateY(-2px) scale(1.03);
 
-  filter: brightness(1.15);
-  text-shadow:
-    0 0 8px rgba(0, 255, 204, 0.45),
-    0 0 18px rgba(59,130,246,.25);
+  filter: brightness(1.08) saturate(1.1);
+
+  box-shadow:
+    0 0 12px rgba(0, 158, 129, 0.18),
+    0 0 24px rgba(6, 126, 169, 0.12);
 }
 
+.icon-zoom:active {
+  transform: translateY(0) scale(0.98);
+}
+
+/* ----------------- Keyboard Focus ----------------- */
+
+.icon-zoom:focus,
+.icon-zoom:focus-visible {
+  outline: none;
+
+  border-radius: 15px;
+
+  box-shadow:
+    0 0 0 2px rgba(59,130,246,.35),
+    0 0 12px rgba(59,130,246,.20),
+    0 0 24px rgba(6,126,169,.12);
+
+  filter: brightness(1.08);
+}
 
 
 /* -------------------------logo zoom--------------------------- */
@@ -405,7 +426,7 @@ body.dark select.input-glow option {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    height: 80px;
+    height: 90px;
     z-index: 1000;
     padding: 15px 25px;
 }
@@ -806,4 +827,22 @@ body.dark .glow-top.delete:hover {
 
     box-shadow:
     0 0 18px rgba(56,189,248,.35);
+}
+
+
+.search-highlight {
+  display: inline;
+  padding: 1px 2px;
+  border-radius: 5px;
+  background: linear-gradient(
+    135deg,
+    rgba(34,211,238,.22),
+    rgba(59,130,246,.24)
+  );
+  border: 1px solid rgba(255,255,255,.18);
+  backdrop-filter: blur(6px);
+  color: #8f00c3;
+  font-weight: 700;
+  box-shadow: 0 0 8px rgba(59,130,246,.18);
+  line-height: inherit;
 }

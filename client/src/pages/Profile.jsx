@@ -317,7 +317,7 @@ const sidebar = (
       top: "15%",
       left: "2%",
       width: "20%",
-      minHeight: "80%",
+      minHeight: "75%",
       padding: "24px",
       borderRadius: "22px",
     }}

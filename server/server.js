@@ -16,6 +16,7 @@ const adminRoutes = require("./routes/adminRoutes");
 const authMiddleware = require("./middleware/authMiddleware");
 const notFound = require("./middleware/notFound");
 const errorHandler = require("./middleware/errorMiddleware");
+const weatherRoutes = require("./routes/weatherRoutes");
 
 dotenv.config();
 connectDB();
@@ -31,6 +32,7 @@ app.use("/api/reminders", reminderRoutes);
 app.use("/api/birthdays", birthdayRoutes);
 app.use("/api/notes", noteRoutes);
 app.use("/api/links", linkRoutes);
+app.use("/api/weather", weatherRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/search", searchRoutes);
 app.use("/api/calendar", calendarRoutes);
