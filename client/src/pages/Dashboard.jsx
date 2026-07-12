@@ -8,7 +8,7 @@ import dashboardLightBg from "../assets/backgrounds/dashboard-light.png";
 import dashboardDarkBg from "../assets/backgrounds/dashboard-dark.png";
 import toast from "react-hot-toast";
 import WeatherWidget from "../components/WeatherWidget";
-
+import LoadingSpinner from "../components/LoadingSpinner";
 
 function Dashboard() {
   const [data, setData] = useState(null);
@@ -77,7 +77,7 @@ function Dashboard() {
   if (!data) {
     return (
       <Layout>
-        <h2>Loading...</h2>
+        <LoadingSpinner text="Loading Dashboard..." />
       </Layout>
     );
   }

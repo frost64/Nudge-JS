@@ -846,3 +846,103 @@ body.dark .glow-top.delete:hover {
   box-shadow: 0 0 8px rgba(59,130,246,.18);
   line-height: inherit;
 }
+
+
+/* ------------------------ Loading Spinner ------------------ */
+/* ==========================================================
+   NUDGE LOADER
+========================================================== */
+
+.nudge-loader{
+    position: relative;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.nudge-loader-ring{
+
+    position:absolute;
+
+    inset:0;
+
+    border-radius:50%;
+
+    border:5px solid transparent;
+
+    border-top:5px solid #00be9f;
+    border-right:5px solid #38bdf8;
+    border-bottom:5px solid rgba(56,189,248,.15);
+    border-left:5px solid rgba(0,190,159,.15);
+
+    animation:nudgeRotate .9s linear infinite;
+
+    box-shadow:
+        0 0 18px rgba(0,190,159,.25),
+        0 0 35px rgba(59,130,246,.18);
+}
+
+.nudge-loader-center{
+
+    position:relative;
+
+    width:72%;
+    height:72%;
+
+    border-radius:50%;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    backdrop-filter:blur(14px);
+
+    background:rgba(255,255,255,.20);
+
+    border:1px solid rgba(255,255,255,.25);
+
+    z-index:2;
+}
+
+body.dark .nudge-loader-center{
+
+    background:rgba(255,255,255,.05);
+
+    border:1px solid rgba(255,255,255,.12);
+}
+
+.nudge-loader-center img{
+
+    animation:nudgePulse 1.8s ease-in-out infinite;
+
+    user-select:none;
+}
+
+@keyframes nudgeRotate{
+
+    from{
+        transform:rotate(0deg);
+    }
+
+    to{
+        transform:rotate(360deg);
+    }
+
+}
+
+@keyframes nudgePulse{
+
+    0%{
+        transform:scale(1);
+    }
+
+    50%{
+        transform:scale(1.06);
+    }
+
+    100%{
+        transform:scale(1);
+    }
+
+}

@@ -40,8 +40,7 @@ function Birthdays() {
     try {
       const res = await api.get("/birthdays");
       setBirthdays(res.data.data);
-    } 
-    catch (error) {
+    } catch (error) {
       console.log(error);
 
       toast.error(
@@ -197,9 +196,9 @@ function Birthdays() {
   };
 
   useEffect(() => {
-    fetchBirthdays();
-    fetchUpcoming();
-  }, []);
+  fetchBirthdays();
+  fetchUpcoming();
+}, []);
   
   useEffect(() => {
     if (shouldCreate === "true") {
@@ -305,6 +304,7 @@ const relationshipOptions = [
   "Myself",
   "Other",
 ];
+
   const sidebar = (
   <Card
     variant="glass"
@@ -352,6 +352,8 @@ const relationshipOptions = [
       getDaysUntilBirthday(a) -
       getDaysUntilBirthday(b)
   );
+
+
   return (
     <Layout
       sidebar={sidebar}

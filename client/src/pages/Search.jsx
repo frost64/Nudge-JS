@@ -9,7 +9,7 @@ import Layout from "../components/Layout";
 import Card from "../components/Card";
 import toast from "react-hot-toast";
 import highlightText from "../utils/highlightText";
-
+import LoadingSpinner from "../components/LoadingSpinner";
 
 function Search() {
   const navigate = useNavigate();
@@ -37,8 +37,6 @@ function Search() {
 
     setLoading(true);
 
-    const loadingToast =
-      toast.loading("Searching...");
 
     try {
       const res =
@@ -51,15 +49,11 @@ function Search() {
       );
       setSelectedCategory("all");
 
-      toast.dismiss(
-        loadingToast
-      );
 
     } catch (error) {
 
-      toast.dismiss(
-        loadingToast
-      );
+
+
 
       console.log(error);
 
@@ -187,7 +181,9 @@ function Search() {
     )}
   </Card>
 );
-
+if (loading) {
+  return <LoadingSpinner />;
+}
   return (
     <Layout
       sidebar={sidebar}

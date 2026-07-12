@@ -10,6 +10,7 @@ import Card from "../components/Card";
 
 import dashboardLightBg from "../assets/backgrounds/dashboard-light.png";
 import dashboardDarkBg from "../assets/backgrounds/dashboard-dark.png";
+import LoadingSpinner from "../components/LoadingSpinner";
 
 function AdminDashboard() {
   const { user } = useContext(AuthContext);
@@ -22,6 +23,7 @@ function AdminDashboard() {
 
   const [stats, setStats] = useState(null);
   const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const confirm = useConfirm();
 
@@ -82,9 +84,19 @@ function AdminDashboard() {
   };
 
   useEffect(() => {
-    fetchStats();
-    fetchUsers();
-  }, []);
+  const loadData = async () => {
+    setLoading(true);
+
+    await Promise.all([
+      fetchStats(),
+      fetchUsers(),
+    ]);
+
+    setLoading(false);
+  };
+
+  loadData();
+}, []);
 
 const sidebar = (
   <Card
@@ -173,7 +185,9 @@ const sidebar = (
 );
 
 
-
+if (loading) {
+  return <LoadingSpinner />;
+}
   return (
     <Layout
       sidebar={sidebar}

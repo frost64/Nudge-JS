@@ -45,8 +45,7 @@ const fetchReminders = async () => {
   try {
     const res = await api.get("/reminders");
     setReminders(res.data.data);
-  } 
-  catch (error) {
+  } catch (error) {
     console.log(error);
     toast.error(
       error.response?.data?.message ||
@@ -362,7 +361,6 @@ const sidebar = (
     )}
   </Card>
 );
-
 
 return ( 
   <Layout

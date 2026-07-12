@@ -56,25 +56,19 @@ function Notes() {
   }, 1200);
 };
 
-  const fetchNotes =
-    async () => {
-      try {
-        const res =
-          await api.get(
-            "/notes"
-          );
-        setNotes(
-          res.data.data
-        );
-      } catch (error) {
-          console.log(error);
+  const fetchNotes = async () => {
+  try {
+    const res = await api.get("/notes");
+    setNotes(res.data.data);
+  } catch (error) {
+    console.log(error);
 
-          toast.error(
-            error.response?.data?.message ||
-            "Failed to load notes."
-          );
-        }
-    };
+    toast.error(
+      error.response?.data?.message ||
+      "Failed to load notes."
+    );
+  }
+};
 
   const handleSave =
     async () => {
@@ -235,6 +229,8 @@ function Notes() {
       }
     };
   }, []);
+
+
 useEffect(() => {
     if (showForm) {
         document.body.style.overflow = "hidden";
@@ -246,6 +242,8 @@ useEffect(() => {
         document.body.style.overflow = "";
     };
 }, [showForm]);
+
+
   const sidebar = (
   <Card
   variant="glass"
@@ -286,8 +284,6 @@ useEffect(() => {
     )}
   </Card>
 );
-
-
 
   return (
     <Layout 
