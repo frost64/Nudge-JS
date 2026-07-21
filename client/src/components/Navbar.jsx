@@ -8,6 +8,7 @@ import api from "../services/api";
 import logo from "../assets/Logo.svg";
 import toast from "react-hot-toast";
 import highlightText from "../utils/highlightText";
+import MobileDrawer from "./MobileDrawer";
 
 import defaultAvatar from "../assets/avatars/defaultAvatar.png";
 import avatar1 from "../assets/avatars/avatar1.png";
@@ -16,10 +17,13 @@ import avatar3 from "../assets/avatars/avatar3.png";
 import avatar4 from "../assets/avatars/avatar4.png";
 import avatar5 from "../assets/avatars/avatar5.png";
 import avatar6 from "../assets/avatars/avatar6.png";
-import avatar7 from "../assets/avatars/avatar7.png";
 
-const avatarMap = {avatar1, avatar2, avatar3, avatar4, avatar5, avatar6, avatar7};
-function Navbar() {
+const avatarMap = {avatar1, avatar2, avatar3, avatar4, avatar5, avatar6};
+function Navbar({
+  isMobile,
+  mobileMenuOpen,
+  setMobileMenuOpen,
+}) {
 
   const { user, setUser, } = useContext(AuthContext);
   const darkMode = user?.theme === "dark";
@@ -168,6 +172,21 @@ function Navbar() {
   }, []);
 
   useEffect(() => {
+  if (!isMobile) {
+    setMobileMenuOpen(false);
+  }
+}, [isMobile, setMobileMenuOpen]);
+
+useEffect(() => {
+  document.body.style.overflow =
+    mobileMenuOpen ? "hidden" : "";
+
+  return () => {
+    document.body.style.overflow = "";
+  };
+}, [mobileMenuOpen]);
+
+  useEffect(() => {
     setHighlightedIndex(-1);
   }, [suggestions]);
 
@@ -187,10 +206,130 @@ function Navbar() {
   setHighlightedIndex(-1);
 }, [navigate]);
 
+const mobileNavigation = (
+  
+  <div
+    style={{
+      display: "flex",
+      flexDirection: "column",
+      gap: "12px",
+    }}
+  >
+
+    <div
+      style={{
+        marginBottom: "20px",
+        paddingBottom: "14px",
+        borderBottom: darkMode
+          ? "1px solid rgba(255,255,255,.08)"
+          : "1px solid rgba(0,0,0,.08)",
+      }}
+    >
+      <h2
+        style={{
+          margin: 0,
+          color: "#067ea9",
+        }}
+      >
+        Nudge
+      </h2>
+
+      <small
+        style={{
+          opacity: .7,
+        }}
+      >
+        Navigation
+      </small>
+    </div>
+
+
+    <Link
+      to="/dashboard"
+      style={{
+        ...linkStyle("/dashboard"),
+        display: "block",
+        width: "100%",
+        boxSizing: "border-box",
+      }}
+      onClick={() => setMobileMenuOpen(false)}
+    >
+      Dashboard
+    </Link>
+
+    <Link
+      to="/birthdays"
+      style={{
+        ...linkStyle("/birthdays"),
+        display: "block",
+        width: "100%",
+        boxSizing: "border-box",
+      }}
+      onClick={() => setMobileMenuOpen(false)}
+    >
+      Birthdays
+    </Link>
+
+    <Link
+      to="/reminders"
+      style={{
+        ...linkStyle("/reminders"),
+        display: "block",
+        width: "100%",
+        boxSizing: "border-box",
+      }}
+      onClick={() => setMobileMenuOpen(false)}
+    >
+      Reminders
+    </Link>
+
+    <Link
+      to="/notes"
+      style={{
+        ...linkStyle("/notes"),
+        display: "block",
+        width: "100%",
+        boxSizing: "border-box",
+      }}
+      onClick={() => setMobileMenuOpen(false)}
+    >
+      Notes
+    </Link>
+
+    <Link
+      to="/links"
+      style={{
+        ...linkStyle("/links"),
+        display: "block",
+        width: "100%",
+        boxSizing: "border-box",
+      }}
+      onClick={() => setMobileMenuOpen(false)}
+    >
+      Links
+    </Link>
+
+    {user?.role === "admin" && (
+      <Link
+        to="/admin"
+        style={{
+          ...linkStyle("/admin"),
+          display: "block",
+          width: "100%",
+          boxSizing: "border-box",
+        }}
+        onClick={() => setMobileMenuOpen(false)}
+      >
+        Admin
+      </Link>
+    )}
+    <div style={{ height: 40 }} />
+  </div>
+);
+
 const suggestionList = useMemo(() => {
   return suggestions.map((item, index) => {
     const selected = highlightedIndex === index;
-
     return (
       <div
         key={`${item.type}-${item.id}`}
@@ -270,6 +409,14 @@ const suggestionList = useMemo(() => {
     <nav
       className = "nav-style"
       style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: isMobile
+          ? "flex-start"
+          : "space-between",
+        gap: isMobile ? "6px" : "20px",
+        flexWrap: "nowrap",
+        
         borderRadius: "50px",
         background: darkMode
           ? "rgba(17,24,39,.40)"
@@ -302,6 +449,40 @@ const suggestionList = useMemo(() => {
       }}
     >
       
+
+      {isMobile && (
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+
+                width: "42px",
+                height: "42px",
+
+                flexShrink: 0,
+
+                margin: 0,
+                padding: 0,
+
+                background: "transparent",
+                border: "none",
+
+                borderRadius: "10px",
+
+                fontSize: "30px",
+                lineHeight: 1,
+
+                cursor: "pointer",
+
+                color: darkMode ? "#fff" : "#111",
+              }}
+            >
+              {mobileMenuOpen ? "✕" : "☰"}
+            </button>
+          )}
       {/* Logo */}
 
       <Link 
@@ -323,12 +504,12 @@ const suggestionList = useMemo(() => {
             src={logo}
             alt="Nudge Logo"
             style={{
-              width: "48px",
-              height: "48px",
+              width: isMobile ? "42px" : "48px",
+              height: isMobile ? "42px" : "48px",
               objectFit: "contain"
             }}
           />
-
+        {!isMobile && (
           <div>
             <div 
               style={{
@@ -349,14 +530,19 @@ const suggestionList = useMemo(() => {
               Remember Everything
             </div>
           </div>
+          )}
+
+
         </div>
       </Link>
 
+      
+
       {/* Navigation Links */}
 
-      <div 
+      <div
         style={{
-          display: "flex",
+          display: isMobile ? "none" : "flex",
           alignItems: "center",
           justifyContent: "center",
           gap: "10px",
@@ -421,10 +607,12 @@ const suggestionList = useMemo(() => {
         ref={searchRef}
         style={{
           position: "relative",
-          width: "250px",
-          minWidth: "250px",
-          flexShrink: 0,
-          zIndex: 2000
+          width: isMobile ? "100%" : "250px",
+          minWidth: isMobile ? 0 : "250px",
+          flexGrow: isMobile ? 1 : 0,
+          flexShrink: 1,
+          flexBasis: isMobile ? 0 : "250px",
+          zIndex: 2000,
         }}
       >
         <FiSearch
@@ -442,6 +630,7 @@ const suggestionList = useMemo(() => {
             pointerEvents: "auto"
           }}
         />
+        
         <input
           className = "input-glow"
           type="search"
@@ -505,8 +694,9 @@ const suggestionList = useMemo(() => {
           }}
           style={{
             width: "100%",
-            padding:
-              "10px 12px 10px 38px",
+            padding: isMobile
+              ? "11px 10px 11px 36px"
+              : "10px 12px 10px 38px",
             borderRadius: "10px",
             border: darkMode
               ? "1px solid #4b5563"
@@ -573,6 +763,10 @@ const suggestionList = useMemo(() => {
 
       <button
         className="theme-toggle"
+        style={{
+            margin: "8px",
+            flexShrink: 0,
+        }}
         onClick={toggleTheme}
       >
         {darkMode ? "☀️" : "🌙"}
@@ -585,19 +779,20 @@ const suggestionList = useMemo(() => {
         to="/profile"
         style={{
           textDecoration: "none",
-          flexShrink: 0
+          flexShrink: 0,
+          margin: "auto",
         }}
       >
         <img
           src={
-            avatarMap[
-              user?.avatar
-            ] || defaultAvatar
+            user?.avatar?.startsWith("/uploads/")
+              ? `${import.meta.env.VITE_API_URL.replace("/api", "")}${user.avatar}`
+              : avatarMap[user?.avatar] || defaultAvatar
           }
           alt="Profile"
           style={{
-            width: "50px",
-            height: "50px",
+            width: isMobile ? "42px" : "50px",
+            height: isMobile ? "42px" : "50px",
             borderRadius: "50%",
             objectFit: "cover",
             border:
@@ -611,7 +806,13 @@ const suggestionList = useMemo(() => {
           }}
         />
       </Link>
-
+      <MobileDrawer
+        open={mobileMenuOpen}
+        onClose={() => setMobileMenuOpen(false)}
+        darkMode={darkMode}
+      >
+        {mobileNavigation}
+      </MobileDrawer>
     </nav>
   );
 }

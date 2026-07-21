@@ -5,6 +5,8 @@ const Birthday = require("../models/Birthday");
 const Link = require("../models/Link");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const fs = require("fs");
+const path = require("path");
 
 
 const loginUser = async (req, res) => {
@@ -166,6 +168,53 @@ const updateProfile = async (req, res) => {
       message: error.message,
     });
 
+  }
+};
+
+const uploadProfilePicture = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        message: "No image uploaded.",
+      });
+    }
+
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found.",
+      });
+    }
+// Delete previous uploaded avatar only
+if (
+  user.avatar &&
+  user.avatar.startsWith("/uploads/avatars/")
+) {
+  const oldPath = path.join(
+    __dirname,
+    "..",
+    user.avatar
+  );
+
+  if (fs.existsSync(oldPath)) {
+    fs.unlinkSync(oldPath);
+  }
+}
+
+// Multer already saved the uploaded file
+user.avatar = `/uploads/avatars/${req.file.filename}`;
+
+await user.save();
+
+res.json({
+  avatar: user.avatar,
+});
+
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
   }
 };
 
@@ -359,7 +408,20 @@ const deleteMyAccount = async (req, res) => {
       Birthday.deleteMany({ user: user._id }),
       Link.deleteMany({ user: user._id })
     ]);
+    if (
+      user.avatar &&
+      user.avatar.startsWith("/uploads/avatars/")
+    ) {
+      const avatarPath = path.join(
+        __dirname,
+        "..",
+        user.avatar
+      );
 
+      if (fs.existsSync(avatarPath)) {
+        fs.unlinkSync(avatarPath);
+      }
+    }
     await user.deleteOne();
 
     res.status(200).json({
@@ -385,5 +447,6 @@ module.exports = {
   updateEmail,
   updatePassword,
   deleteMyAccount,
+  uploadProfilePicture,
 };
 

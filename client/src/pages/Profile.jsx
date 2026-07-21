@@ -1,4 +1,5 @@
-import { useEffect, useState, useContext } from "react";
+import { useEffect, useState, useContext, useRef} from "react";
+import { LayoutContext } from "../components/Layout";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import { useConfirm } from "../context/ConfirmContext";
@@ -18,7 +19,6 @@ import avatar3 from "../assets/avatars/avatar3.png";
 import avatar4 from "../assets/avatars/avatar4.png";
 import avatar5 from "../assets/avatars/avatar5.png";
 import avatar6 from "../assets/avatars/avatar6.png";
-import avatar7 from "../assets/avatars/avatar7.png";
 
 function Profile() {
 
@@ -30,7 +30,7 @@ setUser:setAuthUser
 
 const navigate=useNavigate();
 const confirm=useConfirm();
-
+const { isMobile } = useContext(LayoutContext);
 const darkMode=user?.theme==="dark";
 
 const formBackground=
@@ -39,18 +39,18 @@ darkMode
 :profileLightBg;
 
 const [profile,setProfile]=useState(null);
-
 const [avatar,setAvatar]=useState("");
 const [bio,setBio]=useState("");
-
 const [username,setUsername]=useState("");
 const [email,setEmail]=useState("");
-
 const [currentPassword,setCurrentPassword]=useState("");
 const [newPassword,setNewPassword]=useState("");
 const [confirmPassword,setConfirmPassword]=useState("");
-
 const [error,setError]=useState("");
+const [uploading, setUploading] = useState(false);
+const [selectedImage, setSelectedImage] = useState(null);
+const [previewImage, setPreviewImage] = useState("");
+const fileInputRef = useRef(null);
 
 const avatars=[
 {id:"avatar1",image:avatar1},
@@ -59,7 +59,6 @@ const avatars=[
 {id:"avatar4",image:avatar4},
 {id:"avatar5",image:avatar5},
 {id:"avatar6",image:avatar6},
-{id:"avatar7",image:avatar7},
 ];
 
 const inputStyle={
@@ -117,32 +116,60 @@ useEffect(() => {
   fetchProfile();
 }, []);
 
-const handleProfileUpdate=async()=>{
 
-try{
+const handleProfileUpdate = async () => {
+  try {
 
-const res=await api.put("/auth/profile",{
+    let avatarToSave = avatar;
 
-avatar,
-bio,
+    if (selectedImage) {
+      const formData = new FormData();
 
-});
-await fetchProfile();
+      formData.append("image", selectedImage);
 
-toast.success("Profile updated.");
+      const uploadRes = await api.put(
+        "/auth/profile-picture",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
 
-}
-catch(error){
+      avatarToSave = uploadRes.data.avatar;
+    }
 
-toast.error(
+    await api.put("/auth/profile", {
+      avatar: avatarToSave,
+      bio,
+    });
 
-error.response?.data?.message||
-"Failed to update profile."
+    setSelectedImage(null);
+    setPreviewImage("");
 
-);
+    await fetchProfile();
 
-}
+    toast.success("Profile updated.");
 
+  } catch (error) {
+    toast.error(
+      error.response?.data?.message ||
+      "Failed to update profile."
+    );
+  }
+};
+
+const handleImageUpload = (e) => {
+  const file = e.target.files[0];
+
+  if (!file) return;
+
+  setSelectedImage(file);
+
+  setPreviewImage(URL.createObjectURL(file));
+
+  e.target.value = "";
 };
 
 const handleUsernameUpdate = async () => {
@@ -313,19 +340,22 @@ const sidebar = (
   <Card
     variant="glass"
     style={{
-      position: "fixed",
-      top: "15%",
-      left: "2%",
-      width: "20%",
-      minHeight: "75%",
+      position: isMobile ? "static" : "fixed",
+      top: isMobile ? undefined : "15%",
+      left: isMobile ? undefined : "2%",
+      width: isMobile ? "100%" : "20%",
+      minHeight: isMobile ? "auto" : "75%",
       padding: "24px",
       borderRadius: "22px",
     }}
   >
     <img
       src={
-        avatars.find((a) => a.id === avatar)?.image ||
-        defaultAvatar
+        previewImage
+          ? previewImage
+          : avatar?.startsWith("/uploads/")
+            ? `${import.meta.env.VITE_API_URL.replace("/api", "")}${avatar}`
+            : avatars.find(a => a.id === avatar)?.image || defaultAvatar
       }
       alt="Avatar"
       style={{
@@ -397,6 +427,16 @@ return (
           padding: "35px",
         }}
       >
+
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          style={{ display: "none" }}
+          onChange={handleImageUpload}
+        />
+
+
         <h2
           style={{
             textAlign: "left",
@@ -475,6 +515,68 @@ return (
               }}
             />
           ))}
+          <div
+            
+            onClick={() => {
+              fileInputRef.current?.click()
+            }}
+            style={{
+              width: "82px",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              cursor: "pointer",
+            }}
+          >
+            <div
+              style={{
+                width: "82px",
+                height: "82px",
+                borderRadius: "50%",
+                overflow: "hidden",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+                border: avatar?.startsWith("/uploads/")
+                  ? "3px solid #38bdf8"
+                  : darkMode
+                  ? "2px dashed rgba(255,255,255,.25)"
+                  : "2px dashed rgba(0,0,0,.18)",
+              }}
+            >
+              {avatar?.startsWith("/uploads/") ? (
+                <img
+                  src={
+                    previewImage
+                      ? previewImage
+                      : avatar?.startsWith("/uploads/")
+                        ? `${import.meta.env.VITE_API_URL.replace("/api", "")}${avatar}`
+                        : avatars.find(a => a.id === avatar)?.image || defaultAvatar
+                  }
+                  alt="Uploaded Avatar"
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                  }}
+                />
+              ) : (
+                "+"
+              )}
+            </div>
+
+            <span
+              style={{
+                marginTop: "10px",
+                fontSize: "13px",
+                textAlign: "center",
+                userSelect: "none",
+              }}
+            >
+              Upload Image
+            </span>
+          </div>
         </div>
 
         <h3>Bio</h3>

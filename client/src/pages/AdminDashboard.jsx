@@ -1,4 +1,5 @@
 import { useEffect, useState, useContext } from "react";
+import { LayoutContext } from "../components/Layout";
 import { useConfirm } from "../context/ConfirmContext";
 import toast from "react-hot-toast";
 import api from "../services/api";
@@ -14,7 +15,7 @@ import LoadingSpinner from "../components/LoadingSpinner";
 
 function AdminDashboard() {
   const { user } = useContext(AuthContext);
-
+  const { isMobile } = useContext(LayoutContext);
   const darkMode = user?.theme === "dark";
 
   const backgroundImage = darkMode
@@ -101,15 +102,15 @@ function AdminDashboard() {
 const sidebar = (
   <Card
     variant="glass"
-    style={{
-      position: "fixed",
-      top: "15%",
-      left: "2%",
-      width: "20%",
-      minHeight: "75%",
-      padding: "24px",
-      borderRadius: "22px",
-    }}
+   style={{
+    position: isMobile ? "static" : "fixed",
+    top: isMobile ? undefined : "15%",
+    left: isMobile ? undefined : "2%",
+    width: isMobile ? "100%" : "20%",
+    minHeight: isMobile ? "auto" : "75%",
+    padding: "24px",
+    borderRadius: "22px",
+  }}
   >
     <h1
       style={{
@@ -186,7 +187,11 @@ const sidebar = (
 
 
 if (loading) {
-  return <LoadingSpinner />;
+  return (
+    <Layout backgroundImage={backgroundImage}>
+      <LoadingSpinner />
+    </Layout>
+  );
 }
   return (
     <Layout

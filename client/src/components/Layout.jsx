@@ -1,5 +1,5 @@
 import Navbar from "./Navbar";
-import { useContext, useEffect } from "react";
+import { useContext, useEffect, useState } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { createContext } from "react";
 import { Toaster } from "react-hot-toast";
@@ -7,6 +7,7 @@ import TopScroll from "./TopScroll";
 
 export const LayoutContext = createContext({
   cardVariant: "solid",
+  isMobile: false,
 });
 
 function Layout({
@@ -17,9 +18,21 @@ function Layout({
   cardVariant = "solid",
 }) {
   const { user } = useContext(AuthContext);
+  const darkMode = user?.theme === "dark";
+  const [isMobile, setIsMobile] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const darkMode =
-    user?.theme === "dark";
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 900px)");
+
+    const update = () => setIsMobile(media.matches);
+
+    update();
+
+    media.addEventListener("change", update);
+
+    return () => media.removeEventListener("change", update);
+  }, []);
 
   useEffect(() => {
     if (darkMode) {
@@ -53,7 +66,11 @@ function Layout({
           position: "relative",
         }}
       >
-        <Navbar />
+        <Navbar
+          isMobile={isMobile}
+          mobileMenuOpen={mobileMenuOpen}
+          setMobileMenuOpen={setMobileMenuOpen}
+        />
           <Toaster
             position="center"
             reverseOrder={false}
@@ -143,9 +160,14 @@ function Layout({
           position: "relative",
         }}
       >
-    <LayoutContext.Provider value={{ cardVariant }}>
+    <LayoutContext.Provider
+      value={{
+        cardVariant,
+        isMobile,
+      }}
+    >
         {/* Sidebar */}
-        {sidebar && (
+        {sidebar && !isMobile && (
           <aside
             style={{
               position: "sticky",

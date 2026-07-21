@@ -1,9 +1,35 @@
 const express = require("express");
 const router = express.Router();
+const multer = require("multer");
 
 const authMiddleware = require("../middleware/authMiddleware");
 const { body } = require("express-validator");
 const validate = require("../middleware/validationMiddleware");
+
+const path = require("path");
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, "../uploads/avatars"));
+  },
+  filename: (req, file, cb) => {
+    const uniqueName =
+      `${req.user.id}-${Date.now()}${path.extname(file.originalname)}`;
+
+    cb(null, uniqueName);
+  },
+});
+
+const upload = multer({
+  storage,
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith("image/")) {
+      cb(null, true);
+    } else {
+      cb(new Error("Only image files are allowed."));
+    }
+  },
+});
 
 const {
   registerUser,
@@ -14,6 +40,7 @@ const {
   updateEmail,
   updatePassword,
   deleteMyAccount,
+  uploadProfilePicture,
 } = require("../controllers/authController");
 
 // =======================
@@ -101,6 +128,13 @@ router.delete(
   "/delete-account",
   authMiddleware,
   deleteMyAccount
+);
+
+router.put(
+  "/profile-picture",
+  authMiddleware,
+  upload.single("image"),
+  uploadProfilePicture
 );
 
 module.exports = router;

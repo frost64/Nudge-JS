@@ -42,16 +42,22 @@ p {
 margin-bottom: 8px;
 }
 
-input,
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="date"],
+input[type="time"],
+input[type="number"],
+input[type="search"],
 select,
 textarea {
-width: 100%;
-max-width: 500px;
-padding: 10px;
-border: 1px solid #d1d5db;
-border-radius: 8px;
-outline: none;
-font-size: 14px;
+  width: 100%;
+  max-width: 500px;
+  padding: 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  outline: none;
+  font-size: 14px;
 }
 
 input:focus,
@@ -406,6 +412,7 @@ body.dark select.input-glow option {
 /* -------------------------logo zoom--------------------------- */
 
 .icon-zoom.logo:hover {
+  box-shadow: none;
   text-shadow: none;
   -ms-transform: scale(1.08); /* IE 9 */
   -webkit-transform: scale(1.08); /* Safari 3-8 */
@@ -420,15 +427,21 @@ body.dark select.input-glow option {
 .nav-style{
     position: sticky;
     top: 10px;
-    gap: 20px;
+
     width: calc(100% - 20px);
     margin: 0 auto;
+
     display: flex;
     align-items: center;
     justify-content: space-between;
-    height: 90px;
+
+    min-height: 90px;
+
+    padding: 0 25px;
+
+    gap: 20px;
+
     z-index: 1000;
-    padding: 15px 25px;
 }
 /* ----------------- Navbar Selected icon ----------------- */
 
@@ -804,8 +817,14 @@ body.dark .glow-top.delete:hover {
 /* --------------------------------------------------------------------- */
 
 .theme-toggle{
-    width:35px;
-    height:35px;
+    width:42px;
+    height:42px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    padding:0;
 
     border-radius:50%;
 
@@ -818,6 +837,7 @@ body.dark .glow-top.delete:hover {
     cursor:pointer;
 
     font-size:22px;
+    line-height:1;
 
     transition:.25s;
 }
@@ -826,8 +846,9 @@ body.dark .glow-top.delete:hover {
     transform:translateY(-2px) scale(1.06);
 
     box-shadow:
-    0 0 18px rgba(56,189,248,.35);
+        0 0 18px rgba(56,189,248,.35);
 }
+
 
 
 .search-highlight {

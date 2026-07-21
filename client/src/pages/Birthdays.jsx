@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef} from "react";
 import { useLocation } from "react-router-dom";
 import { useContext } from "react";
+import { LayoutContext } from "../components/Layout";
 import { AuthContext } from "../context/AuthContext";
 import { useConfirm } from "../context/ConfirmContext";
 import api from "../services/api";
@@ -14,6 +15,7 @@ import toast from "react-hot-toast";
 function Birthdays() {
   const { user } = useContext(AuthContext);
   const confirm = useConfirm();
+  const { isMobile } = useContext(LayoutContext);
   const darkMode = user?.theme === "dark";
   const formBackground = darkMode
   ? birthdayDarkBg
@@ -153,6 +155,61 @@ function Birthdays() {
     setNotes("");
     setShowForm(false);
   };
+
+  const exportToCalendar = (birthday) => {
+  const year = new Date().getFullYear();
+
+  const eventDate = new Date(
+    year,
+    birthday.birthMonth - 1,
+    birthday.birthDay
+  );
+
+  const formatDate = (date) =>
+    date
+      .toISOString()
+      .replace(/[-:]/g, "")
+      .split(".")[0] + "Z";
+
+  const start = formatDate(eventDate);
+
+  const endDate = new Date(eventDate);
+  endDate.setDate(endDate.getDate() + 1);
+
+  const end = formatDate(endDate);
+
+  const ics = `BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Nudge//Birthdays//EN
+BEGIN:VEVENT
+UID:${birthday._id}@nudge
+DTSTAMP:${formatDate(new Date())}
+DTSTART:${start}
+DTEND:${end}
+SUMMARY:${birthday.name}'s Birthday
+DESCRIPTION:${birthday.notes}
+RRULE:FREQ=YEARLY
+END:VEVENT
+END:VCALENDAR`;
+
+  const blob = new Blob([ics], {
+    type: "text/calendar;charset=utf-8",
+  });
+
+  const url = URL.createObjectURL(blob);
+
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `${birthday.name}-birthday.ics`;
+
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+
+  URL.revokeObjectURL(url);
+
+  toast.success("Calendar exported successfully.");
+};
 
   const handleDelete = async (id) => {
     const confirmed = await confirm({
@@ -309,11 +366,11 @@ const relationshipOptions = [
   <Card
     variant="glass"
     style={{
-      position: "fixed",
-      top: "15%",
-      left: "2%",
-      width: "20%",
-      minHeight: "75%",
+      position: isMobile ? "static" : "fixed",
+      top: isMobile ? undefined : "15%",
+      left: isMobile ? undefined : "2%",
+      width: isMobile ? "100%" : "20%",
+      minHeight: isMobile ? "auto" : "75%",
       padding: "24px",
       borderRadius: "22px",
     }}
@@ -628,6 +685,13 @@ const relationshipOptions = [
                     >
                       Edit
                     </button> 
+
+                    <button
+                      className="glow-top"
+                      onClick={() => exportToCalendar(birthday)}
+                    >
+                      Export Calendar
+                    </button>
                     
                     <button
                       className="glow-top delete"

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useContext } from "react";
+import { LayoutContext } from "../components/Layout";
 import { AuthContext } from "../context/AuthContext";
 import searchLightBg from "../assets/backgrounds/dashboard-light.png";
 import searchDarkBg from "../assets/backgrounds/dashboard-dark.png";
@@ -14,6 +15,7 @@ import LoadingSpinner from "../components/LoadingSpinner";
 function Search() {
   const navigate = useNavigate();
   const { user } = useContext(AuthContext);
+  const { isMobile } = useContext(LayoutContext);
   const darkMode = user?.theme === "dark";
   const backgroundImage = darkMode
     ? searchDarkBg
@@ -87,11 +89,11 @@ function Search() {
   <Card
     variant="glass"
     style={{
-      position: "fixed",
-      top: "15%",
-      left: "2%",
-      width: "20%",
-      minHeight: "75%",
+      position: isMobile ? "static" : "fixed",
+      top: isMobile ? undefined : "15%",
+      left: isMobile ? undefined : "2%",
+      width: isMobile ? "100%" : "20%",
+      minHeight: isMobile ? "auto" : "75%",
       padding: "24px",
       borderRadius: "22px",
     }}

@@ -1,5 +1,6 @@
 import { useEffect, useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
+import { LayoutContext } from "../components/Layout";
 import api from "../services/api";
 import { AuthContext } from "../context/AuthContext";
 import Layout from "../components/Layout";
@@ -13,6 +14,7 @@ import LoadingSpinner from "../components/LoadingSpinner";
 function Dashboard() {
   const [data, setData] = useState(null);
   const [error, setError] = useState("");
+  const { isMobile } = useContext(LayoutContext);
   
   const getGreeting = () => {
   const hour = new Date().getHours();
@@ -85,18 +87,13 @@ function Dashboard() {
   <Card
     variant="glass"
     style={{
-      position: "fixed",
-      top: "15%",
-      left: "2%",
-      width: "20%",
-      minHeight: "75%",
+      position: isMobile ? "static" : "fixed",
+      top: isMobile ? undefined : "15%",
+      left: isMobile ? undefined : "2%",
+      width: isMobile ? "100%" : "20%",
+      minHeight: isMobile ? "auto" : "75%",
       padding: "24px",
       borderRadius: "22px",
-
-      display: "flex",
-      flexDirection: "column",
-      gap: "16px",
-      
     }}
   >
     <h1
@@ -111,7 +108,10 @@ function Dashboard() {
 
     <button
       className="glow-top left"
-      style={{ width: "100%" }}
+      style={{ 
+        width: "100%",
+        marginBottom: "12px",
+      }}
       onClick={() => navigate("/reminders?create=true")}
     >
       ⏰ New Reminder
@@ -119,7 +119,10 @@ function Dashboard() {
 
     <button
       className="glow-top left"
-      style={{ width: "100%" }}
+      style={{ 
+        width: "100%",
+        marginBottom: "12px", 
+      }}
       onClick={() => navigate("/notes?create=true")}
     >
       📝 New Note
@@ -127,7 +130,10 @@ function Dashboard() {
 
     <button
       className="glow-top left"
-      style={{ width: "100%" }}
+      style={{ 
+        width: "100%",
+        marginBottom: "12px", 
+      }}
       onClick={() => navigate("/birthdays?create=true")}
     >
       🎂 Add Birthday
@@ -135,7 +141,10 @@ function Dashboard() {
 
     <button
       className="glow-top left"
-      style={{ width: "100%" }}
+      style={{ 
+        width: "100%",
+        marginBottom: "12px", 
+      }}
       onClick={() => navigate("/links?create=true")}
     >
       🔗 Save Link

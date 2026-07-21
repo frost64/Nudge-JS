@@ -17,11 +17,19 @@ const authMiddleware = require("./middleware/authMiddleware");
 const notFound = require("./middleware/notFound");
 const errorHandler = require("./middleware/errorMiddleware");
 const weatherRoutes = require("./routes/weatherRoutes");
+const path = require("path");
 
 dotenv.config();
 connectDB();
 const app = express();
 
+
+app.use(
+  "/uploads",
+  express.static(
+    path.join(__dirname, "uploads")
+  )
+);
 app.use(cors());
 app.use(express.json());
 app.use(limiter);

@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import { useContext } from "react";
+import { LayoutContext } from "../components/Layout";
 import { AuthContext } from "../context/AuthContext";
 import { useConfirm } from "../context/ConfirmContext";
 import toast from "react-hot-toast";
@@ -9,9 +10,11 @@ import Layout from "../components/Layout";
 import Card from "../components/Card";
 import reminderLightBg from "../assets/backgrounds/reminder-light.png";
 import reminderDarkBg from "../assets/backgrounds/reminder-dark.png";
+import AutocompleteInput from "../components/AutocompleteInput";
 
 function Reminders() {
 const { user } = useContext(AuthContext);
+const { isMobile } = useContext(LayoutContext);
 const confirm = useConfirm();
 const darkMode = user?.theme === "dark";
 const formBackground = darkMode
@@ -53,6 +56,14 @@ const fetchReminders = async () => {
     );
   }
 };
+
+const reminderCategories = [
+  ...new Set(
+    reminders
+      .map(reminder => reminder.category?.trim())
+      .filter(Boolean)
+  ),
+].sort((a, b) => a.localeCompare(b));
 
 const handleSave = async () => {
   if (
@@ -329,11 +340,11 @@ const sidebar = (
   <Card
     variant="glass"
     style={{
-      position: "fixed",
-      top: "15%",
-      left: "2%",
-      width: "20%",
-      minHeight: "75%",
+      position: isMobile ? "static" : "fixed",
+      top: isMobile ? undefined : "15%",
+      left: isMobile ? undefined : "2%",
+      width: isMobile ? "100%" : "20%",
+      minHeight: isMobile ? "auto" : "75%",
       padding: "24px",
       borderRadius: "22px",
     }}
@@ -465,14 +476,14 @@ return (
         </option>
       </select>
 
-      <input
-        className="input-glow"
-        type="text"
-        placeholder="Category"
+      <AutocompleteInput
         value={category}
-        onChange={(e) =>
-          setCategory(e.target.value)
-        }
+        onChange={setCategory}
+        options={reminderCategories}
+        placeholder="Create/Select Category"
+        darkMode={darkMode}
+        className="input-glow"
+        emptyMessage="No matching categories"
       />
 
       <div
