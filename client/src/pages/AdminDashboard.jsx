@@ -243,6 +243,10 @@ if (loading) {
               variant="glass"
             >
               <p>
+                <strong>Full Name:</strong> {user.fullName}
+              </p>
+
+              <p>
                 <strong>Username:</strong> {user.username}
               </p>
 

@@ -1,31 +1,37 @@
-import { useState } from "react";
+import { useState, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
-
+import { GoogleLogin } from "@react-oauth/google";
+import { AuthContext } from "../context/AuthContext";
 import api from "../services/api";
 import toast from "react-hot-toast";
 import Card from "../components/Card";
 import logo from "../assets/Logo.svg";
 
+import loginLightBg from "../assets/backgrounds/loginLight.png";
+import loginDarkBg from "../assets/backgrounds/loginDark.png";
+
 function Register() {
   const navigate = useNavigate();
+  const { login } = useContext(AuthContext);
+  const [fullName, setFullName] = useState("");
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const savedUser = JSON.parse(
+  localStorage.getItem("user") || "null"
+);
 
-  const [username, setUsername] =
-    useState("");
+  const darkMode = savedUser?.theme === "dark";
 
-  const [email, setEmail] =
-    useState("");
-
-  const [password, setPassword] =
-    useState("");
-
-  const [loading, setLoading] =
-    useState(false);
-
-  
+  const backgroundImage = darkMode
+    ? loginDarkBg
+    : loginLightBg;
 
   const handleSubmit = async () => {
   if (loading) return;
   if (
+    !fullName || 
     !username.trim() ||
     !email.trim() ||
     !password.trim()
@@ -41,6 +47,7 @@ function Register() {
     await api.post(
       "/auth/register",
       {
+        fullName,
         username,
         email,
         password,
@@ -79,20 +86,54 @@ function Register() {
       style={{
         minHeight: "100vh",
         display: "flex",
-        justifyContent:
-          "center",
-        alignItems:
-          "center",
-        padding: "20px"
+        justifyContent: "center",
+        alignItems: "center",
+        padding: "10px",
+
+        background: `url(${backgroundImage})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+        backgroundAttachment: "fixed",
+
+        position: "relative",
+        overflow: "hidden",
       }}
     >
       <div
         style={{
-          width: "100%",
-          maxWidth: "450px"
+          position: "absolute",
+          inset: 0,
+          background: darkMode
+            ? "rgba(0,0,0,.20)"
+            : "rgba(255,255,255,.08)",
+          backdropFilter: "blur(2px)",
+          WebkitBackdropFilter: "blur(2px)",
         }}
-      >
-        <Card>
+      />
+        <Card
+          variant="glass"
+          style={{
+            position: "relative",
+            zIndex: 1,
+            width: "100%",
+            maxWidth: "450px",
+            padding: "40px",
+            borderRadius: "28px",
+          }}
+        >
+
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSubmit();
+            }}
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "18px",
+            }}
+          >
 
           <div
             style={{
@@ -106,8 +147,6 @@ function Register() {
               style={{
                 width: "100px",
                 height: "100px",
-                marginBottom:
-                  "15px"
               }}
             />
 
@@ -117,22 +156,21 @@ function Register() {
 
             <p
               style={{
-                color:
-                  "#6b7280",
-                marginBottom:
-                  "25px"
+                color: "#6b7280",
               }}
             >
               Create your account
             </p>
           </div>
 
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleSubmit();
-            }}
-          >
+          
+            <input
+              type="text"
+              placeholder="Full Name"
+              value={fullName}
+              disabled={loading}
+              onChange={(e) => setFullName(e.target.value)}
+            />
 
             <input
               type="text"
@@ -146,9 +184,6 @@ function Register() {
               }
             />
 
-            <br />
-            <br />
-
             <input
               type="email"
               placeholder="Email"
@@ -160,9 +195,6 @@ function Register() {
                 )
               }
             />
-
-            <br />
-            <br />
 
             <input
               type="password"
@@ -176,39 +208,102 @@ function Register() {
               }
             />
 
-            <br />
-            <br />
-
             <button
+              className="glow-top"
               type="submit"
-              disabled={
-                loading
-              }
+              disabled={loading}
+              style={{
+                width: "100%",
+              }}
             >
               {loading
                 ? "Creating Account..."
                 : "Register"}
             </button>
 
-          </form>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+              }}
+            >
+              <div
+                style={{
+                  flex: 1,
+                  height: "1px",
+                  background: "rgba(255,255,255,.2)",
+                }}
+              />
 
-          <br />
+              <span
+                style={{
+                  padding: "0 12px",
+                  color: "#888",
+                  fontSize: ".9rem",
+                }}
+              >
+                OR
+              </span>
+
+              <div
+                style={{
+                  flex: 1,
+                  height: "1px",
+                  background: "rgba(255,255,255,.2)",
+                }}
+              />
+            </div>
+
+            <GoogleLogin
+              onSuccess={async (credentialResponse) => {
+                try {
+                  const res = await api.post("/auth/google", {
+                    credential: credentialResponse.credential,
+                  });
+
+                  login(
+                    res.data.token,
+                    res.data.user
+                  );
+
+                  navigate("/dashboard");
+                } catch (error) {
+                  console.error(error);
+
+                  toast.error(
+                    error.response?.data?.message ||
+                    "Google sign up failed."
+                  );
+                }
+              }}
+              onError={() => {
+                toast.error("Google signup failed.");
+              }}
+            />
+
+          </form>
 
           <p
             style={{
-              textAlign:
-                "center"
+              textAlign: "center",
+              marginTop: "8px",
+              marginBottom: 0,
             }}
           >
             Already have an account?{" "}
-            <Link to="/">
+            <Link
+              to="/"
+              style={{
+                color: darkMode ? "#7dd3fc" : "#0284c7",
+                textDecoration: "none",
+              }}
+            >
               Login here
             </Link>
           </p>
 
         </Card>
       </div>
-    </div>
   );
 }
 

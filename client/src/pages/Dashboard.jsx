@@ -11,6 +11,26 @@ import toast from "react-hot-toast";
 import WeatherWidget from "../components/WeatherWidget";
 import LoadingSpinner from "../components/LoadingSpinner";
 
+import {
+  FaSun,
+  FaCloudSun,
+  FaMoon,
+} from "react-icons/fa";
+
+import {
+  FaBolt,
+  FaClock,
+  FaStickyNote,
+  FaBirthdayCake,
+  FaLink,
+  FaStar,
+  FaGift,
+  FaExclamationTriangle,
+  FaTasks,
+  FaPlus,
+} from "react-icons/fa";
+
+
 function Dashboard() {
   const [data, setData] = useState(null);
   const [error, setError] = useState("");
@@ -30,12 +50,21 @@ function Dashboard() {
   const getGreetingMessage = () => {
     const hour = new Date().getHours();
     if (hour < 12) {
-      return "Let's get your day organized. Your nudges are waiting! 🌅";
+      return <>
+                Let's get your day organized. Your nudges are waiting!{" "}
+                <FaSun style={{ color: "#facc15" }} />
+              </>
     }
     if (hour < 17) {
-      return "Hope your day is going well. Stay on top of today's nudges. ☀️";
+      return <>
+                Hope your day is going well. Stay on top of today's nudges.{" "}
+                <FaCloudSun style={{ color: "#f59e0b" }} />
+              </>
     }
-    return "Time to wrap things up. Here's what's still left for today. 🌙";
+    return <>
+              Time to wrap things up. Here's what's still left for today.{" "}
+              <FaMoon style={{ color: "#a78bfa" }} />
+            </>
   };
 
   const { user } = useContext(AuthContext);
@@ -101,9 +130,14 @@ function Dashboard() {
         whiteSpace: "nowrap",
         textAlign: "center",
         marginBottom: "10px",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        gap: "8px",
       }}
     >
-      Quick Access ⚡
+      <FaBolt />
+      Quick Access
     </h1>
 
     <button
@@ -114,7 +148,10 @@ function Dashboard() {
       }}
       onClick={() => navigate("/reminders?create=true")}
     >
-      ⏰ New Reminder
+      <>
+        <FaClock size={13} style={{ marginRight: "6px" }} />
+        New Reminder
+      </>
     </button>
 
     <button
@@ -125,7 +162,10 @@ function Dashboard() {
       }}
       onClick={() => navigate("/notes?create=true")}
     >
-      📝 New Note
+      <>
+        <FaStickyNote size={13} style={{ marginRight: "6px" }} />
+        New Note
+      </>
     </button>
 
     <button
@@ -136,7 +176,10 @@ function Dashboard() {
       }}
       onClick={() => navigate("/birthdays?create=true")}
     >
-      🎂 Add Birthday
+      <>
+        <FaBirthdayCake size={13} style={{ marginRight: "6px" }} />
+        Add Birthday
+      </>
     </button>
 
     <button
@@ -147,7 +190,10 @@ function Dashboard() {
       }}
       onClick={() => navigate("/links?create=true")}
     >
-      🔗 Save Link
+      <>
+        <FaLink size={13} style={{ marginRight: "6px" }} />
+        Save Link
+      </>
     </button>
   </Card>
   );
@@ -196,7 +242,7 @@ function Dashboard() {
         >
           {getGreeting()}
         </span>
-        , {user?.username}
+        , {user?.fullName}
       </h1>
 
       <p
@@ -248,38 +294,34 @@ function Dashboard() {
         }}
       >
         <Card variant="glass">
-          <h3
-          className="underline"
-          onClick={() =>
-            navigate("/reminders")
-          }>⏰ Reminders</h3>
+          <h3 className="underline" onClick={() => navigate("/reminders")}>
+            <FaClock style={{ marginRight: "6px" }} />
+            Reminders
+          </h3>
           <h1 style={{userSelect: "none"}}>{data.stats?.totalReminders ?? 0}</h1>
         </Card>
         
         <Card variant="glass">
-          <h3
-          className="underline"
-          onClick={() =>
-            navigate("/notes")
-          }>📝 Notes</h3>
+          <h3 className="underline" onClick={() => navigate("/notes")}>
+            <FaStickyNote style={{ marginRight: "6px" }} />
+            Notes
+          </h3>
           <h1 style={{userSelect: "none"}}>{data.stats?.totalNotes ?? 0}</h1>
         </Card>
 
         <Card variant="glass">
-          <h3
-          className="underline"
-          onClick={() =>
-            navigate("/birthdays")
-          }>🎂 Birthdays</h3>
+          <h3 className="underline" onClick={() => navigate("/birthdays")}>
+            <FaBirthdayCake style={{ marginRight: "6px" }} />
+            Birthdays
+          </h3>
           <h1 style={{userSelect: "none"}}>{data.stats?.totalBirthdays ?? 0}</h1>
         </Card>
 
         <Card variant="glass">
-          <h3
-          className="underline"
-          onClick={() =>
-            navigate("/links")
-          }>🔗 Links</h3>
+          <h3 className="underline" onClick={() => navigate("/links")}>
+            <FaLink style={{ marginRight: "6px" }} />
+            Links
+          </h3>
           <h1 style={{userSelect: "none"}}>{data.stats?.totalLinks ?? 0}</h1>
         </Card>
       </div>
@@ -289,7 +331,10 @@ function Dashboard() {
         className="dashboard-container"
       >
         <Card variant="glass">
-          <h2>Favorite Links</h2>
+          <h2>
+            <FaStar style={{ marginRight: "8px" }} />
+            Favorite Links
+          </h2>
 
           {data.favoriteLinks?.length === 0 ? (
             <p>No favorite links</p>
@@ -310,7 +355,10 @@ function Dashboard() {
         </Card>
 
         <Card variant="glass">
-          <h2>Upcoming Birthdays</h2>
+          <h2>
+            <FaBirthdayCake style={{ marginRight: "8px" }} />
+            Upcoming Birthdays
+          </h2>
 
           {data.upcomingBirthdays?.length === 0 ? (
             <p>No upcoming birthdays</p>
@@ -326,7 +374,12 @@ function Dashboard() {
                 }>
                 {birthday.name}{" "}
                 {birthday.daysRemaining === 0
-                  ? "🎉 Today!"
+                  ? (
+                      <>
+                        <FaGift size={13} style={{ marginRight: "4px" }} />
+                        Today!
+                      </>
+                    )
                   : `(${birthday.daysRemaining} day${birthday.daysRemaining !== 1 ? "s" : ""} left)`
                 }
               </div>
@@ -335,10 +388,21 @@ function Dashboard() {
         </Card>
 
         <Card variant="glass">
-          <h2>⚠️ Overdue Reminders</h2>
+          <h2>
+            <FaExclamationTriangle
+              style={{
+                marginRight: "8px",
+                color: "#ff6b6b",
+              }}
+            />
+            Overdue Reminders
+          </h2>
 
           {data.overdueReminders?.length === 0 ? (
-            <p>No overdue reminders 🎉</p>
+            <p>
+              No overdue reminders{" "}
+              <FaGift style={{ color: "#ffd43b" }} />
+            </p>
           ) : (
             data.overdueReminders.map((reminder) => (
               <div
@@ -359,7 +423,10 @@ function Dashboard() {
         </Card>
 
         <Card variant="glass">
-          <h2>Pending Reminders</h2>
+          <h2>
+            <FaTasks style={{ marginRight: "8px" }} />
+            Pending Reminders
+          </h2>
 
           {data.pendingReminders?.length === 0 ? (
             <p>No pending reminders</p>

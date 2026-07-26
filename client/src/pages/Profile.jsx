@@ -5,7 +5,8 @@ import { AuthContext } from "../context/AuthContext";
 import { useConfirm } from "../context/ConfirmContext";
 import toast from "react-hot-toast";
 import api from "../services/api";
-
+import ImageCropModal from "../components/ImageCropModal";
+import getCroppedImg from "../utils/cropImage";
 import Layout from "../components/Layout";
 import Card from "../components/Card";
 
@@ -41,6 +42,7 @@ darkMode
 const [profile,setProfile]=useState(null);
 const [avatar,setAvatar]=useState("");
 const [bio,setBio]=useState("");
+const [fullName, setFullName] = useState("");
 const [username,setUsername]=useState("");
 const [email,setEmail]=useState("");
 const [currentPassword,setCurrentPassword]=useState("");
@@ -50,7 +52,13 @@ const [error,setError]=useState("");
 const [uploading, setUploading] = useState(false);
 const [selectedImage, setSelectedImage] = useState(null);
 const [previewImage, setPreviewImage] = useState("");
+
 const fileInputRef = useRef(null);
+
+const [cropModalOpen, setCropModalOpen] = useState(false);
+const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+const [croppedBlob, setCroppedBlob] = useState(null);
+
 
 const avatars=[
 {id:"avatar1",image:avatar1},
@@ -87,7 +95,7 @@ const fetchProfile = async () => {
 
     setAvatar(res.data.avatar || "");
     setBio(res.data.bio || "");
-
+    setFullName(res.data.fullName || "");
     setUsername(res.data.username || "");
     setEmail(res.data.email || "");
 
@@ -113,43 +121,41 @@ const fetchProfile = async () => {
 };
 
 useEffect(() => {
+  return () => {
+    if (previewImage) {
+      URL.revokeObjectURL(previewImage);
+    }
+  };
+}, [previewImage]);
+
+
+useEffect(() => {
   fetchProfile();
 }, []);
 
 
 const handleProfileUpdate = async () => {
   try {
-
+    setUploading(true);
     let avatarToSave = avatar;
 
-    if (selectedImage) {
-      const formData = new FormData();
-
-      formData.append("image", selectedImage);
-
-      const uploadRes = await api.put(
-        "/auth/profile-picture",
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
-
-      avatarToSave = uploadRes.data.avatar;
+    if (croppedBlob) {
+      avatarToSave =
+        await uploadCroppedAvatar();
     }
 
     await api.put("/auth/profile", {
       avatar: avatarToSave,
       bio,
     });
-
-    setSelectedImage(null);
-    setPreviewImage("");
-
+    
     await fetchProfile();
-
+    
+    setSelectedImage(null);
+    setCroppedBlob(null);
+    setPreviewImage("");
+    setCroppedAreaPixels(null);
+    
     toast.success("Profile updated.");
 
   } catch (error) {
@@ -158,6 +164,50 @@ const handleProfileUpdate = async () => {
       "Failed to update profile."
     );
   }
+  finally {
+    setUploading(false);
+  }
+};
+
+const handleCropSave = async () => {
+  const blob = await getCroppedImg(
+    selectedImage,
+    croppedAreaPixels
+  );
+
+  setCroppedBlob(blob);
+
+  if (previewImage) {
+    URL.revokeObjectURL(previewImage);
+  }
+  setPreviewImage(URL.createObjectURL(blob));
+
+  setCropModalOpen(false);
+};
+
+const uploadCroppedAvatar = async () => {
+  if (!croppedBlob) return avatar;
+
+  const formData = new FormData();
+
+  formData.append(
+    "image",
+    croppedBlob,
+    "avatar.jpg"
+  );
+
+  const res = await api.put(
+    "/auth/profile-picture",
+    formData,
+    {
+      headers: {
+        "Content-Type":
+          "multipart/form-data",
+      },
+    }
+  );
+
+  return res.data.avatar;
 };
 
 const handleImageUpload = (e) => {
@@ -165,13 +215,38 @@ const handleImageUpload = (e) => {
 
   if (!file) return;
 
-  setSelectedImage(file);
+  const reader = new FileReader();
 
-  setPreviewImage(URL.createObjectURL(file));
+  reader.onload = () => {
+    setSelectedImage(reader.result);
+    setCropModalOpen(true);
+  };
+
+  reader.readAsDataURL(file);
 
   e.target.value = "";
 };
+const handleFullNameUpdate = async () => {
+  if (!fullName.trim()) {
+    return toast.error("Full name is required.");
+  }
 
+  try {
+    await api.put("/auth/fullname", {
+      fullName,
+    });
+
+    await fetchProfile();
+
+    toast.success("Full name updated.");
+
+  } catch (error) {
+    toast.error(
+      error.response?.data?.message ||
+      "Failed to update full name."
+    );
+  }
+};
 const handleUsernameUpdate = async () => {
 
   if (!username.trim()) {
@@ -354,8 +429,12 @@ const sidebar = (
         previewImage
           ? previewImage
           : avatar?.startsWith("/uploads/")
-            ? `${import.meta.env.VITE_API_URL.replace("/api", "")}${avatar}`
-            : avatars.find(a => a.id === avatar)?.image || defaultAvatar
+          ? `${import.meta.env.VITE_API_URL.replace(
+              "/api",
+              ""
+            )}${avatar}`
+          : avatars.find((a) => a.id === avatar)
+              ?.image || defaultAvatar
       }
       alt="Avatar"
       style={{
@@ -375,15 +454,12 @@ const sidebar = (
     >
       Profile Overview
     </h2>
-
+    
+    <p><strong>Full Name:</strong> {profile.fullName}</p>
+    
     <p><strong>Username:</strong> {profile.username}</p>
 
     <p><strong>Email:</strong> {profile.email}</p>
-
-    <p>
-      <strong>Theme:</strong>{" "}
-      {darkMode ? "Dark Mode" : "Light Mode"}
-    </p>
 
     <p><strong>Role:</strong> {profile.role}</p>
 
@@ -399,7 +475,7 @@ const sidebar = (
       )}
     </p>
 
-    <p style={{ marginTop: "18px" }}>
+    <p>
       <strong>Bio:</strong>
       <br />
       {bio || "No bio yet"}
@@ -469,13 +545,23 @@ return (
               key={item.id}
               src={item.image}
               alt={item.id}
-              onClick={() => setAvatar(item.id)}
+              onClick={() => {
+                if (uploading) return;
+
+                setAvatar(item.id);
+                setPreviewImage("");
+                setSelectedImage(null);
+                setCroppedBlob(null);
+              }}
               style={{
                 width: "82px",
                 height: "82px",
                 borderRadius: "50%",
                 objectFit: "cover",
                 cursor: "pointer",
+
+                opacity: uploading ? 0.6 : 1,
+                pointerEvents: uploading ? "none" : "auto",
 
                 border:
                   avatar === item.id
@@ -518,6 +604,7 @@ return (
           <div
             
             onClick={() => {
+              if (uploading) return;
               fileInputRef.current?.click()
             }}
             style={{
@@ -525,7 +612,9 @@ return (
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
-              cursor: "pointer",
+              cursor: uploading ? "not-allowed" : "pointer",
+              opacity: uploading ? 0.6 : 1,
+              pointerEvents: uploading ? "none" : "auto",
             }}
           >
             <div
@@ -538,14 +627,14 @@ return (
                 alignItems: "center",
                 justifyContent: "center",
                 cursor: "pointer",
-                border: avatar?.startsWith("/uploads/")
+                border: previewImage || croppedBlob || avatar?.startsWith("/uploads/")
                   ? "3px solid #38bdf8"
                   : darkMode
                   ? "2px dashed rgba(255,255,255,.25)"
                   : "2px dashed rgba(0,0,0,.18)",
               }}
             >
-              {avatar?.startsWith("/uploads/") ? (
+              {previewImage || avatar?.startsWith("/uploads/") ? (
                 <img
                   src={
                     previewImage
@@ -606,12 +695,53 @@ return (
           <button
             className="glow-top"
             onClick={handleProfileUpdate}
+            disabled={
+              uploading ||
+              (
+                !croppedBlob &&
+                bio === (profile?.bio || "") &&
+                avatar === (profile?.avatar || "")
+              )
+            }
+            style={{
+              cursor: uploading ? "not-allowed" : "pointer",
+              opacity: uploading ? 0.7 : 1,
+            }}
           >
-            Update Profile
+            {uploading ? "Updating..." : "Update Profile"}
           </button>
         </div>
+          <hr style={{ margin: "35px 0" }} />
 
-        <hr style={{ margin: "35px 0" }} />
+          <h3>Full Name</h3>
+
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "12px",
+              width: "100%",
+              marginBottom: "20px",
+            }}
+          >
+            <input
+              className="input-glow"
+              type="text"
+              value={fullName}
+              placeholder="Enter your full name"
+              onChange={(e) =>
+                setFullName(e.target.value)
+              }
+              style={inputStyle}
+            />
+
+            <button
+              className="glow-top"
+              onClick={handleFullNameUpdate}
+            >
+              Update Full Name
+            </button>
+          </div>
 
         <h3>Username</h3>
         <div
@@ -640,8 +770,6 @@ return (
             Update Username
           </button>
         </div>
-
-        <hr style={{ margin: "30px 0" }} />
 
         <h3>Email</h3>
         
@@ -674,7 +802,6 @@ return (
           </button>
         </div>
 
-        <hr style={{ margin: "30px 0" }} />
           <h3>Password</h3>
         <div
           style={{
@@ -756,7 +883,27 @@ return (
       </div>
 
     </div>
+    <ImageCropModal
+      open={cropModalOpen}
+      image={selectedImage}
+      darkMode={darkMode}
+      onCancel={() => {
+        setCropModalOpen(false);
+        setSelectedImage(null);
+        setCroppedAreaPixels(null);
+        setCroppedBlob(null);
 
+        if (previewImage) {
+          URL.revokeObjectURL(previewImage);
+        }
+
+        setPreviewImage("");
+      }}
+      onCropComplete={(_, pixels) =>
+        setCroppedAreaPixels(pixels)
+      }
+      onSave={handleCropSave}
+    />
   </Layout>
 );
 

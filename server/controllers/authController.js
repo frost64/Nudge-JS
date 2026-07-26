@@ -7,7 +7,9 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const fs = require("fs");
 const path = require("path");
-
+const crypto = require("crypto");
+const transporter = require("../config/mailer");
+const { OAuth2Client } = require("google-auth-library");
 
 const loginUser = async (req, res) => {
   try {
@@ -44,6 +46,7 @@ const loginUser = async (req, res) => {
     );
 
     const userData = {
+      fullName: user.fullName,
       id: user._id,
       username: user.username,
       email: user.email,
@@ -65,16 +68,22 @@ const loginUser = async (req, res) => {
     });
   }
 };
-
+const googleClient = new OAuth2Client(
+  process.env.GOOGLE_CLIENT_ID
+);
 
 const registerUser = async (req, res) => {
   try {
-    const { username, email, password } = req.body;
+    const { fullName, username, email, password } = req.body;
 
     const existingEmail = await User.findOne({
   email
 });
-
+if (!fullName?.trim()) {
+  return res.status(400).json({
+    message: "Full name is required",
+  });
+}
 if (existingEmail) {
   return res.status(400).json({
     message: "Email already registered"
@@ -95,6 +104,7 @@ if (existingUsername) {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = await User.create({
+      fullName,
       username,
       email,
       password: hashedPassword
@@ -133,6 +143,7 @@ const updateProfile = async (req, res) => {
   try {
 
     const {
+      fullName,
       bio,
       avatar,
       theme,
@@ -145,7 +156,9 @@ const updateProfile = async (req, res) => {
         message: "User not found",
       });
     }
-
+    if (fullName !== undefined) {
+      user.fullName = fullName;
+    }
     if (bio !== undefined) {
       user.bio = bio;
     }
@@ -215,6 +228,180 @@ res.json({
     res.status(500).json({
       message: error.message,
     });
+  }
+};
+const updateFullName = async (req, res) => {
+  try {
+
+    const { fullName } = req.body;
+
+    if (!fullName || !fullName.trim()) {
+      return res.status(400).json({
+        message: "Full name is required.",
+      });
+    }
+
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found.",
+      });
+    }
+
+    user.fullName = fullName.trim();
+
+    await user.save();
+
+    res.status(200).json(user);
+
+  } catch (error) {
+
+    res.status(500).json({
+      message: error.message,
+    });
+
+  }
+};
+
+
+const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email?.trim()) {
+      return res.status(400).json({
+        message: "Email is required.",
+      });
+    }
+
+    const user = await User.findOne({ email });
+
+    // Don't reveal whether the email exists
+    if (!user) {
+      return res.status(200).json({
+        success: true,
+        message:
+          "If an account exists with that email, a reset link has been sent.",
+      });
+    }
+
+    const resetToken = crypto.randomBytes(32).toString("hex");
+
+    const hashedToken = crypto
+      .createHash("sha256")
+      .update(resetToken)
+      .digest("hex");
+
+    user.passwordResetToken = hashedToken;
+    user.passwordResetExpires =
+      Date.now() + 1000 * 60 * 60; // 1 hour
+
+    await user.save();
+
+    const resetUrl =
+      `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
+
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: user.email,
+      subject: "Nudge Password Reset",
+      html: `
+        <h2>Password Reset</h2>
+
+        <p>Hello ${user.fullName},</p>
+
+        <p>You requested a password reset.</p>
+
+        <p>
+          Click the button below to reset your password:
+        </p>
+
+        <a
+          href="${resetUrl}"
+          style="
+            display:inline-block;
+            padding:12px 24px;
+            background:#0ea5e9;
+            color:white;
+            text-decoration:none;
+            border-radius:8px;
+          "
+        >
+          Reset Password
+        </a>
+
+        <p>
+          This link expires in <strong>1 hour</strong>.
+        </p>
+
+        <p>
+          If you didn't request this, you can safely ignore this email.
+        </p>
+      `,
+    });
+
+    res.status(200).json({
+      success: true,
+      message:
+        "If an account exists with that email, a reset link has been sent.",
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
+
+const resetPassword = async (req, res) => {
+  try {
+
+    const { token } = req.params;
+    const { password } = req.body;
+
+    if (!password || password.length < 6) {
+      return res.status(400).json({
+        message: "Password must be at least 6 characters.",
+      });
+    }
+
+    const hashedToken = crypto
+      .createHash("sha256")
+      .update(token)
+      .digest("hex");
+
+    const user = await User.findOne({
+      passwordResetToken: hashedToken,
+      passwordResetExpires: {
+        $gt: Date.now(),
+      },
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        message: "Reset link is invalid or has expired.",
+      });
+    }
+
+    user.password = await bcrypt.hash(password, 10);
+
+    user.passwordResetToken = undefined;
+    user.passwordResetExpires = undefined;
+
+    await user.save();
+
+    res.json({
+      success: true,
+      message: "Password reset successfully.",
+    });
+
+  } catch (error) {
+
+    res.status(500).json({
+      message: error.message,
+    });
+
   }
 };
 
@@ -384,7 +571,89 @@ const updatePassword = async (req, res) => {
   }
 
 };
+const googleLogin = async (req, res) => {
+  try {
+    const { credential } = req.body;
 
+    if (!credential) {
+      return res.status(400).json({
+        message: "Google credential is required.",
+      });
+    }
+
+    const ticket = await googleClient.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    const payload = ticket.getPayload();
+
+    const {
+      email,
+      name,
+      picture,
+      email_verified,
+    } = payload;
+
+    if (!email_verified) {
+      return res.status(400).json({
+        message: "Google email is not verified.",
+      });
+    }
+
+    let user = await User.findOne({ email });
+
+    if (!user) {
+      const username =
+        email.split("@")[0] +
+        Math.floor(Math.random() * 10000);
+
+      const randomPassword =
+        crypto.randomBytes(32).toString("hex");
+
+      const hashedPassword =
+        await bcrypt.hash(randomPassword, 10);
+
+      user = await User.create({
+        fullName: name,
+        username,
+        email,
+        password: hashedPassword,
+        avatar: picture,
+      });
+    }
+
+    const token = jwt.sign(
+      {
+        id: user._id,
+        role: user.role,
+      },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "7d",
+      }
+    );
+
+    res.json({
+      success: true,
+      token,
+      user: {
+        id: user._id,
+        fullName: user.fullName,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        avatar: user.avatar,
+        bio: user.bio,
+        theme: user.theme,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
 const deleteMyAccount = async (req, res) => {
   try {
 
@@ -443,10 +712,14 @@ module.exports = {
   loginUser,
   getMe,
   updateProfile,
+  updateFullName,
   updateUsername,
   updateEmail,
   updatePassword,
+  googleLogin,
   deleteMyAccount,
   uploadProfilePicture,
+  forgotPassword,
+  resetPassword,
 };
 

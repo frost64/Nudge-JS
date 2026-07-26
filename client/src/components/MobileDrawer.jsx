@@ -1,3 +1,4 @@
+import { IoClose } from "react-icons/io5";
 function MobileDrawer({
   open,
   onClose,
@@ -64,7 +65,7 @@ function MobileDrawer({
             className="glow-top"
             onClick={onClose}
           >
-            ✕
+            <IoClose size={22} />
           </button>
         </div>
 

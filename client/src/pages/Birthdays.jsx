@@ -10,6 +10,7 @@ import Card from "../components/Card";
 import birthdayLightBg from "../assets/backgrounds/birthday-light.png";
 import birthdayDarkBg from "../assets/backgrounds/birthday-dark.png";
 import toast from "react-hot-toast";
+import { FaBirthdayCake, FaPlus, FaGift } from "react-icons/fa";
 
 
 function Birthdays() {
@@ -337,7 +338,26 @@ const getDaysUntilBirthday = (birthday) => {
     (1000 * 60 * 60 * 24)
   );
 };
-    
+
+const months = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
+
+const daysInMonth = birthMonth
+  ? new Date(2024, Number(birthMonth), 0).getDate()
+  : 31;
+
 const relationshipOptions = [
   "Father",
   "Mother",
@@ -375,8 +395,16 @@ const relationshipOptions = [
       borderRadius: "22px",
     }}
   >
-    <h1 style={{ textAlign: "center" }}>
-      Upcoming 🎂
+    <h1
+      style={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        gap: "8px",
+      }}
+    >
+      <FaBirthdayCake />
+      Upcoming
     </h1>
     {upcoming?.length === 0 ? (
             <p style={{paddingLeft: "20px"}}>No upcoming birthdays</p>
@@ -396,8 +424,10 @@ const relationshipOptions = [
                 >
                 {birthday.name}{" "}
                 {birthday.daysRemaining === 0
-                  ? "🎉 Today!"
-                  : `(${birthday.daysRemaining} day${birthday.daysRemaining !== 1 ? "s" : ""} left)`
+                  ? <>
+                      <FaGift size={14} style={{marginLeft:"25px"}}/> Today!
+                    </>
+                  : <span style={{marginLeft:"25px"}}> {birthday.daysRemaining} day{birthday.daysRemaining !== 1 ? "s" : ""} left!</span>
                 }
               </div>
             ))
@@ -474,30 +504,58 @@ const relationshipOptions = [
             />
 
           <div className="birthday-date-row">
-            <input
+            <select
               className="input-glow"
-              type="number"
-              placeholder="Day"
-              min="1"
-              max="31"
+              value={birthMonth}
+              onChange={(e) => {
+                setBirthMonth(e.target.value);
+
+                // Reset day if it becomes invalid
+                if (
+                  birthDay &&
+                  Number(birthDay) >
+                    new Date(2024, Number(e.target.value), 0).getDate()
+                ) {
+                  setBirthDay("");
+                }
+              }}
+            >
+              <option value="">Month</option>
+
+              {months.map((month, index) => (
+                <option
+                  key={month}
+                  value={index + 1}
+                >
+                  {month}
+                </option>
+              ))}
+            </select>
+
+            <select
+              className="input-glow"
               value={birthDay}
               onChange={(e) => setBirthDay(e.target.value)}
-            />
+            >
+              <option value="">Day</option>
+
+              {Array.from(
+                { length: daysInMonth },
+                (_, i) => i + 1
+              ).map((day) => (
+                <option
+                  key={day}
+                  value={day}
+                >
+                  {day}
+                </option>
+              ))}
+            </select>
 
             <input
               className="input-glow"
               type="number"
-              placeholder="Month"
-              min="1"
-              max="12"
-              value={birthMonth}
-              onChange={(e) => setBirthMonth(e.target.value)}
-            />
-
-            <input
-              className="input-glow"
-              type="number"
-              placeholder="Year(Optional)"
+              placeholder="Year (Optional)"
               min="1900"
               max={new Date().getFullYear()}
               value={birthYear}
@@ -592,11 +650,14 @@ const relationshipOptions = [
             className="glow-top"
             style={{
               padding: "12px 22px",
-              fontSize: "1rem"
+              fontSize: "1rem",
             }}
             onClick={() => setShowForm(true)}
           >
-            🎂 Create Birthday
+            <>
+              <FaPlus size={13} style={{marginRight: "5px"}}/>
+              Create Birthday
+            </>
           </button>
         </div>
             {birthdays.length === 0 ? (
@@ -661,12 +722,19 @@ const relationshipOptions = [
 
                     <p>
                       <strong>Next Birthday: </strong>
-
+                      <strong style={{
+                          color: darkMode
+                          ? "yellow"
+                          : "red",
+                        }}>
                       {daysRemaining === 0
-                        ? "🎉 Today!"
+                        ? <>
+                            <FaGift size={14} /> Today!
+                          </>
                         : `${daysRemaining} day${
                             daysRemaining !== 1 ? "s" : ""
                           } remaining`}
+                        </strong>
                     </p>
 
                     <p>

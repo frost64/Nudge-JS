@@ -13,15 +13,23 @@ import Links from "./pages/Links";
 import Search from "./pages/Search";
 import AdminDashboard from "./pages/AdminDashboard";
 import Profile from "./pages/Profile";
+import About from "./pages/About";
+import Privacy from "./pages/Privacy";
+import Terms from "./pages/Terms";
+import Contact from "./pages/Contact"
+import ScrollToTop from "./components/ScrollTopNew";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 
 import ProtectedRoute from "./routes/ProtectedRoute";
 import AdminRoute from "./routes/AdminRoute";
+
 
 function App() {
   return (
     <ConfirmProvider>
       <BrowserRouter>
-
+      <ScrollToTop />
         <Toaster
           position="center"
           toastOptions={{
@@ -105,12 +113,42 @@ function App() {
           />
 
           <Route
+            path="/about"
+            element={<About />}
+          />
+
+          <Route 
+            path="/privacy" 
+            element={<Privacy />} 
+          />
+
+          <Route 
+            path="/terms" 
+            element={<Terms />} 
+          />
+
+          <Route 
+            path="/contact" 
+            element={<Contact />} 
+          />
+
+          <Route
             path="/profile"
             element={
               <ProtectedRoute>
                 <Profile />
               </ProtectedRoute>
             }
+          />
+
+          <Route
+            path="/forgot-password"
+            element={<ForgotPassword />}
+          />
+
+          <Route
+            path="/reset-password/:token"
+            element={<ResetPassword />}
           />
 
         </Routes>

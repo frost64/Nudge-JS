@@ -4,6 +4,7 @@ import { AuthContext } from "../context/AuthContext";
 import { createContext } from "react";
 import { Toaster } from "react-hot-toast";
 import TopScroll from "./TopScroll";
+import Footer from "./Footer";
 
 export const LayoutContext = createContext({
   cardVariant: "solid",
@@ -21,6 +22,7 @@ function Layout({
   const darkMode = user?.theme === "dark";
   const [isMobile, setIsMobile] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [footerVisible, setFooterVisible] = useState(false);
 
   useEffect(() => {
     const media = window.matchMedia("(max-width: 900px)");
@@ -33,6 +35,7 @@ function Layout({
 
     return () => media.removeEventListener("change", update);
   }, []);
+
 
   useEffect(() => {
     if (darkMode) {
@@ -167,6 +170,7 @@ function Layout({
       }}
     >
         {/* Sidebar */}
+      
         {sidebar && !isMobile && (
           <aside
             style={{
@@ -180,7 +184,13 @@ function Layout({
               overflow: "visible",
               justifyContent: "space-between",
               gap: "20px",
-              zIndex: 900
+              zIndex: 900,
+
+              opacity: footerVisible ? 0 : 1,
+              transition:
+                "opacity .45s ease, transform .45s ease, filter .45s ease",
+              pointerEvents: footerVisible ? "none" : "auto",
+
             }}
           >
             {sidebar}
@@ -200,6 +210,7 @@ function Layout({
       </div>
     </div>
      <TopScroll />
+     <Footer onVisibilityChange={setFooterVisible} />
     </div>
   );
 }

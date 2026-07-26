@@ -36,11 +36,15 @@ const {
   loginUser,
   getMe,
   updateProfile,
+  updateFullName,
   updateUsername,
   updateEmail,
   updatePassword,
+  googleLogin,
   deleteMyAccount,
   uploadProfilePicture,
+  forgotPassword,
+  resetPassword,
 } = require("../controllers/authController");
 
 // =======================
@@ -85,6 +89,22 @@ router.post(
   loginUser
 );
 
+router.post(
+  "/google",
+  googleLogin
+);
+
+
+router.post(
+  "/forgot-password",
+  forgotPassword
+);
+
+router.put(
+  "/reset-password/:token",
+  resetPassword
+);
+
 // =======================
 // Profile
 // =======================
@@ -101,7 +121,11 @@ router.put(
   authMiddleware,
   updateProfile
 );
-
+router.put(
+  "/fullname",
+  authMiddleware,
+  updateFullName
+);
 // Username only
 router.put(
   "/username",
@@ -136,5 +160,6 @@ router.put(
   upload.single("image"),
   uploadProfilePicture
 );
+
 
 module.exports = router;

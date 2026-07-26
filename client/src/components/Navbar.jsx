@@ -4,11 +4,25 @@ import { AuthContext } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { FiSearch } from "react-icons/fi";
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { IoMenu, IoClose } from "react-icons/io5";
 import api from "../services/api";
 import logo from "../assets/Logo.svg";
 import toast from "react-hot-toast";
 import highlightText from "../utils/highlightText";
 import MobileDrawer from "./MobileDrawer";
+
+
+import {
+  FiFileText,
+  FiClock,
+  FiGift,
+  FiLink,
+} from "react-icons/fi";
+
+import {
+  IoSunnyOutline,
+  IoMoonOutline,
+} from "react-icons/io5";
 
 import defaultAvatar from "../assets/avatars/defaultAvatar.png";
 import avatar1 from "../assets/avatars/avatar1.png";
@@ -372,13 +386,15 @@ const suggestionList = useMemo(() => {
               flexShrink: 0,
             }}
           >
-            {item.type === "note"
-              ? "📝"
-              : item.type === "reminder"
-              ? "⏰"
-              : item.type === "birthday"
-              ? "🎂"
-              : "🔗"}
+            {item.type === "note" ? (
+              <FiFileText size={16} />
+            ) : item.type === "reminder" ? (
+              <FiClock size={16} />
+            ) : item.type === "birthday" ? (
+              <FiGift size={16} />
+            ) : (
+              <FiLink size={16} />
+            )}
           </span>
 
           {highlightText(item.label, searchQuery)}
@@ -480,7 +496,11 @@ const suggestionList = useMemo(() => {
                 color: darkMode ? "#fff" : "#111",
               }}
             >
-              {mobileMenuOpen ? "✕" : "☰"}
+              {mobileMenuOpen ? (
+                <IoClose size={28} />
+              ) : (
+                <IoMenu size={28} />
+              )}
             </button>
           )}
       {/* Logo */}
@@ -766,10 +786,15 @@ const suggestionList = useMemo(() => {
         style={{
             margin: "8px",
             flexShrink: 0,
+            color: darkMode ? "#fff" : "#111827",
         }}
         onClick={toggleTheme}
       >
-        {darkMode ? "☀️" : "🌙"}
+        {darkMode ? (
+          <IoSunnyOutline size={22} />
+        ) : (
+          <IoMoonOutline size={22} />
+        )}
       </button>
 
       {/* Profile Avatar */}
