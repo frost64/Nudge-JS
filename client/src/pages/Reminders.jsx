@@ -12,6 +12,24 @@ import reminderLightBg from "../assets/backgrounds/reminder-light.png";
 import reminderDarkBg from "../assets/backgrounds/reminder-dark.png";
 import AutocompleteInput from "../components/AutocompleteInput";
 
+import {
+  FaFlag,
+  FaArrowLeft,
+  FaHeading,
+  FaTags,
+  FaBell,
+  FaPlus,
+  FaEdit,
+  FaTrash,
+  FaCheckCircle,
+  FaUndo,
+  FaCalendarAlt,
+  FaClock,
+  FaExclamationTriangle,
+  FaTasks,
+  FaArrowAltCircleLeft,
+} from "react-icons/fa";
+
 function Reminders() {
 const { user } = useContext(AuthContext);
 const { isMobile } = useContext(LayoutContext);
@@ -349,7 +367,18 @@ const sidebar = (
       borderRadius: "22px",
     }}
   >
-    <h1 style={{textAlign: "center"}}>Pending ⏰</h1>
+    <h1
+      style={{
+        textAlign: "center",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        gap: "10px",
+      }}
+    >
+      <FaClock />
+      Pending
+    </h1>
     {pendingReminders.length === 0 ? (
       <p style={{paddingLeft: "20px"}}>No pending reminders</p>
     ) : (
@@ -411,10 +440,24 @@ return (
               `,
       }}
     >
-    <h2>
-      {editingId
-        ? "Edit Reminder"
-        : "New Reminder"}
+    <h2
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "8px",
+      }}
+    >
+      {editingId ? (
+        <>
+          <FaEdit />
+          Edit Reminder
+        </>
+      ) : (
+        <>
+          <FaClock />
+          New Reminder
+        </>
+      )}
     </h2>
 
     <div
@@ -424,67 +467,81 @@ return (
         gap: "15px",
       }}
     >
-      <input
-        className="input-glow"
-        type="text"
-        placeholder="Reminder Title"
-        value={title}
-        onChange={(e) =>
-          setTitle(e.target.value)
-        }
-      />
+      <div className="input-icon-wrapper">
+        <FaHeading className="input-icon" />
 
-      <input
-        className="input-glow"
-        type="date"
-        value={dueDate}
-        onChange={(e) =>
-          setDueDate(e.target.value)
-        }
-      />
+        <input
+          className="input-glow"
+          type="text"
+          placeholder="Reminder Title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+        />
+      </div>
 
-      <input
-        className="input-glow"
-        type="time"
-        value={reminderTime}
-        onChange={(e) =>
-          setReminderTime(e.target.value)
-        }
-      />
+      <div className="input-icon-wrapper">
+        <FaCalendarAlt className="input-icon" />
 
-      <select
-        className="input-glow"
-        value={priority}
-        onChange={(e) =>
-          setPriority(e.target.value)
-        }
-      >
-        <option value="" disabled>
-          Priority
-        </option>
+        <input
+          className="input-glow"
+          type="date"
+          value={dueDate}
+          onChange={(e) => setDueDate(e.target.value)}
+        />
+      </div>
 
-        <option value="low">
-          Low
-        </option>
+      <div className="input-icon-wrapper">
+        <FaClock className="input-icon" />
 
-        <option value="medium">
-          Medium
-        </option>
+        <input
+          className="input-glow"
+          type="time"
+          value={reminderTime}
+          onChange={(e) => setReminderTime(e.target.value)}
+        />
+      </div>
 
-        <option value="high">
-          High
-        </option>
-      </select>
 
-      <AutocompleteInput
-        value={category}
-        onChange={setCategory}
-        options={reminderCategories}
-        placeholder="Create/Select Category"
-        darkMode={darkMode}
-        className="input-glow"
-        emptyMessage="No matching categories"
-      />
+      <div className="input-icon-wrapper">
+      <FaFlag className="input-icon" />
+        <select
+          className="input-glow"
+          value={priority}
+          onChange={(e) =>
+            setPriority(e.target.value)
+          }
+        >
+          <option value="" disabled>
+            Priority
+          </option>
+
+          <option value="low">
+            Low
+          </option>
+
+          <option value="medium">
+            Medium
+          </option>
+
+          <option value="high">
+            High
+          </option>
+        </select>
+      </div>
+
+      <div className="input-icon-wrapper">
+        <FaTags className="input-icon" />
+
+        <AutocompleteInput
+          value={category}
+          onChange={setCategory}
+          options={reminderCategories}
+          placeholder="Create/Select Category"
+          darkMode={darkMode}
+          className="input-glow"
+          emptyMessage="No matching categories"
+        />
+      </div>
 
       <div
         style={{
@@ -496,9 +553,17 @@ return (
           className="glow-top"
           onClick={handleSave}
         >
-          {editingId
-            ? "Update Reminder"
-            : "Add Reminder"}
+          {editingId ? (
+            <>
+              <FaEdit style={{ marginRight: "6px" }} />
+              Update Reminder
+            </>
+          ) : (
+            <>
+              <FaPlus style={{ marginRight: "6px" }} />
+              Add Reminder
+            </>
+          )}
         </button>
 
         <button
@@ -510,6 +575,7 @@ return (
             setShowForm(false);
           }}
         >
+          <FaArrowLeft style={{ marginRight: "6px" }} />
           Cancel
         </button>
       </div>
@@ -550,11 +616,36 @@ return (
         }}
         onClick={() => setShowForm(true)}
       >
-        ⏰ Create Reminder
+        <>
+          <FaPlus size={13}
+              style={{ marginRight: "5px" }}/>
+          <span>Create Reminder</span>
+        </>
       </button>
     </div>
 
-    {reminders.length === 0 ? (<p>Create your first reminder!</p>) : 
+    {reminders.length === 0 ? (<div
+                style={{
+                  textAlign: "center",
+                  opacity: 0.8,
+                  padding: "50px 20px",
+                }}
+              >
+                <FaClock
+                  size={42}
+                  style={{
+                    marginBottom: "15px",
+                    color: "#00be9f",
+                  }}
+                />
+    
+                <h2>No Reminders Yet</h2>
+    
+                <p>
+                  Stay organized by creating your first reminder.
+                </p>
+                <div style={{paddingBottom:"50px"}}></div>
+              </div>) : 
     (
       reminders.map((reminder) => {
         const isOverdue =
@@ -597,52 +688,134 @@ return (
               transition: "box-shadow .35s ease"
             }}
           >
-              <h3><strong>Title: </strong>{reminder.title}</h3>
-        
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: "12px",
+                  gap: "12px",
+                }}
+              >
+                <h3
+                  style={{
+                    margin: 0,
+                  }}
+                >
+                  <strong>Title: </strong>
+                  {reminder.title}
+                </h3>
+
+                {isOverdue && (
+                  <span
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      color: "#ff4d4d",
+                      fontWeight: "bold",
+                      whiteSpace: "nowrap",
+                      fontSize: ".92rem",
+                    }}
+                  >
+                    <FaExclamationTriangle />
+                    Overdue by {overdueDays} day{overdueDays !== 1 ? "s" : ""}
+                  </span>
+                )}
+              </div>
+
               <p>
-                <strong>Due Date: </strong>
+                <strong>
+                  <FaCalendarAlt
+                    style={{ 
+                      marginRight: "6px",
+                      color: "#00be9f", 
+                    }}
+                  />
+                  Due Date: {" "}
+                </strong>
                 {new Date(reminder.dueDate).toLocaleDateString()}
               </p>
+              
 
               <p>
-                <strong>Time: </strong>
+                <strong>
+                  <FaClock
+                    style={{ 
+                      marginRight: "6px",
+                      color: "#00be9f", 
+                    }}
+                  />
+                  Time: {" "}
+                </strong>
                 {reminder.reminderTime}
               </p>
-
+              
               <p>
-                <strong>Priority: </strong>
+                <strong>
+                  <FaFlag
+                    style={{ 
+                      marginRight: "6px",
+                      color: "#00be9f", 
+                    }}
+                  />
+                  Priority: {" "}
+                </strong>
                 {reminder.priority}
               </p>
-
+              
               <p>
-                <strong>Category: </strong>
+                <strong>
+                  <FaTags
+                    style={{ 
+                      marginRight: "6px",
+                      color: "#00be9f", 
+                    }}
+                  />
+                  Category: {" "}
+                </strong>
                 {reminder.category}
               </p>
 
-              <p>
-                <strong>Status: </strong>
-                {reminder.completed
-                  ? "✅ Completed"
-                  : "⏳ Pending"}
-              </p>
-
-              {isOverdue && (
+              
                 <p
                   style={{
-                    color: "#ff4d4d",
-                    fontWeight: "bold",
-                    marginTop: "8px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
                   }}
                 >
-                  ⚠️ Overdue by {overdueDays} day{overdueDays !== 1 ? "s" : ""}
+                  <strong>
+                    <FaTags
+                      style={{ 
+                        marginRight: "6px",
+                        color: "#00be9f", 
+                      }}
+                    />
+                    Status: {" "}
+                  </strong>
+
+                  {reminder.completed ? (
+                    <>
+                      <FaCheckCircle color="#00be9f" />
+                      Completed
+                    </>
+                  ) : (
+                    <>
+                      <FaClock color="#f59e0b" />
+                      Pending
+                    </>
+                  )}
                 </p>
-              )}
 
               <button
                 className="glow-top"
                 onClick={() => startEdit(reminder)}
               >
-                Edit
+                <>
+                  <FaEdit style={{ marginRight: "8px" }} />
+                  <span>Edit</span>
+                </>
               </button>
             
               <button
@@ -650,22 +823,39 @@ return (
                 onClick={() => handleToggle(reminder._id)}
               >
                 {reminder.completed
-                  ? "Mark Pending"
-                  : "Mark Complete"}
+                  ? <>
+                      <FaUndo size={13}
+                        style={{ marginRight: "5px" }}/>
+                      <span>Mark Pending</span>
+                    </>
+                  : <>
+                      <FaCheckCircle size={13}
+                        style={{ marginRight: "5px" }}/>
+                      <span>Mark Complete</span>
+                    </>
+                    }
               </button>
 
               <button
                 className="glow-top"
                 onClick={() => handleExport(reminder._id)}
               >
-                Export Calendar
+                <>
+                  <FaCalendarAlt size={13}
+                        style={{ marginRight: "5px" }}/>
+                  <span>Export Calendar</span>
+                </>
               </button>
 
               <button
                 className="glow-top delete"
                 onClick={() => handleDelete(reminder._id)}
               >
-                Delete
+                <>
+                  <FaTrash size={13}
+                        style={{ marginRight: "5px" }}/>
+                  <span>Delete</span>
+                </>
               </button>
           </Card>
         </div>

@@ -6,6 +6,21 @@ import Card from "../components/Card";
 import profileLightBg from "../assets/backgrounds/dashboard-light.png";
 import profileDarkBg from "../assets/backgrounds/dashboard-dark.png";
 
+import {
+  FaFileContract,
+  FaCalendarAlt,
+  FaCheckCircle,
+  FaClipboardList,
+  FaUserShield,
+  FaStickyNote,
+  FaBan,
+  FaCopyright,
+  FaBalanceScale,
+  FaTimesCircle,
+  FaSyncAlt,
+  FaEnvelope,
+} from "react-icons/fa";
+
 function Terms() {
   const { user } = useContext(AuthContext);
 
@@ -40,10 +55,14 @@ const LAST_UPDATED = "July 23, 2026";
         >
           <h1
             style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
               marginBottom: "10px",
             }}
           >
-            📄 Terms of Service
+            <FaFileContract />
+            Terms of Service
           </h1>
 
           <p
@@ -52,11 +71,23 @@ const LAST_UPDATED = "July 23, 2026";
                 marginBottom: "40px",
             }}
             >
+            <FaCalendarAlt
+              style={{ marginRight: "8px", verticalAlign: "middle" }}
+            />
             Last Updated: {LAST_UPDATED}
         </p>
 
         <div style={sectionStyle}>
-            <h2>Acceptance of Terms</h2>
+            <h2
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+              }}
+            >
+              <FaCheckCircle />
+              Acceptance of Terms
+            </h2>
 
             <p>
                 By accessing or using Nudge, you agree to comply with these
@@ -66,7 +97,16 @@ const LAST_UPDATED = "July 23, 2026";
         </div>
 
         <div style={sectionStyle}>
-            <h2>Use of the Service</h2>
+            <h2
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+              }}
+            >
+              <FaClipboardList />
+              Use of the Service
+            </h2>
 
             <p>
                 Nudge is a productivity application designed to help users
@@ -81,7 +121,16 @@ const LAST_UPDATED = "July 23, 2026";
         </div>
 
         <div style={sectionStyle}>
-            <h2>User Accounts</h2>
+            <h2
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+              }}
+            >
+              <FaUserShield />
+              User Accounts
+            </h2>
 
             <ul style={{marginLeft: "15px"}}>
                 <li>Keep your account credentials secure.</li>
@@ -91,7 +140,16 @@ const LAST_UPDATED = "July 23, 2026";
         </div>
 
         <div style={sectionStyle}>
-            <h2>User Content</h2>
+            <h2
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+              }}
+            >
+              <FaStickyNote />
+              User Content
+            </h2>
 
             <p>
                 You retain ownership of all content you create within Nudge,
@@ -102,7 +160,16 @@ const LAST_UPDATED = "July 23, 2026";
         </div>
 
         <div style={sectionStyle}>
-            <h2>Prohibited Activities</h2>
+            <h2
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+              }}
+            >
+              <FaBan />
+              Prohibited Activities
+            </h2>
 
             <ul style={{marginLeft: "15px"}}>
                 <li>Attempting unauthorized access to the application.</li>
@@ -113,7 +180,16 @@ const LAST_UPDATED = "July 23, 2026";
         </div>
 
         <div style={sectionStyle}>
-            <h2>Intellectual Property</h2>
+            <h2
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+              }}
+            >
+              <FaCopyright />
+              Intellectual Property
+            </h2>
 
             <p>
                 The Nudge application, including its branding, design,
@@ -124,7 +200,16 @@ const LAST_UPDATED = "July 23, 2026";
         </div>
 
         <div style={sectionStyle}>
-            <h2>Limitation of Liability</h2>
+            <h2
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+              }}
+            >
+              <FaBalanceScale />
+              Limitation of Liability
+            </h2>
 
             <p>
                 Nudge is provided on an "as is" and "as available" basis.
@@ -136,7 +221,16 @@ const LAST_UPDATED = "July 23, 2026";
         </div>
 
         <div style={sectionStyle}>
-            <h2>Termination</h2>
+            <h2
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+              }}
+            >
+              <FaTimesCircle />
+              Termination
+            </h2>
 
             <p>
                 Users may permanently delete their account at any time using
@@ -147,7 +241,16 @@ const LAST_UPDATED = "July 23, 2026";
         </div>
 
         <div style={sectionStyle}>
-            <h2>Changes to These Terms</h2>
+            <h2
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+              }}
+            >
+              <FaSyncAlt />
+              Changes to These Terms
+            </h2>
 
             <p>
                 These Terms of Service may be updated periodically to reflect
@@ -158,7 +261,16 @@ const LAST_UPDATED = "July 23, 2026";
         </div>
 
         <div>
-            <h2>Contact</h2>
+            <h2
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+              }}
+            >
+              <FaEnvelope />
+              Contact
+            </h2>
 
             <p>
                 If you have any questions regarding these Terms of Service,

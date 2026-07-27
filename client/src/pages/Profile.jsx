@@ -21,6 +21,24 @@ import avatar4 from "../assets/avatars/avatar4.png";
 import avatar5 from "../assets/avatars/avatar5.png";
 import avatar6 from "../assets/avatars/avatar6.png";
 
+import {
+  FaSave,
+  FaKey,
+  FaSignOutAlt,
+  FaTrashAlt,
+  FaUpload,
+  FaCog, 
+  FaUserCircle, 
+  FaPenFancy,
+  FaLock,
+  FaEnvelope,
+  FaAt,
+  FaIdCard,
+  FaUser,
+  FaUserShield,
+  FaCalendarAlt, 
+} from "react-icons/fa";
+
 function Profile() {
 
 const {
@@ -455,16 +473,16 @@ const sidebar = (
       Profile Overview
     </h2>
     
-    <p><strong>Full Name:</strong> {profile.fullName}</p>
+    <p><FaUser color="#00be9f"/> <strong> Full Name:</strong> {profile.fullName}</p>
     
-    <p><strong>Username:</strong> {profile.username}</p>
+    <p><FaAt color="#00be9f"/> <strong> Username:</strong> {profile.username}</p>
 
-    <p><strong>Email:</strong> {profile.email}</p>
+    <p><FaEnvelope color="#00be9f"/> <strong> Email:</strong> {profile.email}</p>
 
-    <p><strong>Role:</strong> {profile.role}</p>
+    <p><FaUserShield color="#00be9f"/> <strong> Role:</strong> {profile.role}</p>
 
     <p>
-      <strong>Joined:</strong>{" "}
+      <FaCalendarAlt color="#00be9f"/> <strong> Joined:</strong>{" "}
       {new Date(profile.createdAt).toLocaleDateString(
         "en-GB",
         {
@@ -476,8 +494,8 @@ const sidebar = (
     </p>
 
     <p>
-      <strong>Bio:</strong>
-      <br />
+      <FaPenFancy color="#00be9f"/> <strong> Bio:</strong>
+      {" "}
       {bio || "No bio yet"}
     </p>
   </Card>
@@ -492,7 +510,7 @@ return (
     <div
       style={{
         width: "100%",
-        maxWidth: "760px",
+        maxWidth: "800px",
         margin: "0 auto",
         paddingBottom: "50px",
       }}
@@ -515,19 +533,25 @@ return (
 
         <h2
           style={{
-            textAlign: "left",
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
             marginBottom: "35px",
           }}
         >
-          ⚙️ Account Settings
+          <FaCog />
+          Account Settings
         </h2>
 
         <h3
           style={{
-            textAlign: "left",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
             marginBottom: "18px",
           }}
         >
+          <FaUserCircle />
           Choose Avatar
         </h3>
 
@@ -661,14 +685,27 @@ return (
                 fontSize: "13px",
                 textAlign: "center",
                 userSelect: "none",
+                display: "flex",
+                alignItems: "center",
+                gap: "5px",
               }}
             >
-              Upload Image
+              <FaUpload size={12} />
+              Upload
             </span>
           </div>
         </div>
 
-        <h3>Bio</h3>
+        <h3
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+          }}
+        >
+          <FaPenFancy />
+          Bio
+        </h3>
 
         <textarea
           className="input-glow"
@@ -708,12 +745,22 @@ return (
               opacity: uploading ? 0.7 : 1,
             }}
           >
-            {uploading ? "Updating..." : "Update Profile"}
+            <FaSave size={14} style={{ marginRight: "6px" }} />
+              {uploading ? "Updating..." : "Update Profile"}
           </button>
         </div>
           <hr style={{ margin: "35px 0" }} />
 
-          <h3>Full Name</h3>
+          <h3
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+            }}
+          >
+            <FaIdCard />
+            Full Name
+          </h3>
 
           <div
             style={{
@@ -738,12 +785,21 @@ return (
             <button
               className="glow-top"
               onClick={handleFullNameUpdate}
-            >
-              Update Full Name
+            ><FaIdCard size={14} style={{ marginRight: "6px" }} />
+              Update Name
             </button>
           </div>
 
-        <h3>Username</h3>
+        <h3
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+          }}
+        >
+          <FaAt />
+          Username
+        </h3>
         <div
           style={{
             display: "flex",
@@ -766,12 +822,21 @@ return (
           <button
             className="glow-top"
             onClick={handleUsernameUpdate}
-          >
+          ><FaAt size={14} style={{ marginRight: "6px" }} />
             Update Username
           </button>
         </div>
 
-        <h3>Email</h3>
+        <h3
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+          }}
+        >
+          <FaEnvelope />
+          Email
+        </h3>
         
         
         <div
@@ -797,12 +862,21 @@ return (
           <button
             className="glow-top"
             onClick={handleEmailUpdate}
-          >
+          ><FaEnvelope size={14} style={{ marginRight: "6px" }} />
              Update Email 
           </button>
         </div>
 
-          <h3>Password</h3>
+          <h3
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+            }}
+          >
+            <FaLock />
+            Password
+          </h3>
         <div
           style={{
             display: "flex",
@@ -826,7 +900,7 @@ return (
           <button
             className="glow-top"
             onClick={handlePasswordUpdate}
-          >
+          ><FaKey size={14} style={{ marginRight: "6px" }} />
             Update Password
           </button>
           </div>
@@ -868,7 +942,7 @@ return (
         <button
           className="glow-top delete"
           onClick={handleLogout}
-        >
+        ><FaSignOutAlt size={14} style={{ marginRight: "6px" }} />
           Logout
         </button>
 
@@ -876,7 +950,7 @@ return (
           <button
             className="glow-top delete"
             onClick={handleDeleteAccount}
-          >
+          ><FaTrashAlt size={14} style={{ marginRight: "6px" }} />
             Delete Account
           </button>
         )}

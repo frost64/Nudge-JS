@@ -12,6 +12,15 @@ import toast from "react-hot-toast";
 import highlightText from "../utils/highlightText";
 import LoadingSpinner from "../components/LoadingSpinner";
 
+import {
+  FaSearch,
+  FaList,
+  FaStickyNote,
+  FaBell,
+  FaBirthdayCake,
+  FaLink,
+} from "react-icons/fa";
+
 function Search() {
   const navigate = useNavigate();
   const { user } = useContext(AuthContext);
@@ -98,13 +107,19 @@ function Search() {
       borderRadius: "22px",
     }}
   >
-    <h1
-      style={{
-        textAlign: "center",
-      }}
-    >
-      Search By 🔍
-    </h1>
+      <h1
+        style={{
+          textAlign: "center",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          gap: "8px",
+        }}
+      >
+        <FaSearch />
+        Search By
+      </h1>
+  
 
     {!query ? (
       <p
@@ -126,7 +141,10 @@ function Search() {
             cursor: "pointer",
           }}
         >
-          📋 All Results
+          <>
+            <FaList style={{ marginRight: "8px" }} />
+            All Results
+          </>
         </div>
         
         <div
@@ -139,7 +157,10 @@ function Search() {
             cursor: "pointer",
           }}
         >
-          📝 Notes: {results?.notes?.length || 0}
+          <>
+            <FaStickyNote style={{ marginRight: "8px" }} />
+            Notes: {results?.notes?.length || 0}
+          </>
         </div>
 
         <div
@@ -152,7 +173,10 @@ function Search() {
             cursor: "pointer",
           }}
         >
-          ⏰ Reminders: {results?.reminders?.length || 0}
+          <>
+            <FaBell style={{ marginRight: "8px" }} />
+            Reminders: {results?.reminders?.length || 0}
+          </>
         </div>
 
         <div
@@ -165,7 +189,10 @@ function Search() {
             cursor: "pointer",
           }}
         >
-          🎂 Birthdays: {results?.birthdays?.length || 0}
+          <>
+            <FaBirthdayCake style={{ marginRight: "8px" }} />
+            Birthdays: {results?.birthdays?.length || 0}
+          </>
         </div>
 
         <div
@@ -177,7 +204,10 @@ function Search() {
             cursor: "pointer",
           }}
         >
-          🔗 Links: {results?.links?.length || 0}
+          <>
+            <FaLink style={{ marginRight: "8px" }} />
+            Links: {results?.links?.length || 0}
+          </>
         </div>
       </>
     )}
@@ -286,8 +316,9 @@ if (loading) {
               onClick={() =>
                 navigate("/reminders")
               }
-            >
-              ⏰ Reminders
+            ><FaBell
+              style={{ marginRight: "15px" }}/>
+              Reminders
             </h2>
 
             {results.reminders.length === 0 ? (
@@ -326,8 +357,8 @@ if (loading) {
               onClick={() =>
                 navigate("/notes")
               }
-            >
-              📝 Notes
+            ><FaStickyNote style={{ marginRight: "15px" }}/>
+            Notes
             </h2>
 
             {results.notes.length === 0 ? (
@@ -371,8 +402,8 @@ if (loading) {
               onClick={() =>
                 navigate("/birthdays")
               }
-            >
-              🎂 Birthdays
+            ><FaBirthdayCake style={{marginRight:"15px"}}/>
+            Birthdays
             </h2>
 
             {results.birthdays.length === 0 ? (
@@ -410,8 +441,8 @@ if (loading) {
               onClick={() =>
                 navigate("/links")
               }
-            >
-              🔗 Links
+            ><FaLink style={{marginRight:"15px"}}/>
+            Links
             </h2>
 
             {results.links.length === 0 ? (

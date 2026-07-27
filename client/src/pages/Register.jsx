@@ -9,6 +9,13 @@ import logo from "../assets/Logo.svg";
 
 import loginLightBg from "../assets/backgrounds/loginLight.png";
 import loginDarkBg from "../assets/backgrounds/loginDark.png";
+import {
+  FaUser,
+  FaAt,
+  FaEnvelope,
+  FaLock,
+  FaUserPlus,
+} from "react-icons/fa";
 
 function Register() {
   const navigate = useNavigate();
@@ -164,62 +171,107 @@ function Register() {
           </div>
 
           
-            <input
-              type="text"
-              placeholder="Full Name"
-              value={fullName}
-              disabled={loading}
-              onChange={(e) => setFullName(e.target.value)}
-            />
+            <div style={{ position: "relative" }}>
+              <FaUser
+                style={{
+                  position: "absolute",
+                  left: "14px",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  opacity: 0.7,
+                }}
+              />
 
-            <input
-              type="text"
-              placeholder="Username"
-              value={username}
-              disabled={loading}
-              onChange={(e) =>
-                setUsername(
-                  e.target.value
-                )
-              }
-            />
+              <input
+                type="text"
+                placeholder="Full Name"
+                value={fullName}
+                disabled={loading}
+                onChange={(e) => setFullName(e.target.value)}
+                style={{ paddingLeft: "42px" }}
+              />
+            </div>
 
-            <input
-              type="email"
-              placeholder="Email"
-              value={email}
-              disabled={loading}
-              onChange={(e) =>
-                setEmail(
-                  e.target.value
-                )
-              }
-            />
+            <div style={{ position: "relative" }}>
+  <FaAt
+    style={{
+      position: "absolute",
+      left: "14px",
+      top: "50%",
+      transform: "translateY(-50%)",
+      opacity: 0.7,
+    }}
+  />
 
-            <input
-              type="password"
-              placeholder="Password"
-              value={password}
-              disabled={loading}
-              onChange={(e) =>
-                setPassword(
-                  e.target.value
-                )
-              }
-            />
+  <input
+    type="text"
+    placeholder="Username"
+    value={username}
+    disabled={loading}
+    onChange={(e) => setUsername(e.target.value)}
+    style={{ paddingLeft: "42px" }}
+  />
+</div>
+
+            <div style={{ position: "relative" }}>
+  <FaEnvelope
+    style={{
+      position: "absolute",
+      left: "14px",
+      top: "50%",
+      transform: "translateY(-50%)",
+      opacity: 0.7,
+    }}
+  />
+
+  <input
+    type="email"
+    placeholder="Email"
+    value={email}
+    disabled={loading}
+    onChange={(e) => setEmail(e.target.value)}
+    style={{ paddingLeft: "42px" }}
+  />
+</div>
+
+            <div style={{ position: "relative" }}>
+  <FaLock
+    style={{
+      position: "absolute",
+      left: "14px",
+      top: "50%",
+      transform: "translateY(-50%)",
+      opacity: 0.7,
+    }}
+  />
+
+  <input
+    type="password"
+    placeholder="Password"
+    value={password}
+    disabled={loading}
+    onChange={(e) => setPassword(e.target.value)}
+    style={{ paddingLeft: "42px" }}
+  />
+</div>
 
             <button
-              className="glow-top"
-              type="submit"
-              disabled={loading}
-              style={{
-                width: "100%",
-              }}
-            >
-              {loading
-                ? "Creating Account..."
-                : "Register"}
-            </button>
+  className="glow-top"
+  type="submit"
+  disabled={loading}
+  style={{
+    width: "100%",
+  }}
+>
+  <FaUserPlus
+    size={14}
+    style={{ marginRight: "6px" }}
+  />
+
+  {loading
+    ? "Creating Account..."
+    : "Register"}
+</button>
 
             <div
               style={{

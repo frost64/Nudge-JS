@@ -10,8 +10,22 @@ import Card from "../components/Card";
 import birthdayLightBg from "../assets/backgrounds/birthday-light.png";
 import birthdayDarkBg from "../assets/backgrounds/birthday-dark.png";
 import toast from "react-hot-toast";
-import { FaBirthdayCake, FaPlus, FaGift } from "react-icons/fa";
-
+import {
+  FaHourglassHalf,
+  FaStickyNote,
+  FaBirthdayCake,
+  FaPlus,
+  FaGift,
+  FaCalendarAlt,
+  FaEdit,
+  FaTrash,
+  FaFileExport,
+  FaClock,
+  FaUsers,
+  FaUser,
+  FaArrowLeft,
+  FaRegStickyNote
+} from "react-icons/fa";
 
 function Birthdays() {
   const { user } = useContext(AuthContext);
@@ -424,8 +438,12 @@ const relationshipOptions = [
                 >
                 {birthday.name}{" "}
                 {birthday.daysRemaining === 0
-                  ? <>
-                      <FaGift size={14} style={{marginLeft:"25px"}}/> Today!
+                  ? <>  
+                      <FaGift
+                        size={14}
+                        style={{ marginLeft: "25px", marginRight: "6px" }}
+                      />
+                      Today
                     </>
                   : <span style={{marginLeft:"25px"}}> {birthday.daysRemaining} day{birthday.daysRemaining !== 1 ? "s" : ""} left!</span>
                 }
@@ -479,9 +497,17 @@ const relationshipOptions = [
           }}
         >
         <h2>
-          {editingId
-            ? "Edit Birthday"
-            : "New Birthday"}
+          {editingId ? (
+            <>
+              <FaEdit style={{ marginRight: "8px" }} />
+              Edit Birthday
+            </>
+          ) : (
+            <>
+              <FaBirthdayCake style={{ marginRight: "8px" }} />
+              New Birthday
+            </>
+          )}
         </h2>
 
          <div
@@ -491,6 +517,8 @@ const relationshipOptions = [
               gap: "15px"
             }}
           >
+            <div className="input-icon-wrapper">
+            <FaUser className="input-icon" />
             <input
               className="input-glow"
               type="text"
@@ -502,6 +530,7 @@ const relationshipOptions = [
                 )
               }
             />
+            </div>
 
           <div className="birthday-date-row">
             <select
@@ -562,7 +591,8 @@ const relationshipOptions = [
               onChange={(e) => setBirthYear(e.target.value)}
             />
           </div>
-
+          <div className="input-icon-wrapper">
+          <FaUsers className="input-icon" />
           <select
             className="input-glow"
             value={relationship}
@@ -578,7 +608,10 @@ const relationshipOptions = [
               </option>
             ))}
           </select>
+          </div>
 
+          <div className="input-icon-wrapper">
+          <FaRegStickyNote className="input-icon textarea-icon" />
           <textarea
             className="input-glow"
             rows="4"
@@ -591,6 +624,7 @@ const relationshipOptions = [
             }
           />
           </div>
+          </div>
           <div
             style={{
               display: "flex",
@@ -602,15 +636,32 @@ const relationshipOptions = [
               className="glow-top"
               onClick={handleSave}
             >
-              {editingId ? "Update Birthday" : "Add Birthday"}
-            </button>
+              {editingId ? (
+                <>
+                  <FaEdit
+                    size={13}
+                    style={{ marginRight: "6px" }}
+                  />
+                  Update Birthday
+                </>
+              ):(
+                <>
+                  <FaPlus 
+                    size={13}
+                    style={{ marginRight: "6px" }} 
+                  /> 
+                  Add Birthday
+                </>
+              )}
+          </button>
       
               
             <button
               className="glow-top delete"
               onClick= {cancelEdit}
             >
-              Cancel
+              <FaArrowLeft style={{ marginRight: "6px" }} />
+                Cancel
             </button>
           </div>
       </Card>
@@ -661,9 +712,28 @@ const relationshipOptions = [
           </button>
         </div>
             {birthdays.length === 0 ? (
-              <p>
-                Add your first birthday!
-              </p>
+              <div
+                style={{
+                  textAlign: "center",
+                  opacity: 0.8,
+                  padding: "50px 20px",
+                }}
+              >
+                <FaBirthdayCake
+                  size={42}
+                  style={{
+                    marginBottom: "15px",
+                    color: "#00be9f",
+                  }}
+                />
+
+                <h2>No Birthdays Yet</h2>
+
+                <p>
+                  Start celebrating by adding your first birthday.
+                </p>
+                <div style={{paddingBottom:"50px"}}></div>
+              </div>
             ) : (
               sortedBirthdays.map((birthday) => {
                 const daysRemaining = getDaysUntilBirthday(birthday);
@@ -704,24 +774,47 @@ const relationshipOptions = [
                     </h3>
 
                     <p>
-                      <strong>Birthday:</strong>{" "}
+                      <strong>
+                        <FaCalendarAlt
+                          style={{ 
+                            marginRight: "6px",
+                            color: "#00be9f", 
+                          }}
+                        />
+                        Birthday: {" "}
+                      </strong>
                       {formatBirthday(birthday)}
                     </p>
 
                     {birthday.birthYear && (
                       <p>
-                        <strong>Age: </strong>
+                        <strong>
+                          <FaBirthdayCake
+                            style={{color: "#00be9f", marginRight: "6px" }}
+                          />
+                          Age:{" "}
+                        </strong>
                         {getAge(birthday)} years
                       </p>
                     )}
 
                     <p>
-                      <strong>Relationship: </strong>
+                      <strong>
+                        <FaUsers
+                          style={{ marginRight: "6px", color: "#00be9f",  }}
+                        />
+                        Relationship: {" "}
+                      </strong>
                       {birthday.relationship}
                     </p>
 
                     <p>
-                      <strong>Next Birthday: </strong>
+                      <strong>
+                        <FaHourglassHalf
+                          style={{ color: "#00be9f", marginRight: "6px", verticalAlign: "middle" }}
+                        />
+                        Next Birthday:
+                      </strong>{" "}
                       <strong style={{
                           color: darkMode
                           ? "yellow"
@@ -729,7 +822,11 @@ const relationshipOptions = [
                         }}>
                       {daysRemaining === 0
                         ? <>
-                            <FaGift size={14} /> Today!
+                            <FaGift
+                              size={14}
+                              style={{ marginRight: "6px" }}
+                            />
+                            Today
                           </>
                         : `${daysRemaining} day${
                             daysRemaining !== 1 ? "s" : ""
@@ -738,7 +835,12 @@ const relationshipOptions = [
                     </p>
 
                     <p>
-                      <strong>Birthday Note: </strong>
+                      <strong>
+                        <FaStickyNote
+                          style={{ marginRight: "6px", verticalAlign: "middle" , color: "#00be9f"}}
+                        />
+                        Birthday Note:
+                      </strong>{" "}
                       {birthday.notes}
                     </p>
 
@@ -751,14 +853,18 @@ const relationshipOptions = [
                         )
                       }
                     >
-                      Edit
+                        <FaEdit style={{ marginRight: "6px" }} />
+                        Edit
                     </button> 
 
                     <button
                       className="glow-top"
                       onClick={() => exportToCalendar(birthday)}
                     >
-                      Export Calendar
+                      <>
+                        <FaFileExport style={{ marginRight: "6px" }} />
+                        Export Calendar
+                      </>
                     </button>
                     
                     <button
@@ -769,7 +875,10 @@ const relationshipOptions = [
                         )
                       }
                     >
-                      Delete
+                      <>
+                        <FaTrash style={{ marginRight: "6px" }} />
+                        Delete
+                      </>
                     </button>
                   </Card>
                 </div>

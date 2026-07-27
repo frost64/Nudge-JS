@@ -15,6 +15,30 @@ import linkLightBg from "../assets/backgrounds/link-light.png";
 import linkDarkBg from "../assets/backgrounds/link-dark.png";
 import AutocompleteInput from "../components/AutocompleteInput";
 
+import {
+  FaTimes,
+  FaHeading,
+  FaTags,
+  FaFileExport,
+  FaLink,
+  FaPlus,
+  FaDownload,
+  FaFilePdf,
+  FaFileCsv,
+  FaStar,
+  FaRegStar,
+  FaEdit,
+  FaTrash,
+  FaHeart,
+  FaStickyNote,
+  FaArrowLeft,
+} from "react-icons/fa";
+
+import {
+  MdFavoriteBorder,
+  MdFavorite,
+} from "react-icons/md";
+
 function Links() {
 const { user } = useContext(AuthContext);
 const { isMobile } = useContext(LayoutContext);
@@ -624,8 +648,19 @@ const sidebar = (
       borderRadius: "22px",
     }}
   >
-    <h1 style={{ textAlign: "center" }}>
-      Favourites ⭐
+    <h1
+      style={{
+        textAlign: "center",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        gap: "8px",
+      }}
+    >
+      <FaStar style={{
+      color: "#FFD43B",
+    }}/>
+      Favourites
     </h1>
 
     {favoriteLinks.length === 0 ? (
@@ -688,13 +723,25 @@ return (
                 `,
       }}
     >
-      <h2>
-          {
-            editingId
-              ? "Edit Link"
-              : "New Link"
-          }
-        </h2>
+      <h2
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
+        }}
+      >
+        {editingId ? (
+          <>
+            <FaEdit />
+            Edit Link
+          </>
+        ) : (
+          <>
+            <FaLink />
+            New Link
+          </>
+        )}
+      </h2>
         
       <div
         style={{
@@ -703,52 +750,55 @@ return (
           gap: "15px"
         }}
       >
-        <input
-          className="input-glow"
-          type="text"
-          placeholder="Title"
-          value={title}
-          onChange={(e) =>
-            setTitle(
-              e.target.value
-            )
-          }
-        />
+        <div className="input-icon-wrapper">
+          <FaHeading className="input-icon" />
 
-        <input
-          className="input-glow"
-          type="text"
-          placeholder="https://example.com"
-          value={url}
-          onChange={(e) =>
-            setUrl(
-              e.target.value
-            )
-          }
-        />
+          <input
+            className="input-glow"
+            type="text"
+            placeholder="Title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+          />
+        </div>
 
-        <AutocompleteInput
-          value={category}
-          onChange={setCategory}
-          options={linkCategories}
-          placeholder="Create/Select Category"
-          darkMode={darkMode}
-          className="input-glow"
-          emptyMessage="No matching categories"
-        />
+        <div className="input-icon-wrapper">
+          <FaLink className="input-icon" />
 
-        <textarea
-          className="input-glow"
-          placeholder="Description"
-          rows="4"
-          cols="40"
-          value={notes}
-          onChange={(e) =>
-            setNotes(
-              e.target.value
-            )
-          }
-        />
+          <input
+            className="input-glow"
+            type="text"
+            placeholder="https://example.com"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+          />
+        </div>
+
+        <div className="input-icon-wrapper">
+          <FaTags className="input-icon" />
+
+          <AutocompleteInput
+            value={category}
+            onChange={setCategory}
+            options={linkCategories}
+            placeholder="Create/Select Category"
+            darkMode={darkMode}
+            className="input-glow"
+            emptyMessage="No matching categories"
+          />
+        </div>
+
+        <div className="input-icon-wrapper">
+          <FaStickyNote className="input-icon textarea-icon" />
+
+          <textarea
+            className="input-glow"
+            placeholder="Description"
+            rows="4"
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+          />
+        </div>
 
         <div
           style={{
@@ -761,13 +811,24 @@ return (
             className="glow-top"
             onClick={handleSave}
           >
-            {editingId ? "Update Link" : "Add Link"}
+            {editingId ? (
+              <>
+                <FaEdit style={{ marginRight: "6px" }} />
+                Update Link
+              </>
+            ) : (
+              <>
+                <FaPlus style={{ marginRight: "6px" }} />
+                Add Link
+              </>
+            )}
           </button>
 
           <button
             className="glow-top delete"
             onClick={cancelEdit}
           >
+            <FaArrowLeft style={{ marginRight: "6px" }} />
             Cancel
           </button>
         </div>
@@ -812,7 +873,15 @@ return (
             `,
       }}
     >
-      <h2 style={{ marginBottom: "18px" }}>
+      <h2
+        style={{
+          marginBottom: "18px",
+          display: "flex",
+          alignItems: "center",
+          gap: "10px",
+        }}
+      >
+        <FaFileExport />
         Export Links
       </h2>
 
@@ -877,14 +946,26 @@ return (
           className="glow-top"
           onClick={downloadLinksPDF}
         >
-          📄 PDF
+          <>
+            <FaFilePdf
+              size={13}
+              style={{ marginRight: "5px" }}
+            />
+            PDF
+          </>
         </button>
 
         <button
           className="glow-top"
           onClick={downloadLinksCSV}
         >
-          📊 CSV
+          <>
+            <FaFileCsv
+              size={13}
+              style={{ marginRight: "5px" }}
+            />
+            CSV
+          </>
         </button>
 
         <button
@@ -935,7 +1016,13 @@ return (
           className="glow-top"
           onClick={() => setShowDownloadModal(true)}
         >
-          📤 Export
+          <>
+            <FaFileExport
+              size={13}
+              style={{ marginRight: "5px" }}
+            />
+            Export
+          </>
         </button>
 
         <button
@@ -946,13 +1033,40 @@ return (
           }}
           onClick={() => setShowForm(true)}
         >
-          🔗 Create Link
+          <>
+            <FaPlus
+              size={13}
+              style={{ marginRight: "5px" }}
+            />
+            Create Link
+          </>
         </button>
       </div>
     </div>
 
   {links.length === 0 ? (
-      <p>Create your first link!</p>
+      <div
+            style={{
+              textAlign: "center",
+              opacity: 0.8,
+              padding: "50px 20px",
+            }}
+          >
+            <FaLink
+              size={42}
+              style={{
+                marginBottom: "15px",
+                color: "#00be9f",
+              }}
+            />
+
+            <h2>No Links Yet</h2>
+
+            <p>
+              Start building your collection by saving your first link..
+            </p>
+            <div style={{paddingBottom:"50px"}}></div>
+          </div>
     ) : (
       links.map(
         (link) => (
@@ -991,12 +1105,27 @@ return (
                       fontSize: "1.2rem"
                     }}
                   >
-                    {link.favorite && "⭐"}
+                    {link.favorite && (
+                      <FaStar
+                        style={{
+                          color: "#FFD43B",
+                        }}
+                      />
+                    )}
                   </span>
                 </h3>
 
                 <p style={{ wordBreak: "break-all" }}>
-                  <strong>URL: </strong>
+                  <strong>
+                    <FaLink
+                      style={{
+                        marginRight: "6px",
+                        color: "#00be9f",
+                      }}
+                    />
+                    URL:{" "}
+                  </strong>
+
                   <a
                     href={link.url}
                     target="_blank"
@@ -1007,12 +1136,30 @@ return (
                 </p>
 
                 <p>
-                  <strong>Category: </strong>
+                  <strong>
+                    <FaTags
+                      style={{
+                        marginRight: "6px",
+                        color: "#00be9f",
+                      }}
+                    />
+                    Category:{" "}
+                  </strong>
+
                   {link.category}
                 </p>
 
                 <p>
-                  <strong>Description: </strong>
+                  <strong>
+                    <FaStickyNote
+                      style={{
+                        marginRight: "6px",
+                        color: "#00be9f",
+                      }}
+                    />
+                    Description:{" "}
+                  </strong>
+
                   {link.notes}
                 </p>
 
@@ -1022,22 +1169,38 @@ return (
                       startEdit(link)
                     }
                   >
-                    Edit
+                    <>
+                      <FaEdit
+                        size={13}
+                        style={{ marginRight: "5px" }}
+                      />
+                      Edit
+                    </>
                   </button>
 
                   <button
                     className="glow-top"
                     onClick={() =>
-                      handleFavorite(
-                        link._id
-                      )
+                      handleFavorite(link._id)
                     }
                   >
-                    {
-                      link.favorite
-                        ? "Unfavorite"
-                        : "Favorite"
-                    }
+                    {link.favorite ? (
+                      <>
+                        <MdFavorite
+                          size={15}
+                          style={{ marginRight: "5px" }}
+                        />
+                        Unfavorite
+                      </>
+                    ) : (
+                      <>
+                        <MdFavoriteBorder
+                          size={15}
+                          style={{ marginRight: "5px" }}
+                        />
+                        Favorite
+                      </>
+                    )}
                   </button>
 
                   <button
@@ -1048,7 +1211,13 @@ return (
                       )
                     }
                   >
-                    Delete
+                    <>
+                      <FaTrash
+                        size={13}
+                        style={{ marginRight: "5px" }}
+                      />
+                      Delete
+                    </>
                   </button>
             </Card>
           </div>

@@ -776,6 +776,41 @@ body.dark .glow-top.delete:hover {
     flex: 1.5;
 }
 
+
+
+/* ===========================================================
+   INPUTS WITH ICONS
+=========================================================== */
+
+.input-icon-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.input-icon-wrapper .input-glow {
+  max-width: 100%;
+  padding-left: 46px; /* make room for icon */
+}
+
+.input-icon {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #6b7280;
+  font-size: 16px;
+  pointer-events: none;
+  z-index: 2;
+}
+
+body.dark .input-icon {
+  color: rgba(255,255,255,.6);
+}
+
+.input-icon.textarea-icon {
+  top: 16px;
+  transform: none;
+}
 /* ----------------------------------------------------------------------------- */
 .scroll-top-btn {
     position: fixed;

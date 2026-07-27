@@ -6,6 +6,19 @@ import Card from "../components/Card";
 import profileLightBg from "../assets/backgrounds/dashboard-light.png";
 import profileDarkBg from "../assets/backgrounds/dashboard-dark.png";
 
+import {
+  FaShieldAlt,
+  FaInfoCircle,
+  FaDatabase,
+  FaUserShield,
+  FaLock,
+  FaCookieBite,
+  FaServer,
+  FaUserCheck,
+  FaEnvelope,
+  FaHistory,
+} from "react-icons/fa";
+
 function Privacy() {
   const { user } = useContext(AuthContext);
 
@@ -40,23 +53,36 @@ const LAST_UPDATED = "July 23, 2026";
         >
           <h1
             style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
               marginBottom: "10px",
             }}
           >
-            🔒 Privacy Policy
+            <FaShieldAlt />
+            Privacy Policy
           </h1>
 
         <p
-            style={{
-                opacity: 0.7,
-                marginBottom: "40px",
-            }}
-            >
-            Last Updated: {LAST_UPDATED}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            opacity: 0.7,
+            marginBottom: "40px",
+          }}
+        >
+          <FaHistory />
+          Last Updated: {LAST_UPDATED}
         </p>
 
           <div style={sectionStyle}>
-            <h2>Introduction</h2>
+            <h2
+                style={{ display: "flex", alignItems: "center", gap: "8px" }}
+              >
+                <FaInfoCircle />
+                Introduction
+              </h2>
 
             <p>
               Your privacy matters. Nudge is designed to help you organize your
@@ -66,7 +92,12 @@ const LAST_UPDATED = "July 23, 2026";
           </div>
 
           <div style={sectionStyle}>
-            <h2>Information We Collect</h2>
+            <h2
+              style={{ display: "flex", alignItems: "center", gap: "8px" }}
+            >
+              <FaDatabase />
+              Information We Collect
+            </h2>
 
             <ul style={{marginLeft: "15px"}}>
               <li>Username and email address</li>
@@ -77,7 +108,12 @@ const LAST_UPDATED = "July 23, 2026";
           </div>
 
           <div style={sectionStyle}>
-            <h2>How We Use Your Information</h2>
+            <h2
+              style={{ display: "flex", alignItems: "center", gap: "8px" }}
+            >
+              <FaUserShield />
+              How We Use Your Information
+            </h2>
 
             <ul style={{marginLeft: "15px"}}>
               <li>Authenticate your account securely.</li>
@@ -88,7 +124,12 @@ const LAST_UPDATED = "July 23, 2026";
           </div>
 
           <div style={sectionStyle}>
-            <h2>Data Security</h2>
+            <h2
+              style={{ display: "flex", alignItems: "center", gap: "8px" }}
+            >
+              <FaLock />
+              Data Security
+            </h2>
 
             <p>
               We take reasonable measures to protect your information.
@@ -99,7 +140,12 @@ const LAST_UPDATED = "July 23, 2026";
           </div>
 
           <div style={sectionStyle}>
-            <h2>Cookies & Local Storage</h2>
+            <h2
+              style={{ display: "flex", alignItems: "center", gap: "8px" }}
+            >
+              <FaCookieBite />
+              Cookies & Local Storage
+            </h2>
 
             <p>
               Nudge uses browser storage only to improve your experience, such
@@ -109,7 +155,12 @@ const LAST_UPDATED = "July 23, 2026";
           </div>
 
           <div style={sectionStyle}>
-            <h2>Third-Party Services</h2>
+            <h2
+              style={{ display: "flex", alignItems: "center", gap: "8px" }}
+            >
+              <FaServer />
+              Third-Party Services
+            </h2>
 
             <p>
               Nudge is built using technologies including React, Express,
@@ -119,7 +170,12 @@ const LAST_UPDATED = "July 23, 2026";
           </div>
 
           <div style={sectionStyle}>
-            <h2>Your Rights</h2>
+            <h2
+                style={{ display: "flex", alignItems: "center", gap: "8px" }}
+              >
+                <FaUserCheck />
+                Your Rights
+              </h2>
 
             <ul style={{marginLeft: "15px"}}>
               <li>Update your profile information.</li>
@@ -130,7 +186,12 @@ const LAST_UPDATED = "July 23, 2026";
           </div>
 
           <div>
-            <h2>Contact</h2>
+            <h2
+              style={{ display: "flex", alignItems: "center", gap: "8px" }}
+            >
+              <FaEnvelope />
+              Contact
+            </h2>
 
             <p>
               If you have questions regarding this Privacy Policy, you can reach

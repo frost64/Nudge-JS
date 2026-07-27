@@ -14,6 +14,22 @@ import noteDarkBg from "../assets/backgrounds/note-dark.png";
 import logo from "../assets/Logo.svg";
 import AutocompleteInput from "../components/AutocompleteInput";
 
+import {
+  FaStickyNote,
+  FaHeading,
+  FaTags,
+  FaAlignLeft,
+  FaEdit,
+  FaPlus,
+  FaDownload,
+  FaThumbtack,
+  FaStar,
+  FaTrash,
+  FaClock,
+  FaArrowLeft,
+} from "react-icons/fa";
+import { MdFavorite, MdFavoriteBorder } from "react-icons/md";
+
 function Notes() {
   const { user } = useContext(AuthContext);
   const { isMobile } = useContext(LayoutContext);
@@ -611,7 +627,12 @@ useEffect(() => {
   }}
 >
     <h1 style={{ textAlign: "center" }}>
-      Recent 📝
+      <>
+        <FaStickyNote
+          style={{ marginRight: "8px" }}
+        />
+        Recent Notes
+      </>
     </h1>
 
     {recentNotes.length === 0 ? (
@@ -676,11 +697,17 @@ useEffect(() => {
           }}
         >
         <h2>
-          {
-            editingId
-              ? "Edit Note"
-              : "New Note"
-          }
+          {editingId ? (
+            <>
+              <FaEdit style={{ marginRight: "8px" }} />
+              Edit Note
+            </>
+          ) : (
+            <>
+              <FaStickyNote style={{ marginRight: "8px" }} />
+              New Note
+            </>
+          )}
         </h2>
 
         <div
@@ -690,31 +717,38 @@ useEffect(() => {
             gap: "15px"
           }}
         >
-          <input
-            className="input-glow"
-            type="text"
-            placeholder="Title"
-            value={title}
-            onChange={(e) =>
-              setTitle(
-                e.target.value
-              )
-            }
-          />
+          <div className="input-icon-wrapper">
+            <FaHeading className="input-icon" />
+              <input
+                className="input-glow"
+                type="text"
+                placeholder="Title"
+                value={title}
+                onChange={(e) =>
+                  setTitle(
+                    e.target.value
+                  )
+                }
+              />
+          </div>
 
-
-          <textarea
-            className="input-glow"
-            placeholder="Note Description"
-            rows="10"
-            value={content}
-            onChange={(e) =>
-              setContent(
-                e.target.value
-              )
-            }
-          />
-
+          <div className="input-icon-wrapper textarea-icon-wrapper">
+          <FaAlignLeft className="input-icon textarea-icon" />
+            <textarea
+              className="input-glow"
+              placeholder="Note Description"
+              rows="10"
+              value={content}
+              onChange={(e) =>
+                setContent(
+                  e.target.value
+                )
+              }
+            />
+          </div>
+          
+          <div className="input-icon-wrapper">
+          <FaTags className="input-icon" />
           <AutocompleteInput
             value={tags}
             onChange={setTags}
@@ -723,6 +757,7 @@ useEffect(() => {
             multiple
             darkMode={darkMode}
           />
+          </div>
         </div>
         <div
           style={{
@@ -735,14 +770,35 @@ useEffect(() => {
             className="glow-top"
             onClick={handleSave}
           >
-            {editingId ? "Update Note" : "Add Note"}
+            <>
+              {editingId ? (
+                <>
+                  <FaEdit
+                    size={13}
+                    style={{ marginRight: "6px" }}
+                  />
+                  Update Note
+                </>
+              ) : (
+                <>
+                  <FaPlus
+                    size={13}
+                    style={{ marginRight: "5px" }}
+                  />
+                  Add Note
+                </>
+              )}
+            </>
           </button>
 
           <button
             className="glow-top delete"
             onClick={cancelEdit}
           >
-            Cancel
+            <>
+              <FaArrowLeft style={{ marginRight: "6px" }} />
+              Cancel
+            </>
           </button>
         </div>
       </Card>
@@ -861,7 +917,12 @@ useEffect(() => {
           className="glow-top"
           onClick={downloadSelectedNotes}
         >
-          Download PDF
+          <>
+            <FaDownload
+              style={{ marginRight: "6px" }}
+            />
+            Download PDF
+          </>
         </button>
 
         <button
@@ -871,7 +932,10 @@ useEffect(() => {
             setSelectedNotes([]);
           }}
         >
-          Cancel
+          <>
+            <FaTrash style={{ marginRight: "6px" }} />
+            Cancel
+          </>
         </button>
       </div>
     </Card>
@@ -915,7 +979,12 @@ useEffect(() => {
         className="glow-top"
         onClick={() => setShowDownloadModal(true)}
       >
-        📄 Download PDF
+        <>
+          <FaDownload
+            style={{ marginRight: "6px" }}
+          />
+          Download PDF
+        </>
       </button>
 
       <button
@@ -926,13 +995,39 @@ useEffect(() => {
         }}
         onClick={() => setShowForm(true)}
       >
-        📝 Create Note
+        <>
+          <FaPlus
+            style={{ marginRight: "6px" }}
+          />
+          Create Note
+        </>
       </button>
     </div>
 </div>
 
       {notes.length === 0 ? (
-          <p>Create your first note!</p>
+          <div
+            style={{
+              textAlign: "center",
+              opacity: 0.8,
+              padding: "50px 20px",
+            }}
+          >
+            <FaStickyNote
+              size={42}
+              style={{
+                marginBottom: "15px",
+                color: "#00be9f",
+              }}
+            />
+
+            <h2>No Notes Yet</h2>
+
+            <p>
+              Start capturing your ideas by creating your first note.
+            </p>
+            <div style={{paddingBottom:"50px"}}></div>
+          </div>
         ) : (
           notes.map(
             (note) => (
@@ -965,7 +1060,7 @@ useEffect(() => {
                   style={{
                     display: "flex",
                     justifyContent: "space-between",
-                    alignItems: "center"
+                    alignItems: "center",
                   }}
                 >
                   <span>
@@ -973,17 +1068,44 @@ useEffect(() => {
                     {note.title}
                   </span>
 
-                  <span>
-                    {note.pinned && "📌 "}
-                    {note.favorite && "⭐"}
+                  <span
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      color: "#f5c542",
+                    }}
+                  >
+                    {note.pinned && <FaThumbtack />}
+                    {note.favorite && <FaStar />}
                   </span>
                 </h3>
 
-                <p><strong>Description: </strong>{note.content}</p>
+                <p><FaAlignLeft
+                  style={{
+                    marginRight: "6px",
+                    color: "#00be9f",
+                  }}
+                />
+                <strong>Description:</strong>
+                  {note.content}</p>
 
-                <p><strong>Tags: </strong>{note.tags.join(", ")}</p>
+                <p><FaTags
+                      style={{
+                        marginRight: "6px",
+                        color: "#00be9f",
+                      }}
+                    />
+                    <strong>Tags:</strong>
+                    {note.tags.join(", ")}</p>
                 <p>
-                  <strong>Created On: </strong>
+                  <FaClock
+                    style={{
+                      marginRight: "6px",
+                      color: "#00be9f",
+                    }}
+                  />
+                  <strong>Created:</strong>
                   {new Date(note.createdAt).toLocaleString("en-GB", {
                     day: "2-digit",
                     month: "long",
@@ -1000,7 +1122,13 @@ useEffect(() => {
                       )
                     }
                   >
-                    Edit
+                    <>
+                      <FaEdit
+                        size={13}
+                        style={{ marginRight: "6px" }}
+                      />
+                      Edit
+                    </>
                   </button>
 
                   <button
@@ -1011,11 +1139,13 @@ useEffect(() => {
                       )
                     }
                   >
-                    {
-                      note.pinned
-                        ? "Unpin"
-                        : "Pin"
-                    }
+                    <>
+                      <FaThumbtack
+                        size={13}
+                        style={{ marginRight: "6px" }}
+                      />
+                      {note.pinned ? "Unpin" : "Pin"}
+                    </>
                   </button>
 
                   <button
@@ -1026,11 +1156,23 @@ useEffect(() => {
                       )
                     }
                   >
-                    {
-                      note.favorite
-                        ? "Unfavorite"
-                        : "Favorite"
-                    }
+                    {note.favorite ? (
+                      <>
+                        <MdFavorite
+                          size={15}
+                          style={{ marginRight: "5px" }}
+                        />
+                        Unfavorite
+                      </>
+                    ) : (
+                      <>
+                        <MdFavoriteBorder
+                          size={15}
+                          style={{ marginRight: "5px" }}
+                        />
+                        Favorite
+                      </>
+                    )}
                   </button>
 
                   <button
@@ -1041,7 +1183,13 @@ useEffect(() => {
                       )
                     }
                   >
-                    Delete
+                    <>
+                      <FaTrash
+                        size={13}
+                        style={{ marginRight: "6px" }}
+                      />
+                      Delete
+                    </>
                   </button>
               </Card>
             )

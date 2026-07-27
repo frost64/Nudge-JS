@@ -6,6 +6,8 @@ import toast from "react-hot-toast";
 import Card from "../components/Card";
 import logo from "../assets/Logo.svg";
 
+import { FaLock, FaKey } from "react-icons/fa";
+
 import resetLightBg from "../assets/backgrounds/loginLight.png";
 import resetDarkBg from "../assets/backgrounds/loginDark.png";
 
@@ -115,32 +117,58 @@ function ResetPassword() {
 
           </div>
 
-          <input
-            type="password"
-            placeholder="New Password"
-            value={password}
-            onChange={(e) =>
-              setPassword(e.target.value)
-            }
-          />
+          <div style={{ position: "relative" }}>
+  <FaLock
+    style={{
+      position: "absolute",
+      left: "14px",
+      top: "50%",
+      transform: "translateY(-50%)",
+      opacity: 0.7,
+    }}
+  />
 
-          <input
-            type="password"
-            placeholder="Confirm Password"
-            value={confirmPassword}
-            onChange={(e) =>
-              setConfirmPassword(e.target.value)
-            }
-          />
+  <input
+    type="password"
+    placeholder="New Password"
+    value={password}
+    onChange={(e) => setPassword(e.target.value)}
+    style={{ paddingLeft: "42px" }}
+  />
+</div>
+
+          <div style={{ position: "relative" }}>
+  <FaKey
+    style={{
+      position: "absolute",
+      left: "14px",
+      top: "50%",
+      transform: "translateY(-50%)",
+      opacity: 0.7,
+    }}
+  />
+
+  <input
+    type="password"
+    placeholder="Confirm Password"
+    value={confirmPassword}
+    onChange={(e) => setConfirmPassword(e.target.value)}
+    style={{ paddingLeft: "42px" }}
+  />
+</div>
 
           <button
-            className="glow-top"
-            style={{
-              width: "100%",
-            }}
-          >
-            Reset Password
-          </button>
+  className="glow-top"
+  style={{
+    width: "100%",
+  }}
+>
+  <FaKey
+    size={14}
+    style={{ marginRight: "6px" }}
+  />
+  Reset Password
+</button>
 
         </form>
 

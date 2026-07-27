@@ -10,6 +10,15 @@ import logo from "../assets/Logo.svg";
 import loginLightBg from "../assets/backgrounds/loginLight.png";
 import loginDarkBg from "../assets/backgrounds/loginDark.png";
 
+import {
+  FaEnvelope,
+  FaLock,
+  FaGoogle,
+  FaUserPlus,
+  FaKey,
+  FaSignInAlt,
+} from "react-icons/fa";
+
 function Login() {
 
 const navigate = useNavigate();
@@ -129,38 +138,48 @@ return (
         </p>
       </div>
 
-      <input
-        type="email"
-        placeholder="Email"
-        value={email}
-        onChange={(e) =>{
-          setEmail(e.target.value);
-          setLoginError(false);
-        }}
-        style={{
-          borderColor: loginError ? "#ef4444" : undefined,
-          boxShadow: loginError
-            ? "0 0 0 2px rgba(239,68,68,.2)"
-            : undefined,
-        }}
-      />
+      <div className="input-icon-wrapper">
+        <FaEnvelope className="input-icon" />
+
+        <input
+          className="input-glow"
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => {
+            setEmail(e.target.value);
+            setLoginError(false);
+          }}
+          style={{
+            borderColor: loginError ? "#ef4444" : undefined,
+            boxShadow: loginError
+              ? "0 0 0 2px rgba(239,68,68,.2)"
+              : undefined,
+          }}
+        />
+      </div>
 
 
-      <input
-        type="password"
-        placeholder="Password"
-        value={password}
-        onChange={(e) =>{
-          setPassword(e.target.value);
-          setLoginError(false);
-        }}
-        style={{
-          borderColor: loginError ? "#ef4444" : undefined,
-          boxShadow: loginError
-            ? "0 0 0 2px rgba(239,68,68,.2)"
-            : undefined,
-        }}
-      />
+      <div className="input-icon-wrapper">
+        <FaLock className="input-icon" />
+
+        <input
+          className="input-glow"
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => {
+            setPassword(e.target.value);
+            setLoginError(false);
+          }}
+          style={{
+            borderColor: loginError ? "#ef4444" : undefined,
+            boxShadow: loginError
+              ? "0 0 0 2px rgba(239,68,68,.2)"
+              : undefined,
+          }}
+        />
+      </div>
       {loginError && (
         <p
           style={{
@@ -174,28 +193,36 @@ return (
         </p>
       )}
       <div
-  style={{
-    display: "flex",
-    justifyContent: "flex-end",
-    marginTop: "-6px",
-  }}
->
-  <Link
-    to="/forgot-password"
-    style={{
-      fontSize: ".9rem",
-      color: darkMode ? "#7dd3fc" : "#0284c7",
-      textDecoration: "none",
-      transition: ".25s",
-    }}
-    onMouseEnter={(e) => {
-      e.currentTarget.style.textDecoration = "underline";
-    }}
-    onMouseLeave={(e) => {
-      e.currentTarget.style.textDecoration = "none";
-    }}
-  >
-    Forgot Password?
+        style={{
+          display: "flex",
+          justifyContent: "flex-end",
+          marginTop: "-6px",
+        }}
+      >
+        <Link
+          to="/forgot-password"
+          style={{
+            fontSize: ".9rem",
+            color: darkMode ? "#7dd3fc" : "#0284c7",
+            textDecoration: "none",
+            transition: ".25s",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.textDecoration = "underline";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.textDecoration = "none";
+          }}
+        >
+          <>
+        <FaKey
+          style={{
+            marginRight: "6px",
+            fontSize: ".8rem",
+          }}
+        />
+        Forgot Password?
+      </>
   </Link>
 </div>
 
@@ -206,7 +233,13 @@ return (
           width: "100%"
         }}
       >
-        Login
+        <>
+          <FaSignInAlt
+            size={14}
+            style={{ marginRight: "6px" }}
+          />
+          Login
+        </>
       </button>
 
       <div
@@ -279,7 +312,15 @@ return (
       >
         Don't have an account?{" "}
         <Link to="/register">
-          Register here
+          <>
+            <FaUserPlus
+              style={{
+                marginRight: "5px",
+                fontSize: ".8rem",
+              }}
+            />
+            Register here
+          </>
         </Link>
       </p>
 
