@@ -13,6 +13,42 @@ import dashboardLightBg from "../assets/backgrounds/dashboard-light.png";
 import dashboardDarkBg from "../assets/backgrounds/dashboard-dark.png";
 import LoadingSpinner from "../components/LoadingSpinner";
 
+import {
+  FaChartLine,
+  FaChartPie,
+  FaUsersCog,
+  FaClipboardList,
+  FaLightbulb,
+  FaHistory,
+  FaSearch,
+  FaUser,
+  FaEnvelope,
+  FaCalendarAlt,
+  FaTrashAlt,
+  FaUserShield,
+  FaUsers,
+  FaStickyNote,
+  FaClock,
+  FaBirthdayCake,
+  FaLink,
+} from "react-icons/fa";
+
+import {
+  XAxis,
+  YAxis,
+  PieChart,
+  Pie,
+  Cell,
+  ResponsiveContainer,
+  Tooltip,
+  Legend,
+  CartesianGrid,
+  LineChart,
+  Line,
+  Label,
+} from "recharts";
+
+
 function AdminDashboard() {
   const { user } = useContext(AuthContext);
   const { isMobile } = useContext(LayoutContext);
@@ -25,8 +61,75 @@ function AdminDashboard() {
   const [stats, setStats] = useState(null);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [activeTab, setActiveTab] = useState("dashboard");
 
   const confirm = useConfirm();
+
+  const chartData = [
+  { month: "Jan", users: 5 },
+  { month: "Feb", users: 9 },
+  { month: "Mar", users: 15 },
+  { month: "Apr", users: 22 },
+  { month: "May", users: 31 },
+  { month: "Jun", users: 45 },
+];
+
+  const statCards = stats
+  ? [
+      {
+        title: "Users",
+        value: stats.users,
+        icon: FaUsers,
+        color: "#38bdf8",
+      },
+      {
+        title: "Notes",
+        value: stats.notes,
+        icon: FaStickyNote,
+        color: "#10b981",
+      },
+      {
+        title: "Reminders",
+        value: stats.reminders,
+        icon: FaClock,
+        color: "#f59e0b",
+      },
+      {
+        title: "Birthdays",
+        value: stats.birthdays,
+        icon: FaBirthdayCake,
+        color: "#ec4899",
+      },
+      {
+        title: "Links",
+        value: stats.links,
+        icon: FaLink,
+        color: "#8b5cf6",
+      },
+    ]
+  : [];
+
+  const pieData = stats
+  ? [
+      { name: "Notes", value: stats.notes },
+      { name: "Reminders", value: stats.reminders },
+      { name: "Birthdays", value: stats.birthdays },
+      { name: "Links", value: stats.links },
+    ]
+  : [];
+
+  const COLORS = [
+  "#10b981", // Notes
+  "#f59e0b", // Reminders
+  "#ec4899", // Birthdays
+  "#8b5cf6", // Links
+];
+
+const totalModules = pieData.reduce(
+  (sum, item) => sum + item.value,
+  0
+);
 
   const fetchStats = async () => {
     try {
@@ -99,6 +202,16 @@ function AdminDashboard() {
   loadData();
 }, []);
 
+const filteredUsers = users.filter((u) => {
+  const value = search.toLowerCase();
+
+  return (
+    u.fullName.toLowerCase().includes(value) ||
+    u.username.toLowerCase().includes(value) ||
+    u.email.toLowerCase().includes(value)
+  );
+});
+
 const sidebar = (
   <Card
     variant="glass"
@@ -115,73 +228,60 @@ const sidebar = (
     <h1
       style={{
         textAlign: "center",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: "10px",
       }}
     >
-      Admin 📊
+      <FaUserShield color="#38bdf8" />
+      Admin
     </h1>
 
-    {!stats ? (
-      <p style={{ paddingLeft: "20px" }}>
-        Loading statistics...
-      </p>
-    ) : (
-      <>
-        <div
-          className="glow-top left"
-          style={{
-            paddingLeft: "20px",
-            marginBottom: "12px",
-            borderRadius: "10px",
-          }}
-        >
-          👥 Users: {stats.users}
-        </div>
+    <div
+      className="glow-top left"
+      style={{ marginBottom: "12px" }}
+      onClick={() => setActiveTab("dashboard")}
+    >
+      <FaChartPie style={{ marginRight: 10 }} />
+      Dashboard
+    </div>
 
-        <div
-          className="glow-top left"
-          style={{
-            paddingLeft: "20px",
-            marginBottom: "12px",
-            borderRadius: "10px",
-          }}
-        >
-          📝 Notes: {stats.notes}
-        </div>
+    <div
+      className="glow-top left"
+      style={{ marginBottom: "12px" }}
+      onClick={() => setActiveTab("users")}
+    >
+      <FaUsersCog style={{ marginRight: 10 }} />
+      Manage Users
+    </div>
 
-        <div
-          className="glow-top left"
-          style={{
-            paddingLeft: "20px",
-            marginBottom: "12px",
-            borderRadius: "10px",
-          }}
-        >
-          ⏰ Reminders: {stats.reminders}
-        </div>
+    <div
+      className="glow-top left"
+      style={{ marginBottom: "12px" }}
+      onClick={() => setActiveTab("logs")}
+    >
+      <FaClipboardList style={{ marginRight: 10 }} />
+      System Logs
+    </div>
 
-        <div
-          className="glow-top left"
-          style={{
-            paddingLeft: "20px",
-            marginBottom: "12px",
-            borderRadius: "10px",
-          }}
-        >
-          🎂 Birthdays: {stats.birthdays}
-        </div>
+    <div
+      className="glow-top left"
+      style={{ marginBottom: "12px" }}
+      onClick={() => setActiveTab("suggestions")}
+    >
+      <FaLightbulb style={{ marginRight: 10 }} />
+      Suggestions
+    </div>
 
-        <div
-          className="glow-top left"
-          style={{
-            paddingLeft: "20px",
-            marginBottom: "12px",
-            borderRadius: "10px",
-          }}
-        >
-          🔗 Links: {stats.links}
-        </div>
-      </>
-    )}
+    <div
+      className="glow-top left"
+      style={{ marginBottom: "12px" }}
+      onClick={() => setActiveTab("activities")}
+    >
+      <FaHistory style={{ marginRight: 10 }} />
+      Recent Activities
+    </div>
   </Card>
 );
 
@@ -203,72 +303,414 @@ if (loading) {
         style={{
           display: "flex",
           flexDirection: "column",
-          gap: "28px",
-          padding: "10px 10px 40px",
+          gap: "5px",
         }}
       >
+{activeTab === "dashboard" && stats && (
+  <>
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit,minmax(120px,1fr))",
+        gap: "10px",
+      }}
+    >
+      
+      {statCards.map((card) => {
+        const Icon = card.icon;
+
+        return (
+          <Card
+            key={card.title}
+            variant="glass"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "18px",
+              padding: "24px",
+              transition: ".3s",
+              cursor: "default",
+            }}
+          >
+            <div
+              style={{
+                width: "64px",
+                height: "64px",
+                borderRadius: "50px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                background: `${card.color}22`,
+                color: card.color,
+                fontSize: "28px",
+              }}
+            >
+              <Icon />
+            </div>
+
+            <div>
+              <div
+                style={{
+                  opacity: 0.75,
+                  fontSize: ".95rem",
+                }}
+              >
+                {card.title}
+              </div>
+
+              <div
+                style={{
+                  fontSize: "2rem",
+                  fontWeight: 700,
+                  marginTop: "4px",
+                }}
+              >
+                {card.value}
+              </div>
+            </div>
+          </Card>
+        );
+      })}
+    </div>
+<div
+  style={{
+    display: "grid",
+    gridTemplateColumns: isMobile
+      ? "1fr"
+      : "2fr 1fr",
+    gap: "10px",
+    marginTop: "5px",
+  }}
+>
+    <Card
+  variant="glass"
+  style={{
+    flex: 2,
+    height: "250px",
+    padding: "15px",
+  }}
+>
+  <h3
+    style={{
+      display: "flex",
+      alignItems: "center",
+      gap: "20px",
+      marginBottom: "5px",
+    }}
+  >
+    <FaChartLine color="#38bdf8" />
+    User Growth
+  </h3>
+
+  <ResponsiveContainer
+    width="100%"
+    height={200}
+  >
+    <LineChart data={chartData}>
+      <CartesianGrid strokeDasharray="3 3" />
+
+      <XAxis dataKey="month" />
+
+      <YAxis />
+
+      <Tooltip />
+
+      <Line
+        type="monotone"
+        dataKey="users"
+        stroke="#38bdf8"
+        strokeWidth={3}
+        dot={{ r: 5 }}
+        activeDot={{ r: 8 }}
+      />
+    </LineChart>
+  </ResponsiveContainer>
+</Card>
+<Card
+  variant="glass"
+  style={{
+    flex: 1,
+    height: "250px",
+    padding: "20px",
+    display: "flex",
+    flexDirection: "column",
+  }}
+>
+<div
+  style={{
+    position: "relative",
+    width: "100%",
+    height: "100%",
+  }}
+>
+  
+  <ResponsiveContainer>
+    <PieChart>
+      <Pie
+  data={pieData}
+  dataKey="value"
+  nameKey="name"
+  outerRadius={85}
+  innerRadius={55}
+  paddingAngle={4}
+>
+  {pieData.map((entry, index) => (
+    <Cell
+      key={entry.name}
+      fill={COLORS[index % COLORS.length]}
+    />
+  ))}
+
+  <Label
+    content={({ viewBox }) => {
+      if (!viewBox) return null;
+
+      const { cx, cy } = viewBox;
+
+      return (
+        <g>
+          <text
+            x={cx}
+            y={cy - 10}
+            textAnchor="middle"
+            fill={darkMode ? "#9ca3af" : "#6b7280"}
+            fontSize={20}
+          >
+            Total
+          </text>
+
+          <text
+            x={cx}
+            y={cy + 18}
+            textAnchor="middle"
+            fill={darkMode ? "#fff" : "#111827"}
+            fontSize={28}
+            fontWeight="bold"
+          >
+            {totalModules}
+          </text>
+        </g>
+      );
+    }}
+  />
+</Pie>
+
+      <Tooltip />
+
+      <Legend
+        layout="vertical"
+        align="right"
+        verticalAlign="middle"
+        iconType="square"
+      />
+    </PieChart>
+  </ResponsiveContainer>
+</div>
+    </Card>
+    </div>
+  </>
+)}
+
+{activeTab === "users" && (
+  <>
         <h1
           style={{
-            margin: 0,
-            fontSize: "2.5rem",
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
           }}
         >
-          Admin Control Panel
+          <FaUsersCog color="#38bdf8" />
+          Manage Users
         </h1>
 
-        {stats && (
-          <>
-            <h2>Statistics</h2>
+        <div
+          className="input-icon-wrapper"
+          style={{
+            maxWidth: "500px",
+            marginBottom: "5px",
+          }}
+        >
+          <FaSearch className="input-icon" />
 
-            <Card variant="glass">
-              <p><strong>Total Users:</strong> {stats.users}</p>
-              <p><strong>Total Notes:</strong> {stats.notes}</p>
-              <p><strong>Total Reminders:</strong> {stats.reminders}</p>
-              <p><strong>Total Birthdays:</strong> {stats.birthdays}</p>
-              <p><strong>Total Links:</strong> {stats.links}</p>
-            </Card>
-          </>
-        )}
+          <input
+            className="input-glow"
+            type="text"
+            placeholder="Search users..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+        
 
-        <h2>Manage Users</h2>
-
-        {users.length === 0 ? (
-          <Card variant="glass">
-            <p>No users found.</p>
-          </Card>
-        ) : (
-          users.map((user) => (
+       {filteredUsers.length === 0 ? (
+        <Card variant="glass">
+          <p>No users found.</p>
+        </Card>
+      ) : (
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: isMobile
+              ? "1fr"
+              : "repeat(2, minmax(0, 1fr))",
+            gap: "20px",
+            width: "100%",
+          }}
+        >
+          {filteredUsers.map((user) => (
             <Card
               key={user._id}
               variant="glass"
+              style={{
+                padding: "24px",
+                height: "100%",
+              }}
             >
-              <p>
-                <strong>Full Name:</strong> {user.fullName}
-              </p>
-
-              <p>
-                <strong>Username:</strong> {user.username}
-              </p>
-
-              <p>
-                <strong>Email:</strong> {user.email}
-              </p>
-
-              <p>
-                <strong>Role:</strong> {user.role}
-              </p>
-
-              {user.role === "user" && (
-                <button
-                  className="glow-top delete"
-                  onClick={() => handleDelete(user._id)}
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "flex-start",
+                  flexWrap: "wrap",
+                  gap: "20px",
+                }}
+              >
+                <div
+                  style={{
+                    flex: 1,
+                  }}
                 >
-                  Delete User
-                </button>
-              )}
+                  <h3
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "10px",
+                      marginBottom: "5px",
+                    }}
+                  >
+                    <FaUser color="#38bdf8" />
+
+                    {user.fullName}
+                  </h3>
+
+                  <p>
+                    <FaUser
+                      style={{
+                        marginRight: "8px",
+                        color: "#00be9f",
+                      }}
+                    />
+                    @{user.username}
+                  </p>
+
+                  <p>
+                    <FaEnvelope
+                      style={{
+                        marginRight: "8px",
+                        color: "#00be9f",
+                      }}
+                    />
+                    {user.email}
+                  </p>
+
+                  <p>
+                    <FaCalendarAlt
+                      style={{
+                        marginRight: "8px",
+                        color: "#00be9f",
+                      }}
+                    />
+                    Joined{" "}
+                    {new Date(user.createdAt).toLocaleDateString(
+                      "en-GB",
+                      {
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                      }
+                    )}
+                  </p>
+                </div>
+
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "flex-end",
+                    gap: "15px",
+                  }}
+                >
+                  <span
+                    style={{
+                      padding: "8px 16px",
+                      borderRadius: "999px",
+                      fontWeight: 600,
+                      background:
+                        user.role === "admin"
+                          ? "rgba(168,85,247,.18)"
+                          : "rgba(56,189,248,.18)",
+                      color:
+                        user.role === "admin"
+                          ? "#c084fc"
+                          : "#38bdf8",
+                    }}
+                  >
+                    <FaUserShield
+                      style={{
+                        marginRight: "6px",
+                      }}
+                    />
+
+                    {user.role}
+                  </span>
+
+                  {user.role === "user" && (
+                    <button
+                      className="glow-top delete"
+                      onClick={() =>
+                        handleDelete(user._id)
+                      }
+                    >
+                      <FaTrashAlt
+                        style={{
+                          marginRight: "8px",
+                        }}
+                      />
+                      Delete User
+                    </button>
+                  )}
+                </div>
+              </div>
             </Card>
-          ))
+        
+    ))}
+  </div>
         )}
+        </>
+        )}
+
+
+{activeTab === "logs" && (
+  <Card variant="glass">
+    <h2>System Logs</h2>
+    <p>Coming soon...</p>
+  </Card>
+)}
+
+{activeTab === "suggestions" && (
+  <Card variant="glass">
+    <h2>Suggestions</h2>
+    <p>Coming soon...</p>
+  </Card>
+)}
+
+{activeTab === "activities" && (
+  <Card variant="glass">
+    <h2>Recent Activities</h2>
+    <p>Coming soon...</p>
+  </Card>
+)}
       </div>
     </Layout>
   );

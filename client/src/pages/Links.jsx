@@ -1162,7 +1162,6 @@ return (
 
                   {link.notes}
                 </p>
-
                   <button
                     className="glow-top"
                     onClick={() =>
