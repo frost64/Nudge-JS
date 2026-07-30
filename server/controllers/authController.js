@@ -10,6 +10,7 @@ const path = require("path");
 const crypto = require("crypto");
 const transporter = require("../config/mailer");
 const { OAuth2Client } = require("google-auth-library");
+const logActivity = require("../utils/activityLogger");
 
 const loginUser = async (req, res) => {
   try {
@@ -108,6 +109,12 @@ if (existingUsername) {
       username,
       email,
       password: hashedPassword
+    });
+
+    await logActivity({
+      type: "user_registered",
+      message: `${user.username} registered`,
+      user: user._id,
     });
 
     res.status(201).json({
@@ -622,6 +629,11 @@ const googleLogin = async (req, res) => {
         avatar: picture,
       });
     }
+    await logActivity({
+      type: "user_registered",
+      message: `${user.username} registered`,
+      user: user._id,
+    });
 
     const token = jwt.sign(
       {
@@ -691,6 +703,11 @@ const deleteMyAccount = async (req, res) => {
         fs.unlinkSync(avatarPath);
       }
     }
+    await logActivity({
+      type: "user_deleted",
+      message: `${user.username} deleted their account`,
+      user: user._id,
+    });
     await user.deleteOne();
 
     res.status(200).json({

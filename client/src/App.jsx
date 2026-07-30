@@ -20,6 +20,7 @@ import Contact from "./pages/Contact"
 import ScrollToTop from "./components/ScrollTopNew";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+import Suggestions from "./pages/Suggestions";
 
 import ProtectedRoute from "./routes/ProtectedRoute";
 import AdminRoute from "./routes/AdminRoute";
@@ -92,6 +93,10 @@ function App() {
                 <Links />
               </ProtectedRoute>
             }
+          />
+          <Route
+            path="/suggestions"
+            element={<Suggestions />}
           />
 
           <Route

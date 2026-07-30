@@ -1026,7 +1026,6 @@ useEffect(() => {
             <p>
               Start capturing your ideas by creating your first note.
             </p>
-            <div style={{paddingBottom:"50px"}}></div>
           </div>
         ) : (
           notes.map(
@@ -1087,7 +1086,7 @@ useEffect(() => {
                     color: "#00be9f",
                   }}
                 />
-                <strong>Description:</strong>
+                <strong>Description: </strong>
                   {note.content}</p>
 
                 <p><FaTags
@@ -1096,7 +1095,7 @@ useEffect(() => {
                         color: "#00be9f",
                       }}
                     />
-                    <strong>Tags:</strong>
+                    <strong>Tags: </strong>
                     {note.tags.join(", ")}</p>
                 <p>
                   <FaClock
@@ -1105,7 +1104,7 @@ useEffect(() => {
                       color: "#00be9f",
                     }}
                   />
-                  <strong>Created:</strong>
+                  <strong>Created: </strong>
                   {new Date(note.createdAt).toLocaleString("en-GB", {
                     day: "2-digit",
                     month: "long",

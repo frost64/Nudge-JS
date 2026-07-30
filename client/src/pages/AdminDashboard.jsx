@@ -13,7 +13,16 @@ import dashboardLightBg from "../assets/backgrounds/dashboard-light.png";
 import dashboardDarkBg from "../assets/backgrounds/dashboard-dark.png";
 import LoadingSpinner from "../components/LoadingSpinner";
 
+import { useNavigate } from "react-router-dom";
+
 import {
+  FaBell,
+  FaQuestionCircle,
+  FaUserPlus,
+  FaUserMinus,
+  FaEdit,
+  FaTrash,
+  FaCircle,
   FaChartLine,
   FaChartPie,
   FaUsersCog,
@@ -31,6 +40,13 @@ import {
   FaClock,
   FaBirthdayCake,
   FaLink,
+  FaServer,
+  FaDatabase,
+  FaLock,
+  FaShieldAlt,
+  FaCheckCircle,
+  FaExclamationTriangle,
+  FaTimesCircle,
 } from "react-icons/fa";
 
 import {
@@ -51,7 +67,11 @@ import {
 
 function AdminDashboard() {
   const { user } = useContext(AuthContext);
-  const { isMobile } = useContext(LayoutContext);
+  const {
+  isMobile,
+  isTablet,
+  isDesktop,
+} = useContext(LayoutContext);
   const darkMode = user?.theme === "dark";
 
   const backgroundImage = darkMode
@@ -63,18 +83,177 @@ function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState("dashboard");
-
+  const [suggestions, setSuggestions] = useState([]);
+  const [recentSuggestions, setRecentSuggestions] = useState([]);
+  const [systemStatus, setSystemStatus] = useState([]);
+  const [recentActivities, setRecentActivities] = useState([]);
+  const [activities, setActivities] = useState([]);
   const confirm = useConfirm();
 
-  const chartData = [
-  { month: "Jan", users: 5 },
-  { month: "Feb", users: 9 },
-  { month: "Mar", users: 15 },
-  { month: "Apr", users: 22 },
-  { month: "May", users: 31 },
-  { month: "Jun", users: 45 },
-];
+  const [chartData, setChartData] = useState([]);
 
+  const navigate = useNavigate();
+
+  const activityIcons = {
+  user_registered: FaUserPlus,
+  user_deleted: FaUserMinus,
+
+  note_created: FaStickyNote,
+  note_updated: FaEdit,
+  note_deleted: FaTrash,
+
+  reminder_created: FaClock,
+  reminder_updated: FaEdit,
+  reminder_deleted: FaTrash,
+
+  birthday_created: FaBirthdayCake,
+  birthday_updated: FaEdit,
+  birthday_deleted: FaTrash,
+
+  link_created: FaLink,
+  link_updated: FaEdit,
+  link_deleted: FaTrash,
+
+  suggestion_submitted: FaLightbulb,
+
+  admin_deleted_user: FaUserShield,
+};
+
+const activityMeta = {
+  user_registered: {
+    icon: FaUserPlus,
+    color: "#22c55e",
+  },
+  user_deleted: {
+    icon: FaUserMinus,
+    color: "#ef4444",
+  },
+
+  note_created: {
+    icon: FaStickyNote,
+    color: "#3b82f6",
+  },
+  note_updated: {
+    icon: FaEdit,
+    color: "#f59e0b",
+  },
+  note_deleted: {
+    icon: FaTrash,
+    color: "#ef4444",
+  },
+
+  reminder_created: {
+    icon: FaBell,
+    color: "#eab308",
+  },
+  reminder_updated: {
+    icon: FaEdit,
+    color: "#f59e0b",
+  },
+  reminder_deleted: {
+    icon: FaTrash,
+    color: "#ef4444",
+  },
+
+  birthday_created: {
+    icon: FaBirthdayCake,
+    color: "#ec4899",
+  },
+  birthday_updated: {
+    icon: FaEdit,
+    color: "#f59e0b",
+  },
+  birthday_deleted: {
+    icon: FaTrash,
+    color: "#ef4444",
+  },
+
+  link_created: {
+    icon: FaLink,
+    color: "#8b5cf6",
+  },
+  link_updated: {
+    icon: FaEdit,
+    color: "#f59e0b",
+  },
+  link_deleted: {
+    icon: FaTrash,
+    color: "#ef4444",
+  },
+
+  suggestion_created: {
+    icon: FaLightbulb,
+    color: "#06b6d4",
+  },
+};
+
+const activityBadge = {
+  user_registered: {
+    label: "REGISTERED",
+    color: "#22c55e",
+  },
+  user_deleted: {
+    label: "DELETED",
+    color: "#ef4444",
+  },
+
+  note_created: {
+    label: "CREATED",
+    color: "#22c55e",
+  },
+  note_updated: {
+    label: "UPDATED",
+    color: "#f59e0b",
+  },
+  note_deleted: {
+    label: "DELETED",
+    color: "#ef4444",
+  },
+
+  reminder_created: {
+    label: "CREATED",
+    color: "#22c55e",
+  },
+  reminder_updated: {
+    label: "UPDATED",
+    color: "#f59e0b",
+  },
+  reminder_deleted: {
+    label: "DELETED",
+    color: "#ef4444",
+  },
+
+  birthday_created: {
+    label: "CREATED",
+    color: "#22c55e",
+  },
+  birthday_updated: {
+    label: "UPDATED",
+    color: "#f59e0b",
+  },
+  birthday_deleted: {
+    label: "DELETED",
+    color: "#ef4444",
+  },
+
+  link_created: {
+    label: "CREATED",
+    color: "#22c55e",
+  },
+  link_updated: {
+    label: "UPDATED",
+    color: "#f59e0b",
+  },
+  link_deleted: {
+    label: "DELETED",
+    color: "#ef4444",
+  },
+
+  suggestion_created: {
+    label: "NEW",
+    color: "#06b6d4",
+  },
+};
   const statCards = stats
   ? [
       {
@@ -131,6 +310,153 @@ const totalModules = pieData.reduce(
   0
 );
 
+
+const getActivityDate = (date) => {
+  const created = new Date(date);
+  const now = new Date();
+
+  const diffMinutes = Math.floor(
+    (now - created) / 60000
+  );
+
+  if (diffMinutes < 1) return "Just now";
+
+  if (diffMinutes < 60)
+    return `${diffMinutes}m ago`;
+
+  return created.toLocaleDateString();
+};
+const fetchSystemStatus = async () => {
+  try {
+    const res = await api.get("/admin/system-status");
+    setSystemStatus(res.data);
+  } catch (error) {
+    console.log(error);
+
+    toast.error(
+      error.response?.data?.message ||
+      "Failed to load system status."
+    );
+  }
+};
+
+const refreshDashboard = async () => {
+  await Promise.all([
+    fetchStats(),
+    fetchRecentSuggestions(),
+    fetchRecentActivities(),
+    fetchSystemStatus(),
+  ]);
+};
+
+const fetchActivities = async () => {
+  try {
+    const res = await api.get("/admin/activities");
+    setActivities(res.data);
+  } catch (error) {
+    toast.error(
+      error.response?.data?.message ||
+      "Failed to load activities."
+    );
+  }
+};
+
+const fetchUserGrowth = async () => {
+  console.log("fetchUserGrowth called");
+  try {
+    const res = await api.get("/admin/user-growth");
+    setChartData(res.data);
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+
+const fetchSuggestions = async () => {
+  try {
+    const res = await api.get("/admin/suggestions");
+    setSuggestions(res.data);
+  } catch (error) {
+    toast.error("Failed to load suggestions.");
+  }
+};
+
+const markSuggestionRead = async (id) => {
+  try {
+    await api.patch(`/admin/suggestions/${id}/read`);
+
+    setSuggestions((prev) =>
+      prev.map((suggestion) =>
+        suggestion._id === id
+          ? { ...suggestion, status: "read" }
+          : suggestion
+      )
+    );
+    setRecentSuggestions((prev) =>
+      prev.map((suggestion) =>
+        suggestion._id === id
+          ? { ...suggestion, status: "read" }
+          : suggestion
+      )
+    );
+
+    toast.success("Suggestion marked as read.");
+    fetchRecentActivities();
+  } catch (error) {
+    toast.error("Failed to update suggestion.");
+  }
+};
+
+const fetchRecentSuggestions = async () => {
+  try {
+    const res = await api.get(
+      "/admin/recent-suggestions"
+    );
+
+    setRecentSuggestions(res.data);
+  } catch (error) {
+    console.log(error);
+
+    toast.error(
+      error.response?.data?.message ||
+      "Failed to load recent suggestions."
+    );
+  }
+};
+
+const deleteSuggestion = async (id) => {
+  const confirmed = await confirm({
+    title: "Delete Suggestion",
+    message:
+      "Are you sure you want to delete this suggestion?",
+    confirmText: "Delete",
+    cancelText: "Cancel",
+  });
+
+  if (!confirmed) return;
+
+  try {
+    await api.delete(`/admin/suggestions/${id}`);
+
+    setSuggestions((prev) =>
+      prev.filter(
+        (suggestion) => suggestion._id !== id
+      )
+    );
+    setRecentSuggestions((prev) =>
+      prev.filter(
+        (suggestion) => suggestion._id !== id
+      )
+    );
+
+    toast.success("Suggestion deleted.");
+    fetchRecentActivities();
+  } catch (error) {
+    toast.error("Failed to delete suggestion.");
+  }
+};
+
+
   const fetchStats = async () => {
     try {
       const res = await api.get("/admin/stats");
@@ -159,6 +485,21 @@ const totalModules = pieData.reduce(
     }
   };
 
+  const fetchRecentActivities = async () => {
+  try {
+    const res = await api.get("/admin/recent-activities");
+
+    setRecentActivities(res.data);
+  } catch (error) {
+    console.log(error);
+
+    toast.error(
+      error.response?.data?.message ||
+      "Failed to load recent activities."
+    );
+  }
+};
+
   const handleDelete = async (id) => {
     const confirmed = await confirm({
       title: "Delete User",
@@ -177,6 +518,7 @@ const totalModules = pieData.reduce(
 
       fetchUsers();
       fetchStats();
+      fetchRecentActivities();
     } catch (error) {
       console.log(error);
 
@@ -186,14 +528,23 @@ const totalModules = pieData.reduce(
       );
     }
   };
+useEffect(() => {
+  if (activeTab === "suggestions") {
+    fetchSuggestions();
+  }
+}, [activeTab]);
+  
 
-  useEffect(() => {
+useEffect(() => {
   const loadData = async () => {
     setLoading(true);
 
     await Promise.all([
       fetchStats(),
       fetchUsers(),
+      fetchRecentSuggestions(),
+      fetchRecentActivities(),
+      fetchSystemStatus(),
     ]);
 
     setLoading(false);
@@ -201,6 +552,25 @@ const totalModules = pieData.reduce(
 
   loadData();
 }, []);
+
+useEffect(() => {
+  if (activeTab !== "dashboard") return;
+
+  // Refresh immediately whenever Dashboard becomes active
+  refreshDashboard();
+
+  const interval = setInterval(() => {
+    refreshDashboard();
+  }, 30000);
+
+  return () => clearInterval(interval);
+}, [activeTab]);
+
+useEffect(() => {
+  if (activeTab === "activities") {
+    fetchActivities();
+  }
+}, [activeTab]);
 
 const filteredUsers = users.filter((u) => {
   const value = search.toLowerCase();
@@ -212,18 +582,49 @@ const filteredUsers = users.filter((u) => {
   );
 });
 
+const serviceIcons = {
+  Database: <FaDatabase size={15} />,
+  "API Server": <FaServer size={15} />,
+  Authentication: <FaLock size={15} />,
+  "Notes": <FaStickyNote size={15} />,
+  "Links": <FaLink size={15} />,
+  "Reminders": <FaClock size={15} />,
+  "Birthdays": <FaBirthdayCake size={15} />,
+};
+
+const allOperational =
+  systemStatus?.length > 0 &&
+  systemStatus.every(
+    (service) => service.status === "Operational"
+  );
+
+const allDown =
+  systemStatus?.length > 0 &&
+  systemStatus.every(
+    (service) => service.status === "Down"
+  );
+
+const overallStatus = allOperational
+  ? "Operational"
+  : allDown
+  ? "Down"
+  : "Warning";
+
 const sidebar = (
   <Card
     variant="glass"
-   style={{
-    position: isMobile ? "static" : "fixed",
-    top: isMobile ? undefined : "15%",
-    left: isMobile ? undefined : "2%",
-    width: isMobile ? "100%" : "20%",
-    minHeight: isMobile ? "auto" : "75%",
-    padding: "24px",
-    borderRadius: "22px",
-  }}
+    style={{
+      position: isMobile ? "static" : "fixed",
+      top: isMobile ? undefined : "15%",
+      left: isMobile ? undefined : "2%",
+      width: isMobile ? "100%" : "20%",
+      minHeight: isMobile ? "auto" : "75%",
+      padding: "24px",
+      borderRadius: "22px",
+
+      display: "flex",
+      flexDirection: "column",
+    }}
   >
     <h1
       style={{
@@ -237,6 +638,8 @@ const sidebar = (
       <FaUserShield color="#38bdf8" />
       Admin
     </h1>
+    <div>
+
 
     <div
       className="glow-top left"
@@ -282,6 +685,121 @@ const sidebar = (
       <FaHistory style={{ marginRight: 10 }} />
       Recent Activities
     </div>
+</div>
+
+
+  <div style={{ marginTop: "auto" }}>
+  <Card
+    variant="glass"
+    style={{
+      padding: "18px",
+    }}
+  >
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "16px",
+        }}
+      >
+  <div
+    style={{
+      width: "56px",
+      height: "56px",
+      borderRadius: "50%",
+      background:
+        overallStatus === "Operational"
+          ? "#10b98122"
+          : overallStatus === "Down"
+          ? "#ef444422"
+          : "#f59e0b22",
+
+      border: `1px solid ${
+        overallStatus === "Operational"
+          ? "#10b98155"
+          : overallStatus === "Down"
+          ? "#ef444455"
+          : "#f59e0b55"
+      }`,
+
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+
+      boxShadow: `0 0 20px ${
+        overallStatus === "Operational"
+          ? "#10b98144"
+          : overallStatus === "Down"
+          ? "#ef444444"
+          : "#f59e0b44"
+      }`,
+    }}
+  >
+    <FaShieldAlt
+      size={24}
+      color={
+        overallStatus === "Operational"
+          ? "#10b981"
+          : overallStatus === "Down"
+          ? "#ef4444"
+          : "#f59e0b"
+      }
+    />
+  </div>
+
+  <div>
+  <h3
+    style={{
+      margin: 0,
+      marginBottom: "10px",
+      fontSize: "1rem",
+    }}
+  >
+    System Status
+  </h3>
+
+  <span
+    style={{
+      display: "inline-block",
+      background:
+        overallStatus === "Operational"
+          ? "#10b98122"
+          : overallStatus === "Down"
+          ? "#ef444422"
+          : "#f59e0b22",
+
+      color:
+        overallStatus === "Operational"
+          ? "#10b981"
+          : overallStatus === "Down"
+          ? "#ef4444"
+          : "#f59e0b",
+
+      border: `1px solid ${
+        overallStatus === "Operational"
+          ? "#10b98155"
+          : overallStatus === "Down"
+          ? "#ef444455"
+          : "#f59e0b55"
+      }`,
+
+      padding: "4px 8px",
+      borderRadius: "999px",
+      fontSize: "11px",
+      fontWeight: 600,
+      whiteSpace: "nowrap",
+    }}
+  >
+    {overallStatus === "Operational"
+      ? "All systems operational"
+      : overallStatus === "Down"
+      ? "All systems are down"
+      : "Check system status"}
+  </span>
+</div>
+      </div>
+    </Card>
+    </div>
   </Card>
 );
 
@@ -318,6 +836,7 @@ if (loading) {
       
       {statCards.map((card) => {
         const Icon = card.icon;
+        
 
         return (
           <Card
@@ -327,7 +846,7 @@ if (loading) {
               display: "flex",
               alignItems: "center",
               gap: "18px",
-              padding: "24px",
+              padding: "10px",
               transition: ".3s",
               cursor: "default",
             }}
@@ -507,7 +1026,343 @@ if (loading) {
   </ResponsiveContainer>
 </div>
     </Card>
+    
+    
     </div>
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: isMobile
+          ? "1fr"
+          : isTablet
+          ? "repeat(2, 1fr)"
+          : "repeat(3, 1fr)",
+        gap: "20px",
+        height: "100%",
+        width: "100%",
+      }}
+    >
+  <Card 
+    variant="glass"
+    style={{
+      width: "100%",
+      height: "100%",
+      padding: "24px",
+      borderRadius: "22px",
+    }}
+  >
+  <div
+    style={{
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: "18px",
+    }}
+  >
+    <h3
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "12px",
+        margin: 0,
+      }}
+    >
+      <FaServer color="#38bdf8" />
+      System Status
+    </h3>
+  </div>
+
+  {systemStatus.map((service) => (
+    <div
+      key={service.name}
+      style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        padding: "10px",
+        borderBottom: "1px solid rgba(255,255,255,.08)",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "18px",
+        }}
+      >
+        <div
+          style={{
+            width: "30px",
+            height: "30px",
+            borderRadius: "16px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "rgba(56,189,248,.12)",
+            color: "#22d3ee",
+            fontSize: "24px",
+          }}
+        >
+          {serviceIcons[service.name]}
+        </div>
+
+        <span
+          style={{
+            fontSize: "1rem",
+            fontWeight: 500,
+          }}
+        >
+          {service.name}
+        </span>
+      </div>
+
+      <span
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
+          color:
+          service.status === "Operational"
+            ? "#22c55e"
+            : "#ef4444",
+          fontWeight: 600,
+        }}
+      >
+        <span
+          style={{
+            width: "10px",
+            height: "10px",
+            borderRadius: "50%",
+            background:
+              service.status === "Operational"
+                ? "#22c55e"
+                : "#ef4444",
+
+            boxShadow: service.status === "Operational"
+              ? "0 0 10px #22c55e"
+              : "0 0 10px #ef4444",
+          }}
+        />
+        {service.status}
+      </span>
+    </div>
+  ))}
+</Card>
+
+<Card
+  variant="glass"
+  style={{
+    width: "100%",
+    height: "100%",
+    padding: "24px",
+    borderRadius: "22px",
+  }}
+>
+  <div
+    style={{
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: "15px"
+    }}
+  >
+    <h3
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "12px",
+        margin: 0,
+      }}
+    >
+      <FaHistory color="#38bdf8" />
+      Recent Activity
+    </h3>
+
+    <button
+      className="glow-top"
+      onClick={() => setActiveTab("activities")}
+    >
+      View All
+    </button>
+  </div>
+
+  {recentActivities.length === 0 ? (
+  <p style={{ opacity: 0.7 }}>
+    No recent activity.
+  </p>
+) : (
+  recentActivities.map((activity) => {
+    const Icon =
+      activityIcons[activity.type] || FaCircle;
+
+    return (
+      <div
+        key={activity._id}
+        style={{
+          display: "flex",
+          gap: "8px",
+          padding: "5px 0",
+          borderBottom:
+            "1px solid rgba(255,255,255,.08)",
+        }}
+      >
+        <div
+          style={{
+            width: 40,
+            height: 40,
+            borderRadius: "50%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: `${activity.color}20`,
+            color: activity.color,
+            flexShrink: 0,
+          }}
+        >
+          <Icon size={15} />
+        </div>
+
+        <div style={{ flex: 1 }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+            }}
+          >
+            <strong style={{fontSize: "13px"}}>{activity.message}</strong>
+          </div>
+
+          <div
+  style={{
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: "6px",
+    fontSize: ".8rem",
+    opacity: 0.65,
+  }}
+>
+  <span>
+    {new Date(activity.createdAt).toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    })}
+  </span>
+
+  <span>{getActivityDate(activity.createdAt)}</span>
+</div>
+        </div>
+      </div>
+    );
+  })
+)}
+</Card>
+
+  <Card 
+    variant="glass"
+    style={{
+      width: "100%",
+      height: "100%",
+      padding: "24px",
+      borderRadius: "22px",
+    }}
+  >
+  <div
+    style={{
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: "18px",
+    }}
+  >
+    <h3
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "12px",
+        margin: 0,
+      }}
+    >
+      <FaLightbulb color="#fbbf24" />
+      Suggestions
+    </h3>
+
+    <button
+      className="glow-top"
+      style={{
+        padding: "8px 18px",
+      }}
+      onClick={() => setActiveTab("suggestions")}
+    >
+      View All
+    </button>
+  </div>
+
+  {recentSuggestions.length === 0 ? (
+    <p
+      style={{
+        opacity: 0.7,
+      }}
+    >
+      No suggestions yet.
+    </p>
+  ) : (
+    recentSuggestions.map((item) => (
+      <div
+        key={item._id}
+        style={{
+          padding: "4px 0",
+          borderBottom:
+            "1px solid rgba(255,255,255,.08)",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <strong>{item.title}</strong>
+
+          <span
+            style={{
+              fontSize: ".8rem",
+              color:
+                item.status === "new"
+                  ? "#22c55e"
+                  : "#38bdf8",
+            }}
+          >
+            {item.status}
+          </span>
+        </div>
+
+        <div
+  style={{
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    fontSize: ".9rem",
+    opacity: 0.8,
+  }}
+>
+  <span style={{color: "purple"}}>{item.fullName}</span>
+
+  <span
+    style={{
+      fontSize: ".8rem",
+      opacity: 0.7,
+    }}
+  >
+    {new Date(item.createdAt).toLocaleDateString()}
+  </span>
+</div>
+      </div>
+    ))
+  )}
+</Card>
+</div>
   </>
 )}
 
@@ -683,7 +1538,6 @@ if (loading) {
                 </div>
               </div>
             </Card>
-        
     ))}
   </div>
         )}
@@ -692,24 +1546,273 @@ if (loading) {
 
 
 {activeTab === "logs" && (
+  <>
   <Card variant="glass">
     <h2>System Logs</h2>
     <p>Coming soon...</p>
   </Card>
+  </>
+  
 )}
 
 {activeTab === "suggestions" && (
-  <Card variant="glass">
-    <h2>Suggestions</h2>
-    <p>Coming soon...</p>
-  </Card>
+  <>
+    <h2
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "12px",
+      }}
+    >
+      <FaLightbulb color="#fbbf24" />
+      User Suggestions
+    </h2>
+
+    {suggestions.length === 0 ? (
+      <Card variant="glass">
+        <p>No suggestions yet.</p>
+      </Card>
+    ) : (
+      suggestions.map((suggestion) => (
+        <Card
+          key={suggestion._id}
+          variant="glass"
+          style={{
+            padding: "24px",
+            marginBottom: "20px",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "flex-start",
+              marginBottom: "18px",
+            }}
+          >
+            <div>
+              <h3>{suggestion.title}</h3>
+
+              <p>
+                <strong>{suggestion.fullName}</strong>
+                {" • "}
+                @{suggestion.username}
+              </p>
+
+              <small>
+                {new Date(
+                  suggestion.createdAt
+                ).toLocaleString()}
+              </small>
+            </div>
+
+            <span
+              style={{
+                padding: "6px 14px",
+                borderRadius: "999px",
+                background:
+                  suggestion.status === "new"
+                    ? "rgba(34,197,94,.15)"
+                    : "rgba(59,130,246,.15)",
+                color:
+                  suggestion.status === "new"
+                    ? "#22c55e"
+                    : "#3b82f6",
+                fontWeight: 600,
+              }}
+            >
+              {suggestion.status}
+            </span>
+          </div>
+
+          <p
+            style={{
+              lineHeight: 1.8,
+            }}
+          >
+            {suggestion.message}
+          </p>
+
+          <div
+            style={{
+              display: "flex",
+              gap: "12px",
+              marginTop: "20px",
+            }}
+          >
+            {suggestion.status === "new" && (
+              <button
+                className="glow-top"
+                onClick={() =>
+                  markSuggestionRead(suggestion._id)
+                }
+              >
+                Mark as Read
+              </button>
+            )}
+
+            <button
+              className="glow-top delete"
+              onClick={() =>
+                deleteSuggestion(suggestion._id)
+              }
+            >
+              Delete
+            </button>
+          </div>
+        </Card>
+      ))
+    )}
+  </>
 )}
 
 {activeTab === "activities" && (
-  <Card variant="glass">
-    <h2>Recent Activities</h2>
-    <p>Coming soon...</p>
-  </Card>
+  <>
+        <h2
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "12px",
+          }}
+        >
+          <FaHistory color="#be24fb"/> Recent Activity
+        </h2>
+
+          {activities.length === 0 ? (
+            <Card variant="glass">
+              <p>No recent activity found.</p>
+            </Card>
+          ) : (
+            activities.map((activity) => {
+            const [username, ...action] = activity.message.split(" ");
+            const meta =
+              activityMeta[activity.type] || {
+                icon: FaQuestionCircle,
+                color: "#94a3b8",
+              };
+
+            const Icon = meta.icon;
+            const badge =
+            activityBadge[activity.type] || {
+              label: activity.type.toUpperCase(),
+              color: "#64748b",
+            };
+
+            return (
+              <Card
+                key={activity._id}
+                variant="glass"
+                style={{
+                  padding: "10px",
+                  borderRadius: "18px",
+                  margin: 0
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "flex-start",
+                    gap: "20px",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "flex-start",
+                      gap: "16px",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: "30px",
+                        height: "30px",
+                        borderRadius: "50%",
+                        background: meta.color,
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                        color: "#fff",
+                        flexShrink: 0,
+                        boxShadow: `0 0 18px ${meta.color}55`,
+                      }}
+                    >
+                      <Icon size={15} />
+                    </div>
+
+                    <div>
+                      <div
+                        style={{
+                          fontWeight: 600,
+                          marginBottom: "6px",
+                          lineHeight: "1.5",
+                        }}
+                      >
+                        <span
+                          style={{
+                            color: "#9e38f8",
+                            fontWeight: 700,
+                          }}
+                        >
+                          {username}
+                        </span>{" "}
+                        {action.join(" ")}
+                      </div>
+
+                      <div
+                        style={{
+                          fontSize: "0.9rem",
+                          opacity: 0.7,
+                        }}
+                      >
+                        {activity.performedBy}
+                      </div>
+                    </div>
+                  </div>
+
+                 <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "10px",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  <span
+                    style={{
+                      background: `${badge.color}22`,
+                      color: badge.color,
+                      border: `1px solid ${badge.color}55`,
+                      padding: "4px 10px",
+                      borderRadius: "999px",
+                      fontSize: "11px",
+                      fontWeight: 700,
+                      letterSpacing: "0.08em",
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    {badge.label}
+                  </span>
+
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      opacity: 0.7,
+                      fontSize: "0.85rem",
+                    }}
+                  >
+                    <FaClock />
+                    {activity.time}
+                  </div>
+                </div>
+                </div>
+              </Card>
+          );
+        })
+      )}
+      </>
 )}
       </div>
     </Layout>

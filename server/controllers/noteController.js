@@ -1,4 +1,6 @@
 const Note = require("../models/Note");
+const logActivity = require("../utils/activityLogger");
+const User = require("../models/User");
 
 const createNote = async (req, res) => {
   try {
@@ -33,6 +35,12 @@ const createNote = async (req, res) => {
       content: content.trim(),
       tags: tags.map(tag => tag.trim()).filter(Boolean),
       user: req.user.id
+    });
+    const user = await User.findById(req.user.id);
+    await logActivity({
+      type: "note_created",
+      message: `${user.username} created a note`,
+      user: req.user.id,
     });
 
     res.status(201).json(note);
@@ -129,6 +137,12 @@ const updateNote = async (req, res) => {
     note.tags = tags.map(tag => tag.trim()).filter(Boolean);
 
     await note.save();
+    const user = await User.findById(req.user.id);
+    await logActivity({
+      type: "note_updated",
+      message: `${user.username} updated a note`,
+      user: req.user.id,
+    });
 
     res.status(200).json(note);
 
@@ -154,6 +168,12 @@ const deleteNote = async (req, res) => {
     }
 
     await note.deleteOne();
+    const user = await User.findById(req.user.id);
+    await logActivity({
+      type: "note_deleted",
+      message: `${user.username} deleted a note`,
+      user: req.user.id,
+    });
 
     res.status(200).json({
       success: true,

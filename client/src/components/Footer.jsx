@@ -61,7 +61,7 @@ function Footer({ onVisibilityChange }) {
       ref={footerRef}
       id="app-footer"
       style={{
-        marginTop: "50px",
+        marginTop: "600px",
         marginBottom: "10px",
       }}
     >

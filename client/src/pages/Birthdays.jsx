@@ -732,7 +732,6 @@ const relationshipOptions = [
                 <p>
                   Start celebrating by adding your first birthday.
                 </p>
-                <div style={{paddingBottom:"50px"}}></div>
               </div>
             ) : (
               sortedBirthdays.map((birthday) => {

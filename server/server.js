@@ -17,6 +17,7 @@ const authMiddleware = require("./middleware/authMiddleware");
 const notFound = require("./middleware/notFound");
 const errorHandler = require("./middleware/errorMiddleware");
 const weatherRoutes = require("./routes/weatherRoutes");
+const suggestionRoutes = require("./routes/suggestionRoutes");
 const path = require("path");
 
 dotenv.config();
@@ -46,6 +47,7 @@ app.use("/api/search", searchRoutes);
 app.use("/api/calendar", calendarRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/suggestions", suggestionRoutes);
 /* Protected Test Route */
 app.get(
     "/api/protected",

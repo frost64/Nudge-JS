@@ -1,4 +1,6 @@
 const Reminder = require("../models/Reminder");
+const User = require("../models/User");
+const logActivity = require("../utils/activityLogger");
 
 const toggleReminder =
   async (req, res) => {
@@ -61,6 +63,13 @@ const createReminder = async (req, res) => {
       priority,
       category,
       user: req.user.id
+    });
+    const user = await User.findById(req.user.id);
+
+    await logActivity({
+      type: "reminder_created",
+      message: `${user.username} created a reminder`,
+      user: user._id,
     });
 
     res.status(201).json(reminder);
@@ -133,7 +142,13 @@ const updateReminder = async (req, res) => {
       req.body,
       { new: true }
     );
+    const user = await User.findById(req.user.id);
 
+    await logActivity({
+      type: "reminder_updated",
+      message: `${user.username} updated a reminder`,
+      user: user._id,
+    });
     res.status(200).json(updatedReminder);
 
   } catch (error) {
@@ -156,8 +171,15 @@ const deleteReminder = async (req, res) => {
         message: "Reminder not found"
       });
     }
+    const user = await User.findById(req.user.id);
 
+    await logActivity({
+      type: "reminder_deleted",
+      message: `${user.username} deleted a reminder`,
+      user: user._id,
+    });
     await reminder.deleteOne();
+
 
     res.status(200).json({
       success: true,

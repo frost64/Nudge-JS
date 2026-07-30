@@ -1,4 +1,6 @@
 const Birthday = require("../models/Birthday");
+const User = require("../models/User");
+const logActivity = require("../utils/activityLogger");
 
 const createBirthday = async (req, res) => {
   try {
@@ -50,6 +52,13 @@ const createBirthday = async (req, res) => {
       relationship: relationship.trim(),
       notes: notes?.trim(),
       user: req.user.id
+    });
+    const user = await User.findById(req.user.id);
+
+    await logActivity({
+      type: "birthday_created",
+      message: `${user.username} created a birthday`,
+      user: user._id,
     });
 
     res.status(201).json(birthday);
@@ -161,6 +170,13 @@ const updateBirthday = async (req, res) => {
     birthday.notes = notes?.trim();
 
     await birthday.save();
+    const user = await User.findById(req.user.id);
+
+    await logActivity({
+      type: "birthday_updated",
+      message: `${user.username} updated a birthday`,
+      user: user._id,
+    });
 
     res.status(200).json(birthday);
 
@@ -186,7 +202,13 @@ const deleteBirthday = async (req, res) => {
         message: "Birthday not found"
       });
     }
+    const user = await User.findById(req.user.id);
 
+    await logActivity({
+      type: "birthday_deleted",
+      message: `${user.username} deleted a birthday`,
+      user: user._id,
+    });
     await birthday.deleteOne();
 
     res.status(200).json({

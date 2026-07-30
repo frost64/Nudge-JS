@@ -644,7 +644,6 @@ return (
                 <p>
                   Stay organized by creating your first reminder.
                 </p>
-                <div style={{paddingBottom:"50px"}}></div>
               </div>) : 
     (
       reminders.map((reminder) => {

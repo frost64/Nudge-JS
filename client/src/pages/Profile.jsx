@@ -372,8 +372,6 @@ if(!confirmed)return;
 
 logout();
 
-toast.success("Logged out.");
-
 navigate("/");
 
 };

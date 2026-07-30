@@ -19,6 +19,16 @@ import {
   FiLink,
 } from "react-icons/fi";
 
+import { 
+  FaLightbulb,
+  FaBirthdayCake,
+  FaStickyNote,
+  FaUserShield,
+  FaChartPie,
+  FaClock,
+  FaLink,
+} from "react-icons/fa";
+
 import {
   IoSunnyOutline,
   IoMoonOutline,
@@ -572,53 +582,59 @@ const suggestionList = useMemo(() => {
       >
         
         <Link
-          className="icon-zoom"
+          className="glow-top"
           to="/dashboard"
-          style={linkStyle("/dashboard")}
         >
+        <FaChartPie style={{ marginRight: "10px" }} />
           Dashboard
         </Link>
 
         <Link 
-          className="icon-zoom"
+          className="glow-top"
           to="/birthdays"
-          style={linkStyle("/birthdays")}
         >
+        <FaBirthdayCake style={{ marginRight: "10px" }} />
           Birthdays
         </Link>
 
         <Link 
-          className="icon-zoom"
+          className="glow-top"
           to="/reminders"
-          style={linkStyle("/reminders")}
         >
+        <FaClock style={{ marginRight: "10px" }} />
           Reminders
         </Link>
 
         <Link 
-          className="icon-zoom"
+          className="glow-top"
           to="/notes"
-          style={linkStyle("/notes")}
         >
+        <FaStickyNote style={{ marginRight: "10px" }} />
           Notes
         </Link>
 
         <Link 
-          className="icon-zoom"
+          className="glow-top"
           to="/links"
-          style={linkStyle("/links")}
         >
+        <FaLink style={{ marginRight: "10px" }} />
           Links
         </Link>
 
 
         {user?.role === "admin" && (
           <Link 
-            className="icon-zoom"
+            className="glow-top"
             to="/admin"
-            style={linkStyle("/admin")}
           >
+          <FaUserShield style={{ marginRight: "10px" }} />
             Admin
+          </Link>
+        )}
+
+        {user?.role === "user" && (
+          <Link to="/suggestions" className="glow-top">
+            <FaLightbulb/>
           </Link>
         )}
       </div>

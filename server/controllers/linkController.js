@@ -1,4 +1,6 @@
 const Link = require("../models/Link");
+const User = require("../models/User");
+const logActivity = require("../utils/activityLogger");
 
 const createLink = async (req, res) => {
     try {
@@ -43,6 +45,13 @@ const createLink = async (req, res) => {
             category: category.trim(),
             notes: notes.trim(),
             user: req.user.id
+        });
+        const user = await User.findById(req.user.id);
+
+        await logActivity({
+        type: "link_created",
+        message: `${user.username} created a link`,
+        user: user._id,
         });
 
         res.status(201).json(link);
@@ -153,6 +162,13 @@ const updateLink = async (req, res) => {
         link.notes = notes.trim();
 
         await link.save();
+        const user = await User.findById(req.user.id);
+
+        await logActivity({
+        type: "link_updated",
+        message: `${user.username} updated a link`,
+        user: user._id,
+        });
 
         res.status(200).json(link);
 
@@ -178,7 +194,13 @@ const deleteLink = async (req, res) => {
                 message: "Link not found"
             });
         }
+        const user = await User.findById(req.user.id);
 
+        await logActivity({
+        type: "link_deleted",
+        message: `${user.username} deleted a link`,
+        user: user._id,
+        });
         await link.deleteOne();
 
         res.status(200).json({

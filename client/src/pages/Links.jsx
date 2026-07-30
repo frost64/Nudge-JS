@@ -1065,7 +1065,6 @@ return (
             <p>
               Start building your collection by saving your first link..
             </p>
-            <div style={{paddingBottom:"50px"}}></div>
           </div>
     ) : (
       links.map(

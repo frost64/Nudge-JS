@@ -8,7 +8,10 @@ import Footer from "./Footer";
 
 export const LayoutContext = createContext({
   cardVariant: "solid",
+  width: 0,
   isMobile: false,
+  isTablet: false,
+  isDesktop: true,
 });
 
 function Layout({
@@ -20,21 +23,24 @@ function Layout({
 }) {
   const { user } = useContext(AuthContext);
   const darkMode = user?.theme === "dark";
-  const [isMobile, setIsMobile] = useState(false);
+  const [width, setWidth] = useState(window.innerWidth);
+
+  const isMobile = width < 768;
+  const isTablet = width >= 768 && width < 1200;
+  const isDesktop = width >= 1200;
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [footerVisible, setFooterVisible] = useState(false);
 
   useEffect(() => {
-    const media = window.matchMedia("(max-width: 900px)");
+  const handleResize = () => {
+    setWidth(window.innerWidth);
+  };
 
-    const update = () => setIsMobile(media.matches);
+  window.addEventListener("resize", handleResize);
 
-    update();
-
-    media.addEventListener("change", update);
-
-    return () => media.removeEventListener("change", update);
-  }, []);
+  return () =>
+    window.removeEventListener("resize", handleResize);
+}, []);
 
 
   useEffect(() => {
@@ -154,6 +160,7 @@ function Layout({
         )}
       <div
         style={{
+          width: "100%",
           maxWidth: "1400px",
           margin: "0 auto",
           padding: "20px",
@@ -166,7 +173,10 @@ function Layout({
     <LayoutContext.Provider
       value={{
         cardVariant,
+        width,
         isMobile,
+        isTablet,
+        isDesktop,
       }}
     >
         {/* Sidebar */}
