@@ -92,39 +92,48 @@ const buildNewValue = (option) => {
   setOpen(false);
 };
 
-  const handleKeyDown = (e) => {
-    if (!open || filteredOptions.length === 0) return;
+ const handleKeyDown = (e) => {
+  switch (e.key) {
+    case "ArrowDown":
+      if (!open || filteredOptions.length === 0) return;
 
-    switch (e.key) {
-      case "ArrowDown":
-        e.preventDefault();
-        setSelectedIndex((prev) =>
-          prev < filteredOptions.length - 1 ? prev + 1 : 0
-        );
-        break;
+      e.preventDefault();
 
-      case "ArrowUp":
-        e.preventDefault();
-        setSelectedIndex((prev) =>
-          prev > 0 ? prev - 1 : filteredOptions.length - 1
-        );
-        break;
+      setSelectedIndex((prev) =>
+        prev < filteredOptions.length - 1 ? prev + 1 : 0
+      );
+      break;
 
-      case "Enter":
-        if (selectedIndex >= 0) {
-          e.preventDefault();
-          selectOption(filteredOptions[selectedIndex]);
-        }
-        break;
+    case "ArrowUp":
+      if (!open || filteredOptions.length === 0) return;
 
-      case "Escape":
+      e.preventDefault();
+
+      setSelectedIndex((prev) =>
+        prev > 0 ? prev - 1 : filteredOptions.length - 1
+      );
+      break;
+
+    case "Enter":
+      e.preventDefault();
+
+      if (selectedIndex >= 0 && filteredOptions.length > 0) {
+        selectOption(filteredOptions[selectedIndex]);
+      } else {
+        onChange(value.trim());
         setOpen(false);
-        break;
+      }
 
-      default:
-        break;
-    }
-  };
+      break;
+
+    case "Escape":
+      setOpen(false);
+      break;
+
+    default:
+      break;
+  }
+};
 
   // Filter suggestions
   useEffect(() => {

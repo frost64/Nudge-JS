@@ -1,16 +1,30 @@
-const notFound = (
-    req,
-    res,
-    next
+const systemLogger = require("../utils/systemLogger");
+
+const notFound = async (
+  req,
+  res,
+  next
 ) => {
 
-    res.status(404);
+  await systemLogger({
+    level: "info",
+    category: "routing",
+    source: "Routing",
+    message: "Route not found",
+    details: {
+      endpoint: req.originalUrl,
+      method: req.method,
+      ip: req.ip,
+    },
+  });
 
-    const error = new Error(
-        `Route Not Found - ${req.originalUrl}`
-    );
+  res.status(404);
 
-    next(error);
+  const error = new Error(
+    `Route Not Found - ${req.originalUrl}`
+  );
+
+  next(error);
 };
 
 module.exports = notFound;

@@ -16,6 +16,8 @@ import LoadingSpinner from "../components/LoadingSpinner";
 import { useNavigate } from "react-router-dom";
 
 import {
+  FaFileExport,
+  FaInfoCircle,
   FaBell,
   FaQuestionCircle,
   FaUserPlus,
@@ -47,6 +49,8 @@ import {
   FaCheckCircle,
   FaExclamationTriangle,
   FaTimesCircle,
+  FaCommentDots,
+  FaHeading
 } from "react-icons/fa";
 
 import {
@@ -88,6 +92,9 @@ function AdminDashboard() {
   const [systemStatus, setSystemStatus] = useState([]);
   const [recentActivities, setRecentActivities] = useState([]);
   const [activities, setActivities] = useState([]);
+  const [logs, setLogs] = useState([]);
+  const [logSearch, setLogSearch] = useState("");
+  const [logFilter, setLogFilter] = useState("all");
   const confirm = useConfirm();
 
   const [chartData, setChartData] = useState([]);
@@ -263,10 +270,10 @@ const activityBadge = {
         color: "#38bdf8",
       },
       {
-        title: "Notes",
-        value: stats.notes,
-        icon: FaStickyNote,
-        color: "#10b981",
+        title: "Birthdays",
+        value: stats.birthdays,
+        icon: FaBirthdayCake,
+        color: "#ec4899",
       },
       {
         title: "Reminders",
@@ -275,10 +282,10 @@ const activityBadge = {
         color: "#f59e0b",
       },
       {
-        title: "Birthdays",
-        value: stats.birthdays,
-        icon: FaBirthdayCake,
-        color: "#ec4899",
+        title: "Notes",
+        value: stats.notes,
+        icon: FaStickyNote,
+        color: "#10b981",
       },
       {
         title: "Links",
@@ -290,19 +297,19 @@ const activityBadge = {
   : [];
 
   const pieData = stats
-  ? [
-      { name: "Notes", value: stats.notes },
-      { name: "Reminders", value: stats.reminders },
+  ? [ 
       { name: "Birthdays", value: stats.birthdays },
+      { name: "Reminders", value: stats.reminders },
+      { name: "Notes", value: stats.notes },
       { name: "Links", value: stats.links },
     ]
   : [];
 
   const COLORS = [
-  "#10b981", // Notes
-  "#f59e0b", // Reminders
-  "#ec4899", // Birthdays
-  "#8b5cf6", // Links
+  "#ec4899",
+  "#f59e0b",
+  "#10b981",
+  "#8b5cf6",
 ];
 
 const totalModules = pieData.reduce(
@@ -310,6 +317,42 @@ const totalModules = pieData.reduce(
   0
 );
 
+  const logStats = {
+    all: logs.length,
+    success: logs.filter((l) => l.level === "success").length,
+    warning: logs.filter((l) => l.level === "warning").length,
+    error: logs.filter((l) => l.level === "error").length,
+    info: logs.filter((l) => l.level === "info").length,
+  };
+
+const fetchLogs = async () => {
+  try {
+    const res = await api.get("/admin/logs");
+    setLogs(res.data);
+  } catch (error) {
+    console.log(error);
+
+    toast.error(
+      error.response?.data?.message ||
+      "Failed to load system logs."
+    );
+  }
+};
+const filteredLogs = logs.filter((log) => {
+  const search = logSearch.toLowerCase().trim();
+
+  const matchesSearch =
+    !search ||
+    log.message?.toLowerCase().includes(search) ||
+    log.source?.toLowerCase().includes(search) ||
+    log.level?.toLowerCase().includes(search);
+
+  const matchesFilter =
+    logFilter === "all" ||
+    log.level === logFilter;
+
+  return matchesSearch && matchesFilter;
+});
 
 const getActivityDate = (date) => {
   const created = new Date(date);
@@ -326,6 +369,59 @@ const getActivityDate = (date) => {
 
   return created.toLocaleDateString();
 };
+
+const getSuggestionDate = (date) => {
+  const created = new Date(date);
+  const now = new Date();
+
+  const diffMinutes = Math.floor(
+    (now - created) / 60000
+  );
+
+  const time = created.toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+  if (diffMinutes < 1) {
+    return `${time} • Just now`;
+  }
+
+  if (diffMinutes < 60) {
+    return `${time} • ${diffMinutes}m ago`;
+  }
+
+  return `${time} • ${created.toLocaleDateString([], {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  })}`;
+};
+
+const getLogDate = (date) => {
+  const created = new Date(date);
+  const now = new Date();
+
+  const diffMinutes = Math.floor(
+    (now - created) / 60000
+  );
+
+  if (diffMinutes < 1) return "Just now";
+
+  if (diffMinutes < 60) {
+    return `${created.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    })} • ${diffMinutes}m ago`;
+  }
+
+  return created.toLocaleDateString([], {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+};
+
 const fetchSystemStatus = async () => {
   try {
     const res = await api.get("/admin/system-status");
@@ -346,6 +442,7 @@ const refreshDashboard = async () => {
     fetchRecentSuggestions(),
     fetchRecentActivities(),
     fetchSystemStatus(),
+    fetchLogs(),
   ]);
 };
 
@@ -362,7 +459,6 @@ const fetchActivities = async () => {
 };
 
 const fetchUserGrowth = async () => {
-  console.log("fetchUserGrowth called");
   try {
     const res = await api.get("/admin/user-growth");
     setChartData(res.data);
@@ -420,6 +516,128 @@ const fetchRecentSuggestions = async () => {
     toast.error(
       error.response?.data?.message ||
       "Failed to load recent suggestions."
+    );
+  }
+};
+
+const handleClearLogs = async () => {
+  const label =
+    logFilter === "all"
+      ? "all system logs"
+      : `${logFilter} logs`;
+
+  const confirmed = await confirm({
+    title: "Clear Logs",
+    message: `Are you sure you want to permanently delete ${label}?`,
+    confirmText: "Clear",
+    cancelText: "Cancel",
+    variant: "danger",
+  });
+
+  if (!confirmed) return;
+
+  try {
+    await api.delete(
+      `/admin/logs?level=${logFilter}`
+    );
+
+    await fetchLogs();
+    toast.success(
+      logFilter === "all"
+        ? "All logs cleared."
+        : `${logFilter} logs cleared.`
+    );
+  } catch (error) {
+    toast.error(
+      error.response?.data?.message ||
+        "Failed to clear logs."
+    );
+  }
+};
+
+const handleExportLogs = async () => {
+  try {
+    // Remove fields you don't want to export
+    const exportLogs = logs.map(
+      ({
+        _id,
+        __v,
+        updatedAt,
+        ...log
+      }) => log
+    );
+
+    const backup = {
+      application: "Nudge",
+      type: "System Logs Backup",
+      exportedAt: new Date().toISOString(),
+      totalLogs: exportLogs.length,
+      logs: exportLogs,
+    };
+
+    const blob = new Blob(
+      [
+        JSON.stringify(
+          backup,
+          null,
+          2
+        ),
+      ],
+      {
+        type: "application/json",
+      }
+    );
+
+    const url =
+      window.URL.createObjectURL(blob);
+
+    const link =
+      document.createElement("a");
+
+    link.href = url;
+
+    link.download =
+      "nudge-system-logs.json";
+
+    document.body.appendChild(link);
+
+    link.click();
+
+    document.body.removeChild(link);
+
+    window.URL.revokeObjectURL(url);
+
+    toast.success(
+      "Logs exported successfully."
+    );
+
+    const confirmed = await confirm({
+      title: "Clear Exported Logs",
+      message:
+        "Do you want to clear all exported logs?",
+      confirmText: "Clear",
+      cancelText: "Keep Logs",
+      variant: "danger",
+    });
+
+    if (!confirmed) return;
+
+    await api.delete(
+      "/admin/logs?level=all"
+    );
+
+    await fetchLogs();
+
+    toast.success(
+      "All logs cleared."
+    );
+
+  } catch (error) {
+    console.log(error);
+
+    toast.error(
+      error.response?.data?.message ||
+      "Failed to export logs."
     );
   }
 };
@@ -528,6 +746,36 @@ const deleteSuggestion = async (id) => {
       );
     }
   };
+
+const getLogMeta = (level) => {
+  switch (level) {
+    case "success":
+      return {
+        icon: FaCheckCircle,
+        color: "#10b981",
+      };
+
+    case "warning":
+      return {
+        icon: FaExclamationTriangle,
+        color: "#f59e0b",
+      };
+
+    case "error":
+      return {
+        icon: FaTimesCircle,
+        color: "#ef4444",
+      };
+
+    default:
+      return {
+        icon: FaInfoCircle,
+        color: "#3b82f6",
+      };
+  }
+};
+
+
 useEffect(() => {
   if (activeTab === "suggestions") {
     fetchSuggestions();
@@ -545,6 +793,8 @@ useEffect(() => {
       fetchRecentSuggestions(),
       fetchRecentActivities(),
       fetchSystemStatus(),
+      fetchUserGrowth(),
+      fetchLogs(),
     ]);
 
     setLoading(false);
@@ -567,6 +817,19 @@ useEffect(() => {
 }, [activeTab]);
 
 useEffect(() => {
+  if (activeTab !== "logs") return;
+
+  fetchLogs();
+
+  const interval = setInterval(() => {
+    fetchLogs();
+  }, 15000); // 15 seconds
+
+  return () => clearInterval(interval);
+}, [activeTab]);
+
+
+useEffect(() => {
   if (activeTab === "activities") {
     fetchActivities();
   }
@@ -586,10 +849,10 @@ const serviceIcons = {
   Database: <FaDatabase size={15} />,
   "API Server": <FaServer size={15} />,
   Authentication: <FaLock size={15} />,
+  "Birthdays": <FaBirthdayCake size={15} />,
+  "Reminders": <FaClock size={15} />,
   "Notes": <FaStickyNote size={15} />,
   "Links": <FaLink size={15} />,
-  "Reminders": <FaClock size={15} />,
-  "Birthdays": <FaBirthdayCake size={15} />,
 };
 
 const allOperational =
@@ -1368,35 +1631,50 @@ if (loading) {
 
 {activeTab === "users" && (
   <>
-        <h1
+        <div
           style={{
             display: "flex",
+            justifyContent: "space-between",
             alignItems: "center",
-            gap: "10px",
+            gap: "20px",
+            flexWrap: "wrap",
+            marginBottom: "24px",
           }}
         >
-          <FaUsersCog color="#38bdf8" />
-          Manage Users
-        </h1>
+          <h1
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
+              margin: 0,
+            }}
+          >
+            <FaUsersCog color="#38bdf8" />
+            Manage Users
+          </h1>
 
-        <div
-          className="input-icon-wrapper"
-          style={{
-            maxWidth: "500px",
-            marginBottom: "5px",
-          }}
-        >
-          <FaSearch className="input-icon" />
+          <div
+            className="input-icon-wrapper"
+            style={{
+              width: "300px",
+              flex: "0 0 auto",
+              margin: 0,
+            }}
+          >
+            <FaSearch className="input-icon" />
 
-          <input
-            className="input-glow"
-            type="text"
-            placeholder="Search users..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+            <input
+              className="input-glow"
+              type="text"
+              placeholder="Search users..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              style={{
+                width: "100%",
+              }}
+            />
+          </div>
         </div>
-        
 
        {filteredUsers.length === 0 ? (
         <Card variant="glass">
@@ -1547,12 +1825,406 @@ if (loading) {
 
 {activeTab === "logs" && (
   <>
-  <Card variant="glass">
-    <h2>System Logs</h2>
-    <p>Coming soon...</p>
-  </Card>
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        gap: "20px",
+        marginBottom: "8px",
+        flexWrap: "wrap",
+      }}
+    >
+      <h1
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "10px",
+          margin: 0,
+        }}
+      >
+        <FaHistory color="#38bdf8" />
+        System Logs
+      </h1>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "12px",
+          flexWrap: "wrap",
+        }}
+      >
+        <div
+          className="input-icon-wrapper"
+          style={{
+            width: "300px",
+            flex: "0 0 auto",
+            marginBottom: 0,
+            marginLeft: 0,
+          }}
+        >
+          <FaSearch className="input-icon" />
+
+          <input
+            type="text"
+            placeholder="Search logs..."
+            value={logSearch}
+            onChange={(e) => setLogSearch(e.target.value)}
+            className="input-glow"
+          />
+        </div>
+
+        <button
+          className="glow-top"
+          onClick={handleExportLogs}
+        >
+          <FaFileExport
+            style={{
+              marginRight: "8px",
+            }}
+          />
+          Export Logs
+        </button>
+      </div>
+
+    </div>
+
+    <p
+      style={{
+        opacity: 0.7,
+        marginBottom: "24px",
+      }}
+    >
+      Monitor backend services, security events, and infrastructure activity.
+    </p>
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        gap: "20px",
+        flexWrap: "wrap",
+        marginBottom: "24px",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          gap: "12px",
+          flexWrap: "wrap",
+        }}
+      >
+        {[
+          {
+            key: "all",
+            label: "All",
+            color: "#38bdf8",
+          },
+          {
+            key: "success",
+            label: "Success",
+            color: "#10b981",
+          },
+          {
+            key: "warning",
+            label: "Warning",
+            color: "#f59e0b",
+          },
+          {
+            key: "error",
+            label: "Error",
+            color: "#ef4444",
+          },
+          {
+            key: "info",
+            label: "Info",
+            color: "#3b82f6",
+          },
+        ].map((item) => (
+          <button
+            key={item.key}
+            className="glow-top"
+            onClick={() => setLogFilter(item.key)}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
+              padding: "8px 16px",
+              borderRadius: "999px",
+
+              background:
+                logFilter === item.key
+                  ? `${item.color}22`
+                  : undefined,
+
+              border:
+                logFilter === item.key
+                  ? `1px solid ${item.color}55`
+                  : undefined,
+
+              color:
+                logFilter === item.key
+                  ? item.color
+                  : undefined,
+
+              fontWeight:
+                logFilter === item.key
+                  ? 700
+                  : 500,
+
+              transition: ".25s ease",
+            }}
+          >
+            <span>{item.label}</span>
+
+            <span
+              style={{
+                minWidth: "22px",
+                height: "22px",
+                borderRadius: "999px",
+
+                background:
+                  logFilter === item.key
+                    ? item.color
+                    : "rgba(255,255,255,.08)",
+
+                color:
+                  logFilter === item.key
+                    ? "#fff"
+                    : "inherit",
+
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+
+                fontSize: ".75rem",
+                fontWeight: 700,
+              }}
+            >
+              {logStats[item.key]}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      <button
+        className="glow-top delete"
+        onClick={handleClearLogs}
+      >
+        <FaTrashAlt
+          style={{
+            marginRight: "8px",
+          }}
+        />
+
+        {logFilter === "all"
+          ? "Clear All Logs"
+          : `Clear ${
+              logFilter.charAt(0).toUpperCase() +
+              logFilter.slice(1)
+            } Logs`}
+      </button>
+    </div>
+    
+    {filteredLogs.length === 0 ? (
+    <Card variant="glass">
+      <p
+        style={{
+          textAlign: "center",
+          opacity: 0.7,
+          padding: "20px 0",
+        }}
+      >
+        No matching logs found.
+      </p>
+    </Card>
+  ) : (
+  filteredLogs.map((log) => {
+      const meta = getLogMeta(log.level);
+      const Icon = meta.icon;
+      return(
+      <Card
+        key={log._id}
+        variant="glass"
+        style={{
+          padding: "20px",
+          marginBottom: "18px",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "12px",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "14px",
+            }}
+          >
+            <div
+              style={{
+                width: "42px",
+                height: "42px",
+                borderRadius: "50%",
+                background: `${meta.color}22`,
+                border: `1px solid ${meta.color}55`,
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                boxShadow: `0 0 18px ${meta.color}33`,
+                flexShrink: 0,
+              }}
+            >
+              <Icon
+                size={18}
+                color={meta.color}
+              />
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "10px",
+              }}
+            >
+              <span
+                style={{
+                  padding: "4px 10px",
+                  borderRadius: "999px",
+                  fontSize: "11px",
+                  fontWeight: 700,
+
+                  background:
+                    log.level === "success"
+                      ? "#10b98122"
+                      : log.level === "warning"
+                      ? "#f59e0b22"
+                      : log.level === "error"
+                      ? "#ef444422"
+                      : "#3b82f622",
+
+                  color: meta.color,
+
+                  border: `1px solid ${meta.color}55`,
+                }}
+              >
+                {log.level.toUpperCase()}
+              </span>
+
+              <span
+                style={{
+                  fontWeight: 600,
+                  opacity: 0.8,
+                }}
+              >
+                {log.source}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <h3
+          style={{
+            margin: "20px 0 14px",
+            fontSize: "1.15rem",
+            fontWeight: 700,
+            lineHeight: 1.5,
+          }}
+        >
+          {log.message}
+        </h3>
+        {log.details &&
+          Object.keys(log.details).length > 0 && (
+            <div
+              style={{
+                marginTop: "14px",
+                padding: "12px 16px",
+                borderRadius: "14px",
+
+                background: darkMode
+                  ? "rgba(255,255,255,.04)"
+                  : "rgba(0, 113, 123, 0.09)",
+
+                border: `1px solid ${
+                  darkMode
+                    ? "rgba(255,255,255,.08)"
+                    : "rgba(0, 229, 255, 0.11)"
+                }`,
+
+                boxShadow: darkMode
+                  ? "0 8px 24px rgba(0,0,0,.18)"
+                  : "0 8px 24px rgba(0,0,0,.05)",
+
+                display: "flex",
+                flexDirection: "column",
+                gap: "8px",
+              }}
+            >
+              {Object.entries(log.details).map(([key, value]) => (
+                <div
+                  key={key}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "10px",
+                  }}
+                >
+                  <strong
+                    style={{
+                      minWidth: "90px",
+                      fontSize: ".82rem",
+                      fontWeight: 700,
+                      textTransform: "capitalize",
+                      color: darkMode
+                        ? "rgba(255,255,255,.7)"
+                        : "rgba(0,0,0,.65)"
+                    }}
+                  >
+                    {key}:
+                  </strong>
+
+                  <span
+                    style={{
+                      fontSize: ".9rem",
+                      wordBreak: "break-word",
+                      color: darkMode
+                        ? "rgba(255,255,255,.92)"
+                        : "#1f2937"
+                    }}
+                  >
+                    {String(value)}
+                  </span>
+                </div>
+              ))}
+            </div>
+        )}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "flex-end",
+            marginTop: "18px",
+          }}
+        >
+          <small
+            style={{
+              opacity: 0.6,
+              fontSize: ".85rem",
+            }}
+          >
+            {getLogDate(log.createdAt)}
+          </small>
+        </div>
+    </Card>
+    );
+  })
+)}
   </>
-  
 )}
 
 {activeTab === "suggestions" && (
@@ -1590,20 +2262,45 @@ if (loading) {
               marginBottom: "18px",
             }}
           >
-            <div>
-              <h3>{suggestion.title}</h3>
-
-              <p>
-                <strong>{suggestion.fullName}</strong>
-                {" • "}
-                @{suggestion.username}
+            <div
+              style={{
+                flex: 1,
+                width: "100%",
+              }}
+            >
+              <h3>Title: {suggestion.title}</h3>
+              <p
+                style={{
+                  lineHeight: 1.8,
+                }}
+              ><FaCommentDots color="#60a5fa" /> {suggestion.message}
               </p>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  width: "100%",
+                  marginTop: "16px",
+                }}
+              >
+                <div>
+                  <strong style={{color: "green"}}>{suggestion.fullName}</strong>
+                  {" • "}
+                  <span style={{color:"purple", opacity: 0.8 }}>
+                    @{suggestion.username}
+                  </span>
+                </div>
 
-              <small>
-                {new Date(
-                  suggestion.createdAt
-                ).toLocaleString()}
-              </small>
+                <small
+                  style={{
+                    opacity: 0.7,
+                    whiteSpace: "nowrap",
+                    flexShrink: 0,
+                  }}
+                > {getSuggestionDate(suggestion.createdAt)}
+                </small>
+              </div>
             </div>
 
             <span
@@ -1625,13 +2322,7 @@ if (loading) {
             </span>
           </div>
 
-          <p
-            style={{
-              lineHeight: 1.8,
-            }}
-          >
-            {suggestion.message}
-          </p>
+          
 
           <div
             style={{

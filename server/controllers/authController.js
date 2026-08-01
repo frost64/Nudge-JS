@@ -16,7 +16,11 @@ const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    const user = await User.findOne({ email });
+    const normalizedEmail = email.trim().toLowerCase();
+
+    const user = await User.findOne({
+      email: normalizedEmail,
+    });
 
     if (!user) {
       return res.status(400).json({
@@ -77,9 +81,11 @@ const registerUser = async (req, res) => {
   try {
     const { fullName, username, email, password } = req.body;
 
+    const normalizedEmail = email.trim().toLowerCase();
+
     const existingEmail = await User.findOne({
-  email
-});
+      email: normalizedEmail,
+    });
 if (!fullName?.trim()) {
   return res.status(400).json({
     message: "Full name is required",
@@ -107,7 +113,7 @@ if (existingUsername) {
     const user = await User.create({
       fullName,
       username,
-      email,
+      email: normalizedEmail,
       password: hashedPassword
     });
 
@@ -282,7 +288,11 @@ const forgotPassword = async (req, res) => {
       });
     }
 
-    const user = await User.findOne({ email });
+    const normalizedEmail = email.trim().toLowerCase();
+
+    const user = await User.findOne({
+      email: normalizedEmail,
+    });
 
     // Don't reveal whether the email exists
     if (!user) {
@@ -453,7 +463,6 @@ const updateUsername = async (req, res) => {
 
 const updateEmail = async (req, res) => {
   try {
-
     const { email } = req.body;
 
     if (!email || !email.trim()) {
@@ -462,8 +471,10 @@ const updateEmail = async (req, res) => {
       });
     }
 
+    const normalizedEmail = email.trim().toLowerCase();
+
     const existingUser = await User.findOne({
-      email,
+      email: normalizedEmail,
       _id: { $ne: req.user.id },
     });
 
@@ -481,18 +492,16 @@ const updateEmail = async (req, res) => {
       });
     }
 
-    user.email = email;
+    user.email = normalizedEmail;
 
     await user.save();
 
     res.status(200).json(user);
 
   } catch (error) {
-
     res.status(500).json({
       message: error.message,
     });
-
   }
 };
 
@@ -608,11 +617,15 @@ const googleLogin = async (req, res) => {
       });
     }
 
-    let user = await User.findOne({ email });
+    const normalizedEmail = email.trim().toLowerCase();
+
+    let user = await User.findOne({
+      email: normalizedEmail,
+    });
 
     if (!user) {
       const username =
-        email.split("@")[0] +
+        normalizedEmail.split("@")[0] +
         Math.floor(Math.random() * 10000);
 
       const randomPassword =
@@ -624,7 +637,7 @@ const googleLogin = async (req, res) => {
       user = await User.create({
         fullName: name,
         username,
-        email,
+        email: normalizedEmail,
         password: hashedPassword,
         avatar: picture,
       });

@@ -8,7 +8,9 @@ const {
     getRecentSuggestions,
     getUserGrowth,
     getRecentActivities,
-    getActivities
+    getActivities,
+    getSystemLogs,
+    clearSystemLogs,
 } = require("../controllers/adminController");
 
 const {
@@ -102,5 +104,18 @@ router.get(
   getActivities
 );
 
+router.get(
+  "/logs",
+  authMiddleware,
+  adminMiddleware,
+  getSystemLogs
+);
+
+router.delete(
+    "/logs",
+    authMiddleware,
+    adminMiddleware,
+    clearSystemLogs
+);
 
 module.exports = router;

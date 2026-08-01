@@ -19,6 +19,7 @@ const errorHandler = require("./middleware/errorMiddleware");
 const weatherRoutes = require("./routes/weatherRoutes");
 const suggestionRoutes = require("./routes/suggestionRoutes");
 const path = require("path");
+const systemLogger = require("./utils/systemLogger");
 
 dotenv.config();
 connectDB();
@@ -72,6 +73,13 @@ app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+app.listen(PORT, async () => {
+  console.log(`Server running on port ${PORT}`);
+
+  await systemLogger({
+  level: "success",
+  category: "startup",
+  source: "Server",
+  message: `Express server started on port ${PORT}`,
+});
 });

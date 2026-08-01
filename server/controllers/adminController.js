@@ -6,10 +6,11 @@ const Link = require("../models/Link");
 const Suggestion = require("../models/Suggestion");
 const logActivity = require("../utils/activityLogger");
 const Activity = require("../models/Activity");
+const SystemLog = require("../models/SystemLog");
 
 const getStats = async (req, res) => {
     try {
-
+      
         const users =
             await User.countDocuments();
 
@@ -42,6 +43,50 @@ const getStats = async (req, res) => {
     }
 };
 
+const getSystemLogs = async (req, res) => {
+  try {
+    const logs = await SystemLog.find()
+      .sort({ createdAt: -1 })
+      .limit(200);
+
+    res.json(logs);
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
+
+
+const clearSystemLogs = async (req, res) => {
+  try {
+    const { level } = req.query;
+
+    let result;
+
+    if (level && level !== "all") {
+      result = await SystemLog.deleteMany({
+        level,
+      });
+    } else {
+      result = await SystemLog.deleteMany({});
+    }
+
+    res.json({
+      success: true,
+      deletedCount: result.deletedCount,
+      message:
+        level && level !== "all"
+          ? `${level} logs cleared successfully`
+          : "All logs cleared successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
 
 const getUsers = async (req, res) => {
     try {
@@ -314,5 +359,7 @@ module.exports = {
     getRecentSuggestions,
     getUserGrowth,
     getRecentActivities,
-    getActivities
+    getActivities,
+    getSystemLogs,
+    clearSystemLogs,
 };
