@@ -1,337 +1,640 @@
-import { useState, useContext } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import {
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+} from "react";
 import { GoogleLogin } from "@react-oauth/google";
-import { AuthContext } from "../context/AuthContext";
-import api from "../services/api";
+import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-
-import Card from "../components/Card";
-import logo from "../assets/Logo.svg";
-import loginLightBg from "../assets/backgrounds/loginLight.png";
-import loginDarkBg from "../assets/backgrounds/loginDark.png";
 
 import {
   FaEnvelope,
-  FaLock,
-  FaGoogle,
-  FaUserPlus,
   FaKey,
+  FaLock,
   FaSignInAlt,
+  FaUserPlus,
 } from "react-icons/fa";
 
-function Login() {
+import logo from "../assets/Logo.svg";
+import loginDarkBg from "../assets/backgrounds/loginDark.png";
+import loginLightBg from "../assets/backgrounds/loginLight.png";
 
-const navigate = useNavigate();
-const { login } = useContext(AuthContext);
-const savedUser = JSON.parse(
-  localStorage.getItem("user") || "null"
-);
-const darkMode = savedUser?.theme === "dark";
-const backgroundImage = darkMode
-  ? loginDarkBg
-  : loginLightBg;
-const [email, setEmail] = useState("");
-const [password, setPassword] = useState("");
-const [loginError, setLoginError] = useState(false);
+import Card from "../components/Card";
+import { AuthContext } from "../context/AuthContext";
+import useBreakpoint from "../hooks/useBreakpoint";
+import api from "../services/api";
 
-const handleSubmit =
-async (e) => {
-
- 
-  e.preventDefault();
-
+/**
+ * Safely retrieves the saved user from localStorage.
+ *
+ * @returns {object|null}
+ */
+function getStoredUser() {
   try {
+    const storedUser = localStorage.getItem("user");
 
-    const res =
-      await api.post(
-        "/auth/login",
-        {
-          email,
-          password
-        }
+    return storedUser
+      ? JSON.parse(storedUser)
+      : null;
+  } catch (error) {
+    console.error(
+      "Failed to parse stored user.",
+      error
+    );
+
+    localStorage.removeItem("user");
+
+    return null;
+  }
+}
+
+/**
+ * Renders the standard and Google authentication page.
+ */
+function Login() {
+  const navigate = useNavigate();
+  const { login } = useContext(AuthContext);
+  const { isMobile, isTablet } = useBreakpoint();
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loginError, setLoginError] =
+    useState("");
+  const [loading, setLoading] =
+    useState(false);
+  const [googleLoading, setGoogleLoading] =
+    useState(false);
+
+  const savedUser = useMemo(
+    () => getStoredUser(),
+    []
+  );
+
+  const darkMode = savedUser?.theme === "dark";
+
+  const backgroundImage = darkMode
+    ? loginDarkBg
+    : loginLightBg;
+
+  const clearLoginError = useCallback(() => {
+    if (loginError) {
+      setLoginError("");
+    }
+  }, [loginError]);
+
+  const handleEmailChange = useCallback(
+    (event) => {
+      setEmail(event.target.value);
+      clearLoginError();
+    },
+    [clearLoginError]
+  );
+
+  const handlePasswordChange = useCallback(
+    (event) => {
+      setPassword(event.target.value);
+      clearLoginError();
+    },
+    [clearLoginError]
+  );
+
+  const completeLogin = useCallback(
+    (responseData) => {
+      login(
+        responseData.token,
+        responseData.user
       );
 
-    login(
-      res.data.token,
-      res.data.user
-    );
-    navigate("/dashboard");
+      navigate("/dashboard", {
+        replace: true,
+      });
+    },
+    [login, navigate]
+  );
 
-  } catch (error) {
-    setLoginError(true);
-  }
-};
- 
+  const handleSubmit = useCallback(
+    async (event) => {
+      event.preventDefault();
 
-return (
-<div
-  style={{
-    minHeight: "100vh",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    padding: "10px",
-    background: `url(${backgroundImage})`,
-    backgroundSize: "cover",
-    backgroundPosition: "center",
-    backgroundRepeat: "no-repeat",
-    backgroundAttachment: "fixed",
+      if (loading || googleLoading) return;
 
-    position: "relative",
-    overflow: "hidden",
-  }}
->
+      const normalizedEmail = email
+        .trim()
+        .toLowerCase();
 
-  <div
-  style={{
-    position: "absolute",
-    inset: 0,
-    background: darkMode
-      ? "rgba(0,0,0,.20)"
-      : "rgba(255,255,255,.08)",
-    backdropFilter: "blur(2px)",
-    WebkitBackdropFilter: "blur(2px)",
-  }}
-/>
-<Card
-  variant="glass"
-  style={{
-    position: "relative",
-    zIndex: 1,
-    width: "100%",
-    maxWidth: "450px",
-    padding: "40px",
-    borderRadius: "28px",
-  }}
->
-    <form
-      onSubmit={handleSubmit}
+      if (!normalizedEmail) {
+        setLoginError(
+          "Please enter your email address."
+        );
+        return;
+      }
+
+      if (!password) {
+        setLoginError(
+          "Please enter your password."
+        );
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setLoginError("");
+
+        const response = await api.post(
+          "/auth/login",
+          {
+            email: normalizedEmail,
+            password,
+          }
+        );
+
+        completeLogin(response.data);
+      } catch (error) {
+        console.error(error);
+
+        setLoginError(
+          error.response?.data?.message ||
+            "Invalid email or password."
+        );
+      } finally {
+        setLoading(false);
+      }
+    },
+    [
+      completeLogin,
+      email,
+      googleLoading,
+      loading,
+      password,
+    ]
+  );
+
+  const handleGoogleSuccess = useCallback(
+    async (credentialResponse) => {
+      if (
+        googleLoading ||
+        loading ||
+        !credentialResponse?.credential
+      ) {
+        return;
+      }
+
+      try {
+        setGoogleLoading(true);
+        setLoginError("");
+
+        const response = await api.post(
+          "/auth/google",
+          {
+            credential:
+              credentialResponse.credential,
+          }
+        );
+
+        completeLogin(response.data);
+      } catch (error) {
+        console.error(error);
+
+        toast.error(
+          error.response?.data?.message ||
+            "Google login failed."
+        );
+      } finally {
+        setGoogleLoading(false);
+      }
+    },
+    [
+      completeLogin,
+      googleLoading,
+      loading,
+    ]
+  );
+
+  const handleGoogleError = useCallback(() => {
+    toast.error("Google login failed.");
+  }, []);
+
+  return (
+    <main
       style={{
+        position: "relative",
+
         display: "flex",
-        flexDirection: "column",
-        gap: "18px",
+        alignItems: isMobile
+          ? "flex-start"
+          : "center",
+        justifyContent: "center",
+
+        width: "100%",
+        minWidth: 0,
+        minHeight: "100dvh",
+
+        margin: 0,
+
+        padding: isMobile
+          ? "20px 12px calc(32px + env(safe-area-inset-bottom))"
+          : isTablet
+            ? "30px"
+            : "40px 20px",
+
+        boxSizing: "border-box",
+
+        backgroundImage: `url(${backgroundImage})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+        backgroundAttachment: isMobile
+          ? "scroll"
+          : "fixed",
+
+        overflowX: "hidden",
       }}
     >
-
       <div
+        aria-hidden="true"
         style={{
-          textAlign: "center",
-        }}
-      >
-        <img
-          src={logo}
-          alt="Nudge Logo"
-          style={{
-            width: "100px",
-            height: "100px",
-          }}
-        />
+          position: "absolute",
+          inset: 0,
 
-        <h1>Nudge</h1>
+          background: darkMode
+            ? "rgba(0,0,0,.20)"
+            : "rgba(255,255,255,.08)",
 
-        <p
-          style={{
-            color: "#6b7280",
-          }}
-        >
-          Remember Everything
-        </p>
-      </div>
+          backdropFilter: "blur(2px)",
+          WebkitBackdropFilter: "blur(2px)",
 
-      <div className="input-icon-wrapper">
-        <FaEnvelope className="input-icon" />
-
-        <input
-          className="input-glow"
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => {
-            setEmail(e.target.value);
-            setLoginError(false);
-          }}
-          style={{
-            borderColor: loginError ? "#ef4444" : undefined,
-            boxShadow: loginError
-              ? "0 0 0 2px rgba(239,68,68,.2)"
-              : undefined,
-          }}
-        />
-      </div>
-
-
-      <div className="input-icon-wrapper">
-        <FaLock className="input-icon" />
-
-        <input
-          className="input-glow"
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => {
-            setPassword(e.target.value);
-            setLoginError(false);
-          }}
-          style={{
-            borderColor: loginError ? "#ef4444" : undefined,
-            boxShadow: loginError
-              ? "0 0 0 2px rgba(239,68,68,.2)"
-              : undefined,
-          }}
-        />
-      </div>
-      {loginError && (
-        <p
-          style={{
-            color: "#ef4444",
-            fontSize: ".9rem",
-            textAlign: "center",
-            margin: "-8px 0 2px",
-          }}
-        >
-          Invalid email or password.
-        </p>
-      )}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "flex-end",
-          marginTop: "-6px",
-        }}
-      >
-        <Link
-          to="/forgot-password"
-          style={{
-            fontSize: ".9rem",
-            color: darkMode ? "#7dd3fc" : "#0284c7",
-            textDecoration: "none",
-            transition: ".25s",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.textDecoration = "underline";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.textDecoration = "none";
-          }}
-        >
-          <>
-        <FaKey
-          style={{
-            marginRight: "6px",
-            fontSize: ".8rem",
-          }}
-        />
-        Forgot Password?
-      </>
-  </Link>
-</div>
-
-      <button
-        className="glow-top"
-        type="submit"
-        style={{
-          width: "100%"
-        }}
-      >
-        <>
-          <FaSignInAlt
-            size={14}
-            style={{ marginRight: "6px" }}
-          />
-          Login
-        </>
-      </button>
-
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-        }}
-      >
-        <div
-          style={{
-            flex: 1,
-            height: "1px",
-            background: "rgba(255,255,255,.2)",
-          }}
-        />
-
-        <span
-          style={{
-            padding: "0 12px",
-            color: "#888",
-            fontSize: ".9rem",
-          }}
-        >
-          OR
-        </span>
-
-        <div
-          style={{
-            flex: 1,
-            height: "1px",
-            background: "rgba(255,255,255,.2)",
-          }}
-        />
-      </div>
-
-      <GoogleLogin
-        onSuccess={async (credentialResponse) => {
-          try {
-            const res = await api.post("/auth/google", {
-              credential: credentialResponse.credential,
-            });
-
-            login(
-              res.data.token,
-              res.data.user
-            );
-
-            navigate("/dashboard");
-          } catch (error) {
-            console.error(error);
-
-            toast.error(
-              error.response?.data?.message ||
-              "Google login failed."
-            );
-          }
-        }}
-        onError={() => {
-          toast.error("Google login failed.");
+          pointerEvents: "none",
         }}
       />
-      
 
-      <p
+      <Card
+        variant="glass"
         style={{
-          textAlign: "center",
-          marginTop: "8px",
-          marginBottom: 0,
+          position: "relative",
+          zIndex: 1,
+
+          width: "100%",
+          maxWidth: "450px",
+          minWidth: 0,
+
+          margin: isMobile
+            ? "12px 0 0"
+            : 0,
+
+          padding: isMobile
+            ? "24px 18px"
+            : isTablet
+              ? "32px"
+              : "40px",
+
+          borderRadius: isMobile
+            ? "22px"
+            : "28px",
         }}
       >
-        Don't have an account?{" "}
-        <Link to="/register">
-          <>
-            <FaUserPlus
+        <form
+          noValidate
+          onSubmit={handleSubmit}
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "18px",
+          }}
+        >
+          <header
+            style={{
+              textAlign: "center",
+            }}
+          >
+            <img
+              src={logo}
+              alt="Nudge"
               style={{
-                marginRight: "5px",
-                fontSize: ".8rem",
+                width: isMobile
+                  ? "78px"
+                  : "100px",
+
+                height: isMobile
+                  ? "78px"
+                  : "100px",
+
+                objectFit: "contain",
               }}
             />
-            Register here
-          </>
-        </Link>
-      </p>
 
-    </form>
+            <h1
+              style={{
+                marginTop: "8px",
+                marginBottom: "4px",
 
-  </Card>
-</div>
- 
+                fontSize: isMobile
+                  ? "2rem"
+                  : "2.4rem",
+              }}
+            >
+              Nudge
+            </h1>
 
-);
+            <p
+              style={{
+                margin: 0,
+                color: darkMode
+                  ? "#d1d5db"
+                  : "#6b7280",
+              }}
+            >
+              Remember Everything
+            </p>
+          </header>
 
+          <div className="input-icon-wrapper">
+            <FaEnvelope
+              className="input-icon"
+              aria-hidden="true"
+            />
+
+            <input
+              id="login-email"
+              className="input-glow"
+              type="email"
+              name="email"
+              inputMode="email"
+              autoComplete="email"
+              autoCapitalize="none"
+              spellCheck="false"
+              placeholder="Email"
+              aria-label="Email address"
+              aria-invalid={Boolean(loginError)}
+              aria-describedby={
+                loginError
+                  ? "login-error"
+                  : undefined
+              }
+              value={email}
+              disabled={loading || googleLoading}
+              onChange={handleEmailChange}
+              style={{
+                borderColor: loginError
+                  ? "#ef4444"
+                  : undefined,
+
+                boxShadow: loginError
+                  ? "0 0 0 2px rgba(239,68,68,.20)"
+                  : undefined,
+              }}
+            />
+          </div>
+
+          <div className="input-icon-wrapper">
+            <FaLock
+              className="input-icon"
+              aria-hidden="true"
+            />
+
+            <input
+              id="login-password"
+              className="input-glow"
+              type="password"
+              name="password"
+              autoComplete="current-password"
+              placeholder="Password"
+              aria-label="Password"
+              aria-invalid={Boolean(loginError)}
+              aria-describedby={
+                loginError
+                  ? "login-error"
+                  : undefined
+              }
+              value={password}
+              disabled={loading || googleLoading}
+              onChange={handlePasswordChange}
+              style={{
+                borderColor: loginError
+                  ? "#ef4444"
+                  : undefined,
+
+                boxShadow: loginError
+                  ? "0 0 0 2px rgba(239,68,68,.20)"
+                  : undefined,
+              }}
+            />
+          </div>
+
+          {loginError && (
+            <p
+              id="login-error"
+              role="alert"
+              style={{
+                margin: "-8px 0 2px",
+
+                color: "#ef4444",
+                fontSize: ".9rem",
+                lineHeight: 1.5,
+                textAlign: "center",
+              }}
+            >
+              {loginError}
+            </p>
+          )}
+
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "flex-end",
+
+              marginTop: "-6px",
+            }}
+          >
+            <Link
+              to="/forgot-password"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+
+                gap: "6px",
+
+                color: darkMode
+                  ? "#7dd3fc"
+                  : "#0284c7",
+
+                fontSize: ".9rem",
+                textDecoration: "none",
+
+                transition:
+                  "text-decoration-color .25s ease",
+              }}
+            >
+              <FaKey
+                aria-hidden="true"
+                style={{
+                  fontSize: ".8rem",
+                }}
+              />
+
+              Forgot Password?
+            </Link>
+          </div>
+
+          <button
+            type="submit"
+            className="glow-top"
+            disabled={loading || googleLoading}
+            aria-busy={loading}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+
+              width: "100%",
+              margin: 0,
+            }}
+          >
+            <FaSignInAlt
+              aria-hidden="true"
+              size={14}
+              style={{
+                marginRight: "6px",
+              }}
+            />
+
+            {loading
+              ? "Logging in..."
+              : "Login"}
+          </button>
+
+          <div
+            aria-hidden="true"
+            style={{
+              display: "flex",
+              alignItems: "center",
+
+              gap: "12px",
+            }}
+          >
+            <div
+              style={{
+                flexGrow: 1,
+                height: "1px",
+
+                background: darkMode
+                  ? "rgba(255,255,255,.20)"
+                  : "rgba(0,0,0,.12)",
+              }}
+            />
+
+            <span
+              style={{
+                color: darkMode
+                  ? "#9ca3af"
+                  : "#6b7280",
+
+                fontSize: ".9rem",
+              }}
+            >
+              OR
+            </span>
+
+            <div
+              style={{
+                flexGrow: 1,
+                height: "1px",
+
+                background: darkMode
+                  ? "rgba(255,255,255,.20)"
+                  : "rgba(0,0,0,.12)",
+              }}
+            />
+          </div>
+
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+
+              width: "100%",
+              minWidth: 0,
+
+              opacity: googleLoading
+                ? 0.65
+                : 1,
+
+              pointerEvents:
+                googleLoading || loading
+                  ? "none"
+                  : "auto",
+
+              transition: "opacity .2s ease",
+              overflow: "hidden",
+            }}
+          >
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={handleGoogleError}
+              theme={
+                darkMode
+                  ? "filled_black"
+                  : "outline"
+              }
+              shape="pill"
+              text="signin_with"
+              width={
+                isMobile
+                  ? "300"
+                  : "360"
+              }
+            />
+          </div>
+
+          {googleLoading && (
+            <p
+              role="status"
+              style={{
+                margin: "-8px 0 0",
+
+                fontSize: ".9rem",
+                textAlign: "center",
+                opacity: 0.75,
+              }}
+            >
+              Signing in with Google...
+            </p>
+          )}
+
+          <p
+            style={{
+              marginTop: "8px",
+              marginBottom: 0,
+
+              lineHeight: 1.6,
+              textAlign: "center",
+            }}
+          >
+            Don&apos;t have an account?{" "}
+
+            <Link
+              to="/register"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+
+                gap: "5px",
+              }}
+            >
+              <FaUserPlus
+                aria-hidden="true"
+                style={{
+                  fontSize: ".8rem",
+                }}
+              />
+
+              Register here
+            </Link>
+          </p>
+        </form>
+      </Card>
+    </main>
+  );
 }
 
 export default Login;

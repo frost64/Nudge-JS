@@ -1,28 +1,64 @@
-import { useContext, useState } from "react";
+import {
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+} from "react";
 import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
 
-import Card from "../components/Card";
-import api from "../services/api";
-import { AuthContext } from "../context/AuthContext";
-
-import logo from "../assets/Logo.svg";
-import loginLightBg from "../assets/backgrounds/loginLight.png";
-import loginDarkBg from "../assets/backgrounds/loginDark.png";
-
 import {
-  FaKey,
-  FaEnvelope,
-  FaPaperPlane,
   FaArrowLeft,
+  FaEnvelope,
+  FaKey,
+  FaPaperPlane,
 } from "react-icons/fa";
 
+import logo from "../assets/Logo.svg";
+import loginDarkBg from "../assets/backgrounds/loginDark.png";
+import loginLightBg from "../assets/backgrounds/loginLight.png";
+
+import Card from "../components/Card";
+import { AuthContext } from "../context/AuthContext";
+import useBreakpoint from "../hooks/useBreakpoint";
+import api from "../services/api";
+
+/**
+ * Safely reads the saved user from localStorage.
+ *
+ * @returns {object|null}
+ */
+function getStoredUser() {
+  try {
+    const storedUser = localStorage.getItem("user");
+
+    return storedUser
+      ? JSON.parse(storedUser)
+      : null;
+  } catch (error) {
+    console.error(
+      "Failed to parse stored user.",
+      error
+    );
+
+    return null;
+  }
+}
+
+/**
+ * Allows users to request a password-reset email.
+ */
 function ForgotPassword() {
   const { user } = useContext(AuthContext);
+  const { isMobile, isTablet } = useBreakpoint();
 
-  const savedUser =
-    user ||
-    JSON.parse(localStorage.getItem("user") || "null");
+  const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const savedUser = useMemo(
+    () => user || getStoredUser(),
+    [user]
+  );
 
   const darkMode = savedUser?.theme === "dark";
 
@@ -30,53 +66,85 @@ function ForgotPassword() {
     ? loginDarkBg
     : loginLightBg;
 
-  const [email, setEmail] = useState("");
-  const [loading, setLoading] = useState(false);
+  const handleEmailChange = useCallback(
+    (event) => {
+      setEmail(event.target.value);
+    },
+    []
+  );
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = useCallback(
+    async (event) => {
+      event.preventDefault();
 
-    if (!email.trim()) {
-      return toast.error("Please enter your email.");
-    }
+      const normalizedEmail = email
+        .trim()
+        .toLowerCase();
 
-    try {
-      setLoading(true);
+      if (!normalizedEmail) {
+        toast.error("Please enter your email.");
+        return;
+      }
 
-      await api.post("/auth/forgot-password", {
-        email,
-      });
+      try {
+        setLoading(true);
 
-      toast.success(
-        "Password reset link sent."
-      );
+        await api.post(
+          "/auth/forgot-password",
+          {
+            email: normalizedEmail,
+          }
+        );
 
-      setEmail("");
+        toast.success(
+          "Password reset link sent."
+        );
 
-    } catch (error) {
-      toast.error(
-        error.response?.data?.message ||
-          "Something went wrong."
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+        setEmail("");
+      } catch (error) {
+        console.error(error);
+
+        toast.error(
+          error.response?.data?.message ||
+            "Something went wrong."
+        );
+      } finally {
+        setLoading(false);
+      }
+    },
+    [email]
+  );
 
   return (
-    <div
+    <main
       style={{
-        minHeight: "100vh",
         display: "flex",
+        alignItems: isMobile
+          ? "flex-start"
+          : "center",
         justifyContent: "center",
-        alignItems: "center",
-        padding: "20px",
 
-        background: `url(${backgroundImage})`,
+        width: "100%",
+        minHeight: "100dvh",
+        minWidth: 0,
+
+        margin: 0,
+
+        padding: isMobile
+          ? "20px 12px calc(32px + env(safe-area-inset-bottom))"
+          : isTablet
+            ? "30px"
+            : "40px 20px",
+
+        boxSizing: "border-box",
+
+        backgroundImage: `url(${backgroundImage})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
-        backgroundAttachment: "fixed", 
+        backgroundAttachment: isMobile
+          ? "scroll"
+          : "fixed",
       }}
     >
       <Card
@@ -84,11 +152,25 @@ function ForgotPassword() {
         style={{
           width: "100%",
           maxWidth: "460px",
-          padding: "42px",
-          borderRadius: "28px",
+          minWidth: 0,
+
+          margin: isMobile
+            ? "12px 0 0"
+            : 0,
+
+          padding: isMobile
+            ? "24px 18px"
+            : isTablet
+              ? "34px"
+              : "42px",
+
+          borderRadius: isMobile
+            ? "22px"
+            : "28px",
         }}
       >
         <form
+          noValidate
           onSubmit={handleSubmit}
           style={{
             display: "flex",
@@ -96,17 +178,25 @@ function ForgotPassword() {
             gap: "18px",
           }}
         >
-          <div
+          <header
             style={{
               textAlign: "center",
             }}
           >
             <img
               src={logo}
-              alt="Logo"
+              alt="Nudge"
               style={{
-                width: "90px",
+                width: isMobile
+                  ? "72px"
+                  : "90px",
+
+                height: isMobile
+                  ? "72px"
+                  : "90px",
+
                 marginBottom: "15px",
+                objectFit: "contain",
               }}
             />
 
@@ -115,72 +205,96 @@ function ForgotPassword() {
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
+                flexWrap: "wrap",
+
                 gap: "10px",
+
+                marginTop: 0,
+                marginBottom: "12px",
+
+                fontSize: isMobile
+                  ? "1.7rem"
+                  : "2rem",
+
+                textAlign: "center",
               }}
             >
-              <FaKey />
+              <FaKey aria-hidden="true" />
               Forgot Password
             </h1>
 
             <p
               style={{
-                opacity: .7,
+                margin: 0,
+                lineHeight: 1.7,
+                opacity: 0.7,
               }}
             >
               Enter your registered email and
-              we'll send you a password reset link.
+              we&apos;ll send you a password reset
+              link.
             </p>
-          </div>
+          </header>
 
           <div
-            style={{
-              position: "relative",
-            }}
-          >
-            <FaEnvelope
-              style={{
-                position: "absolute",
-                left: "16px",
-                top: "50%",
-                transform: "translateY(-50%)",
-                opacity: 0.7,
-                pointerEvents: "none",
-              }}
-            />
-
-            <input
-              className="input-glow"
-              type="email"
-              placeholder="Email Address"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              style={{
-                paddingLeft: "46px",
-              }}
-            />
-          </div>
-
-          <button
-            className="glow-top"
-            type="submit"
-            disabled={loading}
+            className="input-icon-wrapper"
             style={{
               width: "100%",
             }}
           >
-            <>
-              <FaPaperPlane
-                size={14}
-                style={{ marginRight: "8px" }}
-              />
-              {loading ? "Sending..." : "Send Reset Link"}
-            </>
+            <FaEnvelope
+              className="input-icon"
+              aria-hidden="true"
+            />
+
+            <input
+              id="forgot-password-email"
+              className="input-glow"
+              type="email"
+              name="email"
+              inputMode="email"
+              autoComplete="email"
+              autoCapitalize="none"
+              spellCheck="false"
+              placeholder="Email Address"
+              aria-label="Email address"
+              value={email}
+              disabled={loading}
+              onChange={handleEmailChange}
+            />
+          </div>
+
+          <button
+            type="submit"
+            className="glow-top"
+            disabled={loading}
+            aria-busy={loading}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+
+              width: "100%",
+              margin: 0,
+            }}
+          >
+            <FaPaperPlane
+              aria-hidden="true"
+              size={14}
+              style={{
+                marginRight: "8px",
+              }}
+            />
+
+            {loading
+              ? "Sending..."
+              : "Send Reset Link"}
           </button>
 
           <p
             style={{
-              textAlign: "center",
               margin: 0,
+              textAlign: "center",
             }}
           >
             <Link
@@ -188,16 +302,23 @@ function ForgotPassword() {
               style={{
                 display: "inline-flex",
                 alignItems: "center",
+                justifyContent: "center",
+
                 gap: "6px",
+
+                textDecoration: "none",
               }}
             >
-              <FaArrowLeft size={13} />
+              <FaArrowLeft
+                aria-hidden="true"
+                size={13}
+              />
               Back to Login
             </Link>
           </p>
         </form>
       </Card>
-    </div>
+    </main>
   );
 }
 

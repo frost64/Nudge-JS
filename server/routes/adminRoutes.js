@@ -1,121 +1,121 @@
 const express = require("express");
-const router = express.Router();
+
 const {
-    getStats,
-    getUsers,
-    deleteUser,
-    getSystemStatus,
-    getRecentSuggestions,
-    getUserGrowth,
-    getRecentActivities,
-    getActivities,
-    getSystemLogs,
-    clearSystemLogs,
+  clearSystemLogs,
+  deleteUser,
+  getActivities,
+  getRecentActivities,
+  getRecentSuggestions,
+  getStats,
+  getSystemLogs,
+  getSystemStatus,
+  getUserGrowth,
+  getUsers,
 } = require("../controllers/adminController");
 
 const {
-    getAllSuggestions,
-    markSuggestionRead,
-    deleteSuggestion,
+  deleteSuggestion,
+  getAllSuggestions,
+  markSuggestionRead,
 } = require("../controllers/suggestionController");
 
+const adminMiddleware = require(
+  "../middleware/adminMiddleware"
+);
 
-const authMiddleware =
-    require("../middleware/authMiddleware");
+const authMiddleware = require(
+  "../middleware/authMiddleware"
+);
 
-const adminMiddleware =
-    require("../middleware/adminMiddleware");
+const router = express.Router();
 
+/*
+ * Every route in this router requires a valid user session
+ * and administrator privileges.
+ */
+router.use(
+  authMiddleware,
+  adminMiddleware
+);
 
+/*
+ * Dashboard statistics and system status.
+ */
 router.get(
-    "/stats",
-    authMiddleware,
-    adminMiddleware,
-    getStats
+  "/stats",
+  getStats
 );
 
 router.get(
-    "/users",
-    authMiddleware,
-    adminMiddleware,
-    getUsers
+  "/system-status",
+  getSystemStatus
 );
 
+/*
+ * User management.
+ */
 router.get(
-    "/system-status",
-    authMiddleware,
-    adminMiddleware,
-    getSystemStatus
+  "/users",
+  getUsers
 );
 
 router.delete(
-    "/users/:id",
-    authMiddleware,
-    adminMiddleware,
-    deleteUser
+  "/users/:id",
+  deleteUser
 );
 
+/*
+ * Suggestion management.
+ */
 router.get(
-    "/suggestions",
-    authMiddleware,
-    adminMiddleware,
-    getAllSuggestions
-);
-
-router.patch(
-    "/suggestions/:id/read",
-    authMiddleware,
-    adminMiddleware,
-    markSuggestionRead
-);
-
-router.delete(
-    "/suggestions/:id",
-    authMiddleware,
-    adminMiddleware,
-    deleteSuggestion
+  "/suggestions",
+  getAllSuggestions
 );
 
 router.get(
   "/recent-suggestions",
-  authMiddleware,
-  adminMiddleware,
   getRecentSuggestions
 );
 
+router.patch(
+  "/suggestions/:id/read",
+  markSuggestionRead
+);
+
+router.delete(
+  "/suggestions/:id",
+  deleteSuggestion
+);
+
+/*
+ * User growth and activity data.
+ */
 router.get(
   "/user-growth",
-  authMiddleware,
-  adminMiddleware,
   getUserGrowth
 );
 
 router.get(
   "/recent-activities",
-  authMiddleware,
-  adminMiddleware,
   getRecentActivities
 );
 
 router.get(
   "/activities",
-  authMiddleware,
-  adminMiddleware,
   getActivities
 );
 
+/*
+ * System log management.
+ */
 router.get(
   "/logs",
-  authMiddleware,
-  adminMiddleware,
   getSystemLogs
 );
 
 router.delete(
-    "/logs",
-    authMiddleware,
-    adminMiddleware,
-    clearSystemLogs
+  "/logs",
+  clearSystemLogs
 );
 
 module.exports = router;

@@ -1,112 +1,190 @@
-import { createContext, useContext, useState } from "react";
-import GlassModal from "../components/GlassModal";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+
 import Card from "../components/Card";
+import GlassModal from "../components/GlassModal";
+import useBreakpoint from "../hooks/useBreakpoint";
 
-const ConfirmContext = createContext();
+const ConfirmContext = createContext(null);
 
+/**
+ * Provides promise-based confirmation dialogs.
+ *
+ * Usage:
+ * const confirmed = await confirm({
+ *   title: "Delete item",
+ *   message: "This action cannot be undone.",
+ * });
+ */
 export function ConfirmProvider({ children }) {
+  const { isMobile } = useBreakpoint();
+
   const [options, setOptions] = useState(null);
+  const resolverRef = useRef(null);
 
-  const confirm = (config) => {
-    return new Promise((resolve) => {
-      setOptions({
-        ...config,
-        resolve,
-      });
-    });
-  };
-
-  const close = (result) => {
-    options?.resolve(result);
+  const close = useCallback((result) => {
+    resolverRef.current?.(result);
+    resolverRef.current = null;
     setOptions(null);
-  };
+  }, []);
+
+  const confirm = useCallback(
+    (config = {}) =>
+      new Promise((resolve) => {
+        // Resolve any existing confirmation before replacing it.
+        resolverRef.current?.(false);
+
+        resolverRef.current = resolve;
+
+        setOptions({
+          title: config.title || "Confirm Action",
+          message:
+            config.message ||
+            "Are you sure you want to continue?",
+          confirmText:
+            config.confirmText || "Confirm",
+          cancelText:
+            config.cancelText || "Cancel",
+        });
+      }),
+    []
+  );
+
+  useEffect(() => {
+    if (!options) return undefined;
+
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") {
+        close(false);
+      }
+    };
+
+    document.addEventListener(
+      "keydown",
+      handleKeyDown
+    );
+
+    return () => {
+      document.removeEventListener(
+        "keydown",
+        handleKeyDown
+      );
+    };
+  }, [close, options]);
+
+  useEffect(
+    () => () => {
+      resolverRef.current?.(false);
+      resolverRef.current = null;
+    },
+    []
+  );
+
+  const contextValue = useMemo(
+    () => confirm,
+    [confirm]
+  );
 
   return (
-    <ConfirmContext.Provider value={confirm}>
+    <ConfirmContext.Provider value={contextValue}>
       {children}
 
       {options && (
-        <>
-          {/* Blurred Background */}
-          <div
+        <GlassModal ariaLabel={options.title}>
+          <Card
+            variant="glass"
             style={{
-              position: "fixed",
-              inset: 0,
-              zIndex: 1999,
+              width: "100%",
+              maxWidth: "420px",
+              minWidth: 0,
+              margin: 0,
 
-              background:
-                "linear-gradient(135deg, rgba(255,0,80,.08), rgba(0,180,255,.08), rgba(0,255,170,.08))",
+              borderRadius: "24px",
 
-              backdropFilter: "blur(8px)",
-              WebkitBackdropFilter: "blur(8px)",
-
-              transition: "all .25s ease",
-
-              pointerEvents: "auto",
+              backdropFilter: "blur(4px)",
+              WebkitBackdropFilter: "blur(4px)",
             }}
-          />
-
-          <GlassModal>
-            <Card
-              variant="glass"
+          >
+            <h2
               style={{
-                width: "100%",
-                maxWidth: "420px",
-                borderRadius: "24px",
-                zIndex: 2000,
-
-                backdropFilter: "blur(4px)",
-                WebkitBackdropFilter: "blur(4px)",
+                marginTop: 0,
+                marginBottom: "12px",
+                overflowWrap: "anywhere",
               }}
             >
-              <h2
-                style={{
-                  marginTop: 0,
-                  marginBottom: "12px",
-                }}
-              >
-                {options.title}
-              </h2>
+              {options.title}
+            </h2>
 
-              <p
-                style={{
-                  lineHeight: 1.6,
-                  opacity: 0.9,
-                }}
-              >
-                {options.message}
-              </p>
+            <p
+              style={{
+                margin: 0,
+                lineHeight: 1.6,
+                opacity: 0.9,
+                overflowWrap: "anywhere",
+              }}
+            >
+              {options.message}
+            </p>
 
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "flex-end",
-                  gap: "12px",
-                  marginTop: "28px",
-                }}
-              >
-                <button
-                  className="glow-top"
-                  onClick={() => close(false)}
-                >
-                  {options.cancelText || "Cancel"}
-                </button>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: isMobile
+                  ? "column-reverse"
+                  : "row",
 
-                <button
-                  className="glow-top delete"
-                  onClick={() => close(true)}
-                >
-                  {options.confirmText || "Delete"}
-                </button>
-              </div>
-            </Card>
-          </GlassModal>
-        </>
+                justifyContent: isMobile
+                  ? "stretch"
+                  : "flex-end",
+
+                gap: "12px",
+
+                marginTop: isMobile
+                  ? "22px"
+                  : "28px",
+              }}
+            >
+              <button
+                type="button"
+                className="glow-top"
+                onClick={() => close(false)}
+              >
+                {options.cancelText}
+              </button>
+
+              <button
+                type="button"
+                className="glow-top delete"
+                onClick={() => close(true)}
+              >
+                {options.confirmText}
+              </button>
+            </div>
+          </Card>
+        </GlassModal>
       )}
     </ConfirmContext.Provider>
   );
 }
 
+/**
+ * Returns the global promise-based confirmation function.
+ */
 export function useConfirm() {
-  return useContext(ConfirmContext);
+  const confirm = useContext(ConfirmContext);
+
+  if (!confirm) {
+    throw new Error(
+      "useConfirm must be used inside ConfirmProvider."
+    );
+  }
+
+  return confirm;
 }

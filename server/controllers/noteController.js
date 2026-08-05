@@ -1,257 +1,517 @@
+const mongoose = require("mongoose");
+
 const Note = require("../models/Note");
-const logActivity = require("../utils/activityLogger");
 const User = require("../models/User");
 
-const createNote = async (req, res) => {
-  try {
-    const {
+const logActivity = require("../utils/activityLogger");
+
+const DEFAULT_PAGE = 1;
+const DEFAULT_LIMIT = 10;
+const MAX_LIMIT = 100;
+
+/**
+ * Sends a consistent server-error response.
+ *
+ * @param {import("express").Response} res
+ * @param {Error} error
+ * @param {string} fallbackMessage
+ * @returns {import("express").Response}
+ */
+function sendServerError(
+  res,
+  error,
+  fallbackMessage = "Internal server error."
+) {
+  console.error(error);
+
+  return res.status(500).json({
+    success: false,
+    message:
+      process.env.NODE_ENV === "production"
+        ? fallbackMessage
+        : error.message || fallbackMessage,
+  });
+}
+
+/**
+ * Converts a query value into a bounded positive integer.
+ *
+ * @param {unknown} value
+ * @param {number} fallback
+ * @param {number} maximum
+ * @returns {number}
+ */
+function parsePositiveInteger(
+  value,
+  fallback,
+  maximum = Number.MAX_SAFE_INTEGER
+) {
+  const parsedValue = Number.parseInt(
+    value,
+    10
+  );
+
+  if (
+    !Number.isInteger(parsedValue) ||
+    parsedValue < 1
+  ) {
+    return fallback;
+  }
+
+  return Math.min(
+    parsedValue,
+    maximum
+  );
+}
+
+/**
+ * Normalizes tags, removes empty values, and removes
+ * case-insensitive duplicates while preserving order.
+ *
+ * @param {unknown} value
+ * @returns {string[]}
+ */
+function normalizeTags(value) {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  const seenTags = new Set();
+  const normalizedTags = [];
+
+  for (const tag of value) {
+    const normalizedTag = String(
+      tag ?? ""
+    ).trim();
+
+    if (!normalizedTag) {
+      continue;
+    }
+
+    const comparisonValue =
+      normalizedTag.toLowerCase();
+
+    if (seenTags.has(comparisonValue)) {
+      continue;
+    }
+
+    seenTags.add(comparisonValue);
+    normalizedTags.push(normalizedTag);
+  }
+
+  return normalizedTags;
+}
+
+/**
+ * Validates and normalizes note request data.
+ *
+ * @param {object} body
+ * @returns {{
+ *   error: string|null,
+ *   data: object|null
+ * }}
+ */
+function validateNotePayload(body = {}) {
+  const title = String(
+    body.title ?? ""
+  ).trim();
+
+  const content = String(
+    body.content ?? ""
+  ).trim();
+
+  const tags = normalizeTags(
+    body.tags
+  );
+
+  if (!title) {
+    return {
+      error: "Title is required.",
+      data: null,
+    };
+  }
+
+  if (!content) {
+    return {
+      error:
+        "Description is required.",
+      data: null,
+    };
+  }
+
+  if (tags.length === 0) {
+    return {
+      error:
+        "Please add at least one tag.",
+      data: null,
+    };
+  }
+
+  return {
+    error: null,
+    data: {
       title,
       content,
-      tags
-    } = req.body;
+      tags,
+    },
+  };
+}
 
-    if (!title?.trim()) {
-      return res.status(400).json({
-        message: "Title is required."
-      });
+/**
+ * Records note activity without allowing logging
+ * failures to break the main request.
+ *
+ * @param {string} userId
+ * @param {string} type
+ * @param {string} action
+ * @returns {Promise<void>}
+ */
+async function safelyLogNoteActivity(
+  userId,
+  type,
+  action
+) {
+  try {
+    const user = await User.findById(
+      userId
+    )
+      .select("username")
+      .lean();
+
+    if (!user) {
+      return;
     }
 
-    if (!content?.trim()) {
-      return res.status(400).json({
-        message: "Description is required."
-      });
-    }
-
-    if (
-      !Array.isArray(tags) ||
-      tags.filter(tag => tag.trim()).length === 0
-    ) {
-      return res.status(400).json({
-        message: "Please add at least one tag."
-      });
-    }
-    const note = await Note.create({
-      title: title.trim(),
-      content: content.trim(),
-      tags: tags.map(tag => tag.trim()).filter(Boolean),
-      user: req.user.id
-    });
-    const user = await User.findById(req.user.id);
     await logActivity({
-      type: "note_created",
-      message: `${user.username} created a note`,
+      type,
+      message:
+        `${user.username} ${action} a note`,
+      user: user._id,
+    });
+  } catch (error) {
+    console.error(
+      "Failed to write note activity:",
+      error
+    );
+  }
+}
+
+/**
+ * Creates a note belonging to the authenticated user.
+ */
+async function createNote(req, res) {
+  try {
+    const { error, data } =
+      validateNotePayload(
+        req.body
+      );
+
+    if (error) {
+      return res.status(400).json({
+        success: false,
+        message: error,
+      });
+    }
+
+    const note = await Note.create({
+      ...data,
       user: req.user.id,
     });
 
-    res.status(201).json(note);
+    await safelyLogNoteActivity(
+      req.user.id,
+      "note_created",
+      "created"
+    );
 
+    return res.status(201).json(
+      note
+    );
   } catch (error) {
-    res.status(500).json({
-      message: error.message
-    });
+    return sendServerError(
+      res,
+      error,
+      "Failed to create note."
+    );
   }
-};
+}
 
-const getNotes = async (req, res) => {
+/**
+ * Returns the authenticated user's notes with pagination.
+ */
+async function getNotes(req, res) {
   try {
+    const page =
+      parsePositiveInteger(
+        req.query.page,
+        DEFAULT_PAGE
+      );
 
-    const page = Number(req.query.page) || 1;
-    const limit = Number(req.query.limit) || 10;
+    const limit =
+      parsePositiveInteger(
+        req.query.limit,
+        DEFAULT_LIMIT,
+        MAX_LIMIT
+      );
 
-    const skip = (page - 1) * limit;
+    const skip =
+      (page - 1) * limit;
 
-    const notes = await Note.find({
-      user: req.user.id
-    })
-      .sort({
-        pinned: -1,
-        createdAt: -1
-      })
-      .skip(skip)
-      .limit(limit);
+    const filter = {
+      user: req.user.id,
+    };
 
-    const total = await Note.countDocuments({
-      user: req.user.id
-    });
+    const [notes, total] =
+      await Promise.all([
+        Note.find(filter)
+          .sort({
+            pinned: -1,
+            createdAt: -1,
+            _id: -1,
+          })
+          .skip(skip)
+          .limit(limit)
+          .lean(),
 
-    res.status(200).json({
+        Note.countDocuments(
+          filter
+        ),
+      ]);
+
+    return res.status(200).json({
       page,
       limit,
       total,
-      pages: Math.ceil(total / limit),
-      data: notes
+      pages:
+        total === 0
+          ? 0
+          : Math.ceil(total / limit),
+      data: notes,
     });
-
   } catch (error) {
-
-    res.status(500).json({
-      message: error.message
-    });
-
+    return sendServerError(
+      res,
+      error,
+      "Failed to load notes."
+    );
   }
-};
+}
 
-const updateNote = async (req, res) => {
+/**
+ * Updates one note owned by the authenticated user.
+ */
+async function updateNote(req, res) {
   try {
-
-    const note = await Note.findOne({
-      _id: req.params.id,
-      user: req.user.id
-    });
-
-    if (!note) {
-      return res.status(404).json({
-        message: "Note not found"
-      });
-    }
-
-    const {
-      title,
-      content,
-      tags
-    } = req.body;
-
-    if (!title?.trim()) {
-      return res.status(400).json({
-        message: "Title is required."
-      });
-    }
-
-    if (!content?.trim()) {
-      return res.status(400).json({
-        message: "Description is required."
-      });
-    }
+    const { id } = req.params;
 
     if (
-      !Array.isArray(tags) ||
-      tags.filter(tag => tag.trim()).length === 0
+      !mongoose.isValidObjectId(id)
     ) {
       return res.status(400).json({
-        message: "Please add at least one tag."
+        success: false,
+        message: "Invalid note ID.",
       });
     }
 
-    note.title = title.trim();
-    note.content = content.trim();
-    note.tags = tags.map(tag => tag.trim()).filter(Boolean);
+    const { error, data } =
+      validateNotePayload(
+        req.body
+      );
 
-    await note.save();
-    const user = await User.findById(req.user.id);
-    await logActivity({
-      type: "note_updated",
-      message: `${user.username} updated a note`,
-      user: req.user.id,
-    });
+    if (error) {
+      return res.status(400).json({
+        success: false,
+        message: error,
+      });
+    }
 
-    res.status(200).json(note);
-
-  } catch (error) {
-    res.status(500).json({
-      message: error.message
-    });
-  }
-};
-
-const deleteNote = async (req, res) => {
-  try {
-
-    const note = await Note.findOne({
-      _id: req.params.id,
-      user: req.user.id
-    });
+    const note =
+      await Note.findOneAndUpdate(
+        {
+          _id: id,
+          user: req.user.id,
+        },
+        {
+          $set: data,
+        },
+        {
+          new: true,
+          runValidators: true,
+        }
+      );
 
     if (!note) {
       return res.status(404).json({
-        message: "Note not found"
+        success: false,
+        message: "Note not found.",
       });
     }
 
-    await note.deleteOne();
-    const user = await User.findById(req.user.id);
-    await logActivity({
-      type: "note_deleted",
-      message: `${user.username} deleted a note`,
-      user: req.user.id,
-    });
+    await safelyLogNoteActivity(
+      req.user.id,
+      "note_updated",
+      "updated"
+    );
 
-    res.status(200).json({
+    return res.status(200).json(
+      note
+    );
+  } catch (error) {
+    return sendServerError(
+      res,
+      error,
+      "Failed to update note."
+    );
+  }
+}
+
+/**
+ * Deletes one note owned by the authenticated user.
+ */
+async function deleteNote(req, res) {
+  try {
+    const { id } = req.params;
+
+    if (
+      !mongoose.isValidObjectId(id)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid note ID.",
+      });
+    }
+
+    const note =
+      await Note.findOneAndDelete({
+        _id: id,
+        user: req.user.id,
+      });
+
+    if (!note) {
+      return res.status(404).json({
+        success: false,
+        message: "Note not found.",
+      });
+    }
+
+    await safelyLogNoteActivity(
+      req.user.id,
+      "note_deleted",
+      "deleted"
+    );
+
+    return res.status(200).json({
       success: true,
-      message: "Note deleted"
+      message:
+        "Note deleted successfully.",
     });
-
   } catch (error) {
-
-    res.status(500).json({
-      message: error.message
-    });
-
+    return sendServerError(
+      res,
+      error,
+      "Failed to delete note."
+    );
   }
-};
+}
 
-const togglePinNote = async (req, res) => {
+/**
+ * Toggles the pinned status of one user-owned note.
+ */
+async function togglePinNote(req, res) {
   try {
+    const { id } = req.params;
+
+    if (
+      !mongoose.isValidObjectId(id)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid note ID.",
+      });
+    }
 
     const note = await Note.findOne({
-      _id: req.params.id,
-      user: req.user.id
+      _id: id,
+      user: req.user.id,
     });
 
     if (!note) {
       return res.status(404).json({
-        message: "Note not found"
+        success: false,
+        message: "Note not found.",
       });
     }
 
-    note.pinned = !note.pinned;
+    note.pinned =
+      !Boolean(note.pinned);
 
     await note.save();
 
-    res.status(200).json(note);
-
+    return res.status(200).json(
+      note
+    );
   } catch (error) {
-
-    res.status(500).json({
-      message: error.message
-    });
-
+    return sendServerError(
+      res,
+      error,
+      "Failed to update pinned status."
+    );
   }
-};
+}
 
-const toggleFavoriteNote = async (req, res) => {
+/**
+ * Toggles the favorite status of one user-owned note.
+ */
+async function toggleFavoriteNote(
+  req,
+  res
+) {
   try {
+    const { id } = req.params;
+
+    if (
+      !mongoose.isValidObjectId(id)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid note ID.",
+      });
+    }
 
     const note = await Note.findOne({
-      _id: req.params.id,
-      user: req.user.id
+      _id: id,
+      user: req.user.id,
     });
 
     if (!note) {
       return res.status(404).json({
-        message: "Note not found"
+        success: false,
+        message: "Note not found.",
       });
     }
 
-    note.favorite = !note.favorite;
+    note.favorite =
+      !Boolean(note.favorite);
 
     await note.save();
 
-    res.status(200).json(note);
-
+    return res.status(200).json(
+      note
+    );
   } catch (error) {
-
-    res.status(500).json({
-      message: error.message
-    });
-
+    return sendServerError(
+      res,
+      error,
+      "Failed to update favorite status."
+    );
   }
-};
+}
 
 module.exports = {
   createNote,
-  getNotes,
-  updateNote,
   deleteNote,
+  getNotes,
+  toggleFavoriteNote,
   togglePinNote,
-  toggleFavoriteNote
+  updateNote,
 };

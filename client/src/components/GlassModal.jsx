@@ -1,15 +1,28 @@
 import { useContext } from "react";
-import { AuthContext } from "../context/AuthContext";
 
-function GlassModal({ children }) {
+import { AuthContext } from "../context/AuthContext";
+import useBreakpoint from "../hooks/useBreakpoint";
+
+/**
+ * Responsive glassmorphism modal wrapper.
+ *
+ * The modal container handles viewport scrolling while allowing
+ * the provided children to control their own width and content.
+ */
+function GlassModal({
+  children,
+  ariaLabel = "Dialog",
+}) {
   const { user } = useContext(AuthContext);
+  const { isMobile, isTablet } = useBreakpoint();
 
   const darkMode = user?.theme === "dark";
 
   return (
     <>
-      {/* Background Blur */}
+      {/* Decorative background overlay */}
       <div
+        aria-hidden="true"
         style={{
           position: "fixed",
           inset: 0,
@@ -22,12 +35,17 @@ function GlassModal({ children }) {
           backdropFilter: "blur(12px)",
           WebkitBackdropFilter: "blur(12px)",
 
-          transition: "all .25s ease",
+          pointerEvents: "none",
+          transition:
+            "background .25s ease, backdrop-filter .25s ease",
         }}
       />
 
-      {/* Modal */}
+      {/* Scrollable modal viewport */}
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={ariaLabel}
         style={{
           position: "fixed",
           inset: 0,
@@ -35,9 +53,25 @@ function GlassModal({ children }) {
 
           display: "flex",
           justifyContent: "center",
-          alignItems: "center",
+          alignItems: isMobile
+            ? "flex-start"
+            : "center",
 
-          padding: "40px",
+          width: "100%",
+          height: "100dvh",
+          minWidth: 0,
+          boxSizing: "border-box",
+
+          padding: isMobile
+            ? "16px 12px calc(80px + env(safe-area-inset-bottom))"
+            : isTablet
+              ? "28px"
+              : "40px",
+
+          overflowX: "hidden",
+          overflowY: "auto",
+          overscrollBehavior: "contain",
+          WebkitOverflowScrolling: "touch",
         }}
       >
         {children}

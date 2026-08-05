@@ -1,17 +1,27 @@
 const express = require("express");
-const router = express.Router();
-
-const authMiddleware =
-    require("../middleware/authMiddleware");
 
 const {
-    getDashboard
+  getDashboard,
 } = require("../controllers/dashboardController");
 
+const authMiddleware = require(
+  "../middleware/authMiddleware"
+);
+
+const router = express.Router();
+
+/*
+ * All dashboard routes require authentication.
+ */
+router.use(authMiddleware);
+
+/*
+ * Returns dashboard statistics, recent content,
+ * pending reminders, overdue reminders, and birthdays.
+ */
 router.get(
-    "/",
-    authMiddleware,
-    getDashboard
+  "/",
+  getDashboard
 );
 
 module.exports = router;

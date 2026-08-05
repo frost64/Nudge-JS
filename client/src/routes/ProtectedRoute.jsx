@@ -1,12 +1,27 @@
+import { useContext } from "react";
 import { Navigate } from "react-router-dom";
 
-function ProtectedRoute({ children }) {
+import { AuthContext } from "../context/AuthContext";
 
-  const token =
-    localStorage.getItem("token");
+/**
+ * Protects routes that require authentication.
+ */
+function ProtectedRoute({ children }) {
+  const { token, user } =
+    useContext(AuthContext);
 
   if (!token) {
-    return <Navigate to="/" />;
+    return (
+      <Navigate
+        to="/"
+        replace
+      />
+    );
+  }
+
+  // Prevent redirect flicker while auth state initializes.
+  if (user === undefined) {
+    return null;
   }
 
   return children;

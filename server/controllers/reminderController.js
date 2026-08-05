@@ -1,282 +1,658 @@
+const mongoose = require("mongoose");
+
 const Reminder = require("../models/Reminder");
 const User = require("../models/User");
+
 const logActivity = require("../utils/activityLogger");
 
-const toggleReminder =
-  async (req, res) => {
-    try {
-      const reminder =
-        await Reminder.findOne({
-          _id: req.params.id,
-          user: req.user.id
-        });
+const DEFAULT_PAGE = 1;
+const DEFAULT_LIMIT = 10;
+const MAX_LIMIT = 100;
+const UPCOMING_DAYS = 30;
+const MILLISECONDS_PER_DAY =
+  24 * 60 * 60 * 1000;
 
-      if (!reminder) {
-        return res.status(404).json({
-          message:
-            "Reminder not found"
-        });
-      }
+/**
+ * Sends a consistent server-error response.
+ *
+ * @param {import("express").Response} res
+ * @param {Error} error
+ * @param {string} fallbackMessage
+ * @returns {import("express").Response}
+ */
+function sendServerError(
+  res,
+  error,
+  fallbackMessage = "Internal server error."
+) {
+  console.error(error);
 
-      reminder.completed =
-        !reminder.completed;
+  if (error?.name === "ValidationError") {
+    return res.status(400).json({
+      success: false,
+      message:
+        Object.values(error.errors)
+          .map((item) => item.message)
+          .join(" ") ||
+        "Reminder validation failed.",
+    });
+  }
 
-      await reminder.save();
+  return res.status(500).json({
+    success: false,
+    message:
+      process.env.NODE_ENV === "production"
+        ? fallbackMessage
+        : error.message || fallbackMessage,
+  });
+}
 
-      res.status(200).json(
-        reminder
-      );
+/**
+ * Converts a query value into a bounded positive integer.
+ *
+ * @param {unknown} value
+ * @param {number} fallback
+ * @param {number} maximum
+ * @returns {number}
+ */
+function parsePositiveInteger(
+  value,
+  fallback,
+  maximum = Number.MAX_SAFE_INTEGER
+) {
+  const parsedValue = Number.parseInt(
+    value,
+    10
+  );
 
-    } catch (error) {
+  if (
+    !Number.isInteger(parsedValue) ||
+    parsedValue < 1
+  ) {
+    return fallback;
+  }
 
-      res.status(500).json({
-        message:
-          error.message
-      });
+  return Math.min(
+    parsedValue,
+    maximum
+  );
+}
 
-    }
+/**
+ * Returns the start of the current UTC calendar day.
+ *
+ * @param {Date} date
+ * @returns {Date}
+ */
+function getStartOfUtcDay(date = new Date()) {
+  return new Date(
+    Date.UTC(
+      date.getUTCFullYear(),
+      date.getUTCMonth(),
+      date.getUTCDate()
+    )
+  );
+}
 
-  };
+/**
+ * Validates a 24-hour HH:mm time value.
+ *
+ * @param {unknown} value
+ * @returns {boolean}
+ */
+function isValidReminderTime(value) {
+  return /^([01]\d|2[0-3]):([0-5]\d)$/.test(
+    String(value ?? "").trim()
+  );
+}
 
-const createReminder = async (req, res) => {
-  try {
+/**
+ * Validates and normalizes reminder request data.
+ *
+ * @param {object} body
+ * @returns {{
+ *   error: string|null,
+ *   data: object|null
+ * }}
+ */
+function validateReminderPayload(body = {}) {
+  const title = String(
+    body.title ?? ""
+  ).trim();
 
-    const { title, description, dueDate, reminderTime, priority, category} = req.body;
+  const description = String(
+    body.description ?? ""
+  ).trim();
 
-    if (
-      !title?.trim() ||
-      !dueDate ||
-      !reminderTime ||
-      !priority ||
-      !category?.trim()
-    ) {
-      return res.status(400).json({
-        message: "Please fill in all required fields."
-      });
-    }
+  const reminderTime = String(
+    body.reminderTime ?? ""
+  ).trim();
 
-    const reminder = await Reminder.create({
+  const priority = String(
+    body.priority ?? ""
+  ).trim();
+
+  const category = String(
+    body.category ?? ""
+  ).trim();
+
+  if (!title) {
+    return {
+      error: "Title is required.",
+      data: null,
+    };
+  }
+
+  if (!body.dueDate) {
+    return {
+      error: "Due date is required.",
+      data: null,
+    };
+  }
+
+  const dueDate = new Date(
+    body.dueDate
+  );
+
+  if (Number.isNaN(dueDate.getTime())) {
+    return {
+      error: "Due date is invalid.",
+      data: null,
+    };
+  }
+
+  if (!reminderTime) {
+    return {
+      error:
+        "Reminder time is required.",
+      data: null,
+    };
+  }
+
+  if (
+    !isValidReminderTime(
+      reminderTime
+    )
+  ) {
+    return {
+      error:
+        "Reminder time must use HH:mm format.",
+      data: null,
+    };
+  }
+
+  if (!priority) {
+    return {
+      error: "Priority is required.",
+      data: null,
+    };
+  }
+
+  if (!category) {
+    return {
+      error: "Category is required.",
+      data: null,
+    };
+  }
+
+  return {
+    error: null,
+    data: {
       title,
       description,
       dueDate,
       reminderTime,
       priority,
       category,
-      user: req.user.id
-    });
-    const user = await User.findById(req.user.id);
+    },
+  };
+}
 
-    await logActivity({
-      type: "reminder_created",
-      message: `${user.username} created a reminder`,
-      user: user._id,
-    });
-
-    res.status(201).json(reminder);
-
-  } catch (error) {
-
-    res.status(500).json({
-      message: error.message
-    });
-
-  }
-};
-
-
-
-const getReminders = async (req, res) => {
+/**
+ * Records reminder activity without allowing
+ * activity-log failures to break the request.
+ *
+ * @param {string} userId
+ * @param {string} type
+ * @param {string} action
+ * @returns {Promise<void>}
+ */
+async function safelyLogReminderActivity(
+  userId,
+  type,
+  action
+) {
   try {
+    const user = await User.findById(
+      userId
+    )
+      .select("username")
+      .lean();
 
-    const page = Number(req.query.page) || 1;
-    const limit = Number(req.query.limit) || 10;
-
-    const skip = (page - 1) * limit;
-
-    const reminders = await Reminder.find({
-      user: req.user.id
-    })
-      .sort({
-        dueDate: 1
-      })
-      .skip(skip)
-      .limit(limit);
-
-    const total = await Reminder.countDocuments({
-      user: req.user.id
-    });
-
-    res.status(200).json({
-      page,
-      limit,
-      total,
-      pages: Math.ceil(total / limit),
-      data: reminders
-    });
-
-  } catch (error) {
-
-    res.status(500).json({
-      message: error.message
-    });
-
-  }
-};
-
-
-const updateReminder = async (req, res) => {
-  try {
-    const reminder = await Reminder.findOne({
-      _id: req.params.id,
-      user: req.user.id
-    });
-
-    if (!reminder) {
-      return res.status(404).json({
-        message: "Reminder not found"
-      });
+    if (!user) {
+      return;
     }
 
-    const updatedReminder = await Reminder.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true }
+    await logActivity({
+      type,
+      message:
+        `${user.username} ${action} a reminder`,
+      user: user._id,
+    });
+  } catch (error) {
+    console.error(
+      "Failed to write reminder activity:",
+      error
     );
-    const user = await User.findById(req.user.id);
-
-    await logActivity({
-      type: "reminder_updated",
-      message: `${user.username} updated a reminder`,
-      user: user._id,
-    });
-    res.status(200).json(updatedReminder);
-
-  } catch (error) {
-    res.status(500).json({
-      message: error.message
-    });
   }
-};
+}
 
-const deleteReminder = async (req, res) => {
+/**
+ * Toggles the completed state of one user-owned reminder.
+ */
+async function toggleReminder(req, res) {
   try {
+    const { id } = req.params;
 
-    const reminder = await Reminder.findOne({
-      _id: req.params.id,
-      user: req.user.id
-    });
-
-    if (!reminder) {
-      return res.status(404).json({
-        message: "Reminder not found"
-      });
-    }
-    const user = await User.findById(req.user.id);
-
-    await logActivity({
-      type: "reminder_deleted",
-      message: `${user.username} deleted a reminder`,
-      user: user._id,
-    });
-    await reminder.deleteOne();
-
-
-    res.status(200).json({
-      success: true,
-      message: "Reminder deleted"
-    });
-
-  } catch (error) {
-
-    res.status(500).json({
-      message: error.message
-    });
-
-  }
-};
-
-const completeReminder = async (req, res) => {
-  try {
-
-    const reminder = await Reminder.findOne({
-      _id: req.params.id,
-      user: req.user.id
-    });
-
-    if (!reminder) {
-      return res.status(404).json({
-        message: "Reminder not found"
+    if (
+      !mongoose.isValidObjectId(id)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Invalid reminder ID.",
       });
     }
 
-    reminder.completed = true;
+    const reminder =
+      await Reminder.findOne({
+        _id: id,
+        user: req.user.id,
+      });
+
+    if (!reminder) {
+      return res.status(404).json({
+        success: false,
+        message:
+          "Reminder not found.",
+      });
+    }
+
+    reminder.completed =
+      !Boolean(reminder.completed);
 
     await reminder.save();
 
-    res.status(200).json(reminder);
-
+    return res.status(200).json(
+      reminder
+    );
   } catch (error) {
-
-    res.status(500).json({
-      message: error.message
-    });
-
+    return sendServerError(
+      res,
+      error,
+      "Failed to update reminder status."
+    );
   }
-};
+}
 
-const getUpcomingReminders = async (req, res) => {
-    try {
+/**
+ * Creates a reminder belonging to the authenticated user.
+ */
+async function createReminder(req, res) {
+  try {
+    const { error, data } =
+      validateReminderPayload(
+        req.body
+      );
 
-        const today = new Date();
-
-        const nextMonth = new Date(today);
-
-        nextMonth.setDate(today.getDate() + 30);
-
-        const reminders = await Reminder.find({
-            user: req.user.id,
-            completed: false,
-            dueDate: {
-                $gte: today,
-                $lte: nextMonth
-            }
-        })
-        .sort({ dueDate: 1 });
-
-        const upcoming = reminders.map(reminder => {
-
-            const diffTime =
-                reminder.dueDate.getTime() -
-                today.getTime();
-
-            const daysRemaining =
-                Math.ceil(
-                    diffTime / (1000 * 60 * 60 * 24)
-                );
-
-            return {
-                ...reminder.toObject(),
-                daysRemaining
-            };
-        });
-
-        res.status(200).json(upcoming);
-
-    } catch (error) {
-
-        res.status(500).json({
-            message: error.message
-        });
-
+    if (error) {
+      return res.status(400).json({
+        success: false,
+        message: error,
+      });
     }
-};
+
+    const reminder =
+      await Reminder.create({
+        ...data,
+        user: req.user.id,
+      });
+
+    await safelyLogReminderActivity(
+      req.user.id,
+      "reminder_created",
+      "created"
+    );
+
+    return res.status(201).json(
+      reminder
+    );
+  } catch (error) {
+    return sendServerError(
+      res,
+      error,
+      "Failed to create reminder."
+    );
+  }
+}
+
+/**
+ * Returns the authenticated user's reminders
+ * using bounded pagination.
+ */
+async function getReminders(req, res) {
+  try {
+    const page =
+      parsePositiveInteger(
+        req.query.page,
+        DEFAULT_PAGE
+      );
+
+    const limit =
+      parsePositiveInteger(
+        req.query.limit,
+        DEFAULT_LIMIT,
+        MAX_LIMIT
+      );
+
+    const skip =
+      (page - 1) * limit;
+
+    const filter = {
+      user: req.user.id,
+    };
+
+    const [reminders, total] =
+      await Promise.all([
+        Reminder.find(filter)
+          .sort({
+            dueDate: 1,
+            reminderTime: 1,
+            createdAt: -1,
+            _id: -1,
+          })
+          .skip(skip)
+          .limit(limit)
+          .lean(),
+
+        Reminder.countDocuments(
+          filter
+        ),
+      ]);
+
+    return res.status(200).json({
+      page,
+      limit,
+      total,
+      pages:
+        total === 0
+          ? 0
+          : Math.ceil(total / limit),
+      data: reminders,
+    });
+  } catch (error) {
+    return sendServerError(
+      res,
+      error,
+      "Failed to load reminders."
+    );
+  }
+}
+
+/**
+ * Updates one reminder owned by the authenticated user.
+ */
+async function updateReminder(req, res) {
+  try {
+    const { id } = req.params;
+
+    if (
+      !mongoose.isValidObjectId(id)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Invalid reminder ID.",
+      });
+    }
+
+    const { error, data } =
+      validateReminderPayload(
+        req.body
+      );
+
+    if (error) {
+      return res.status(400).json({
+        success: false,
+        message: error,
+      });
+    }
+
+    const reminder =
+      await Reminder.findOneAndUpdate(
+        {
+          _id: id,
+          user: req.user.id,
+        },
+        {
+          $set: data,
+        },
+        {
+          new: true,
+          runValidators: true,
+        }
+      );
+
+    if (!reminder) {
+      return res.status(404).json({
+        success: false,
+        message:
+          "Reminder not found.",
+      });
+    }
+
+    await safelyLogReminderActivity(
+      req.user.id,
+      "reminder_updated",
+      "updated"
+    );
+
+    return res.status(200).json(
+      reminder
+    );
+  } catch (error) {
+    return sendServerError(
+      res,
+      error,
+      "Failed to update reminder."
+    );
+  }
+}
+
+/**
+ * Deletes one reminder owned by the authenticated user.
+ */
+async function deleteReminder(req, res) {
+  try {
+    const { id } = req.params;
+
+    if (
+      !mongoose.isValidObjectId(id)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Invalid reminder ID.",
+      });
+    }
+
+    const reminder =
+      await Reminder.findOneAndDelete({
+        _id: id,
+        user: req.user.id,
+      });
+
+    if (!reminder) {
+      return res.status(404).json({
+        success: false,
+        message:
+          "Reminder not found.",
+      });
+    }
+
+    await safelyLogReminderActivity(
+      req.user.id,
+      "reminder_deleted",
+      "deleted"
+    );
+
+    return res.status(200).json({
+      success: true,
+      message:
+        "Reminder deleted successfully.",
+    });
+  } catch (error) {
+    return sendServerError(
+      res,
+      error,
+      "Failed to delete reminder."
+    );
+  }
+}
+
+/**
+ * Marks one user-owned reminder as completed.
+ */
+async function completeReminder(
+  req,
+  res
+) {
+  try {
+    const { id } = req.params;
+
+    if (
+      !mongoose.isValidObjectId(id)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Invalid reminder ID.",
+      });
+    }
+
+    const reminder =
+      await Reminder.findOneAndUpdate(
+        {
+          _id: id,
+          user: req.user.id,
+        },
+        {
+          $set: {
+            completed: true,
+          },
+        },
+        {
+          new: true,
+          runValidators: true,
+        }
+      );
+
+    if (!reminder) {
+      return res.status(404).json({
+        success: false,
+        message:
+          "Reminder not found.",
+      });
+    }
+
+    return res.status(200).json(
+      reminder
+    );
+  } catch (error) {
+    return sendServerError(
+      res,
+      error,
+      "Failed to complete reminder."
+    );
+  }
+}
+
+/**
+ * Returns incomplete reminders occurring within
+ * the next 30 calendar days.
+ */
+async function getUpcomingReminders(
+  req,
+  res
+) {
+  try {
+    const today =
+      getStartOfUtcDay();
+
+    const endDate = new Date(
+      today.getTime() +
+        UPCOMING_DAYS *
+          MILLISECONDS_PER_DAY
+    );
+
+    const reminders =
+      await Reminder.find({
+        user: req.user.id,
+        completed: false,
+
+        dueDate: {
+          $gte: today,
+          $lte: endDate,
+        },
+      })
+        .sort({
+          dueDate: 1,
+          reminderTime: 1,
+          createdAt: 1,
+        })
+        .lean();
+
+    const upcoming = reminders.map(
+      (reminder) => {
+        const dueDate =
+          getStartOfUtcDay(
+            new Date(
+              reminder.dueDate
+            )
+          );
+
+        const daysRemaining =
+          Math.round(
+            (dueDate.getTime() -
+              today.getTime()) /
+              MILLISECONDS_PER_DAY
+          );
+
+        return {
+          ...reminder,
+          daysRemaining,
+        };
+      }
+    );
+
+    return res.status(200).json(
+      upcoming
+    );
+  } catch (error) {
+    return sendServerError(
+      res,
+      error,
+      "Failed to load upcoming reminders."
+    );
+  }
+}
 
 module.exports = {
-  createReminder,
-  getReminders,
-  updateReminder,
-  deleteReminder,
   completeReminder,
+  createReminder,
+  deleteReminder,
+  getReminders,
   getUpcomingReminders,
-  toggleReminder
+  toggleReminder,
+  updateReminder,
 };

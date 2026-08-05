@@ -1,361 +1,670 @@
-import { useState, useContext } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { GoogleLogin } from "@react-oauth/google";
-import { AuthContext } from "../context/AuthContext";
-import api from "../services/api";
-import toast from "react-hot-toast";
-import Card from "../components/Card";
-import logo from "../assets/Logo.svg";
-
-import loginLightBg from "../assets/backgrounds/loginLight.png";
-import loginDarkBg from "../assets/backgrounds/loginDark.png";
 import {
-  FaUser,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+} from "react";
+import { GoogleLogin } from "@react-oauth/google";
+import {
+  Link,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
+import toast from "react-hot-toast";
+
+import {
   FaAt,
   FaEnvelope,
   FaLock,
+  FaUser,
   FaUserPlus,
 } from "react-icons/fa";
 
+import logo from "../assets/Logo.svg";
+import loginDarkBg from "../assets/backgrounds/loginDark.png";
+import loginLightBg from "../assets/backgrounds/loginLight.png";
+
+import Card from "../components/Card";
+import { AuthContext } from "../context/AuthContext";
+import useBreakpoint from "../hooks/useBreakpoint";
+import api from "../services/api";
+
+/**
+ * Safely retrieves the stored user preferences.
+ *
+ * @returns {object|null}
+ */
+function getStoredUser() {
+  try {
+    const storedUser =
+      localStorage.getItem("user");
+
+    return storedUser
+      ? JSON.parse(storedUser)
+      : null;
+  } catch (error) {
+    console.error(
+      "Failed to parse stored user.",
+      error
+    );
+
+    localStorage.removeItem("user");
+
+    return null;
+  }
+}
+
+/**
+ * Registers a new user and sends an OTP
+ * before completing account creation.
+ */
 function Register() {
   const navigate = useNavigate();
-  const { login } = useContext(AuthContext);
-  const [fullName, setFullName] = useState("");
-  const [username, setUsername] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const savedUser = JSON.parse(
-  localStorage.getItem("user") || "null"
-);
+  const location = useLocation();
 
-  const darkMode = savedUser?.theme === "dark";
+  const { login } =
+    useContext(AuthContext);
+
+  const {
+    isMobile,
+    isTablet,
+  } = useBreakpoint();
+
+  const registrationData =
+    location.state?.registrationData ||
+    location.state ||
+    {};
+
+  const [fullName, setFullName] =
+    useState(
+      registrationData.fullName || ""
+    );
+
+  const [username, setUsername] =
+    useState(
+      registrationData.username || ""
+    );
+
+  const [email, setEmail] =
+    useState(
+      registrationData.email || ""
+    );
+
+  const [password, setPassword] =
+    useState(
+      registrationData.password || ""
+    );
+
+  const [loading, setLoading] =
+    useState(false);
+
+  const [
+    googleLoading,
+    setGoogleLoading,
+  ] = useState(false);
+
+  const storedUser = useMemo(
+    () => getStoredUser(),
+    []
+  );
+
+  const darkMode =
+    storedUser?.theme === "dark";
 
   const backgroundImage = darkMode
     ? loginDarkBg
     : loginLightBg;
 
-  const handleSubmit = async () => {
-  if (loading) return;
-  if (
-    !fullName || 
-    !username.trim() ||
-    !email.trim() ||
-    !password.trim()
-  ) {
-    toast.error("Please fill all fields.");
-    return;
-  }
+  const isBusy =
+    loading || googleLoading;
 
-  try {
+  const completeLogin = useCallback(
+    (responseData) => {
+      login(
+        responseData.token,
+        responseData.user
+      );
 
-    setLoading(true);
+      navigate("/dashboard", {
+        replace: true,
+      });
+    },
+    [login, navigate]
+  );
 
-    await api.post(
-      "/auth/register",
-      {
-        fullName,
-        username,
-        email,
-        password,
+  /**
+   * Validates registration fields and requests an OTP.
+   */
+  const handleSubmit = useCallback(
+    async (event) => {
+      event.preventDefault();
+
+      if (isBusy) return;
+
+      const normalizedFullName =
+        fullName.trim();
+
+      const normalizedUsername =
+        username.trim();
+
+      const normalizedEmail = email
+        .trim()
+        .toLowerCase();
+
+      if (
+        !normalizedFullName ||
+        !normalizedUsername ||
+        !normalizedEmail ||
+        !password
+      ) {
+        toast.error(
+          "Please fill all fields."
+        );
+
+        return;
       }
-    );
 
-    toast.success(
-      "Registration successful!"
-    );
+      try {
+        setLoading(true);
 
-    navigate("/", {
-      state: {
-        message:
-          "Registration successful. Please login.",
+        await api.post(
+          "/auth/register/send-otp",
+          {
+            fullName:
+              normalizedFullName,
+            username:
+              normalizedUsername,
+            email:
+              normalizedEmail,
+            password,
+          }
+        );
+
+        toast.success(
+          "OTP sent to your email."
+        );
+
+        navigate(
+          "/verify-registration",
+          {
+            state: {
+              registrationData: {
+                fullName:
+                  normalizedFullName,
+                username:
+                  normalizedUsername,
+                email:
+                  normalizedEmail,
+                password,
+              },
+            },
+          }
+        );
+      } catch (error) {
+        console.error(error);
+
+        toast.error(
+          error.response?.data?.message ||
+            "Cannot connect to backend server."
+        );
+      } finally {
+        setLoading(false);
+      }
+    },
+    [
+      email,
+      fullName,
+      isBusy,
+      navigate,
+      password,
+      username,
+    ]
+  );
+
+  /**
+   * Handles Google account registration and login.
+   */
+  const handleGoogleSuccess =
+    useCallback(
+      async (credentialResponse) => {
+        if (
+          isBusy ||
+          !credentialResponse?.credential
+        ) {
+          return;
+        }
+
+        try {
+          setGoogleLoading(true);
+
+          const response =
+            await api.post(
+              "/auth/google",
+              {
+                credential:
+                  credentialResponse.credential,
+              }
+            );
+
+          completeLogin(response.data);
+        } catch (error) {
+          console.error(error);
+
+          toast.error(
+            error.response?.data?.message ||
+              "Google sign up failed."
+          );
+        } finally {
+          setGoogleLoading(false);
+        }
       },
-    });
-
-  } catch (error) {
-
-    console.log(error);
-
-    toast.error(
-      error.response?.data?.message ||
-      "Cannot connect to backend server."
+      [
+        completeLogin,
+        isBusy,
+      ]
     );
 
-  } finally {
-
-    setLoading(false);
-
-  }
-};
+  const handleGoogleError =
+    useCallback(() => {
+      toast.error(
+        "Google signup failed."
+      );
+    }, []);
 
   return (
-    <div
+    <main
       style={{
-        minHeight: "100vh",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        padding: "10px",
+        position: "relative",
 
-        background: `url(${backgroundImage})`,
+        display: "flex",
+        alignItems: isMobile
+          ? "flex-start"
+          : "center",
+        justifyContent: "center",
+
+        width: "100%",
+        minWidth: 0,
+        minHeight: "100dvh",
+
+        margin: 0,
+
+        padding: isMobile
+          ? "20px 12px calc(32px + env(safe-area-inset-bottom))"
+          : isTablet
+            ? "30px"
+            : "40px 20px",
+
+        boxSizing: "border-box",
+
+        backgroundImage:
+          `url(${backgroundImage})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
-        backgroundAttachment: "fixed",
+        backgroundAttachment: isMobile
+          ? "scroll"
+          : "fixed",
 
-        position: "relative",
-        overflow: "hidden",
+        overflowX: "hidden",
       }}
     >
       <div
+        aria-hidden="true"
         style={{
           position: "absolute",
           inset: 0,
+
           background: darkMode
             ? "rgba(0,0,0,.20)"
             : "rgba(255,255,255,.08)",
+
           backdropFilter: "blur(2px)",
-          WebkitBackdropFilter: "blur(2px)",
+          WebkitBackdropFilter:
+            "blur(2px)",
+
+          pointerEvents: "none",
         }}
       />
-        <Card
-          variant="glass"
+
+      <Card
+        variant="glass"
+        style={{
+          position: "relative",
+          zIndex: 1,
+
+          width: "100%",
+          maxWidth: "450px",
+          minWidth: 0,
+
+          margin: isMobile
+            ? "12px 0 0"
+            : 0,
+
+          padding: isMobile
+            ? "24px 18px"
+            : isTablet
+              ? "32px"
+              : "40px",
+
+          borderRadius: isMobile
+            ? "22px"
+            : "28px",
+        }}
+      >
+        <form
+          noValidate
+          onSubmit={handleSubmit}
           style={{
-            position: "relative",
-            zIndex: 1,
-            width: "100%",
-            maxWidth: "450px",
-            padding: "40px",
-            borderRadius: "28px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "18px",
           }}
         >
-
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleSubmit();
-            }}
+          <header
             style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: "18px",
-            }}
-          >
-
-          <div
-            style={{
-              textAlign:
-                "center"
+              textAlign: "center",
             }}
           >
             <img
               src={logo}
-              alt="Nudge Logo"
+              alt="Nudge"
               style={{
-                width: "100px",
-                height: "100px",
+                width: isMobile
+                  ? "78px"
+                  : "100px",
+
+                height: isMobile
+                  ? "78px"
+                  : "100px",
+
+                objectFit: "contain",
               }}
             />
 
-            <h1>
+            <h1
+              style={{
+                marginTop: "8px",
+                marginBottom: "4px",
+
+                fontSize: isMobile
+                  ? "2rem"
+                  : "2.4rem",
+              }}
+            >
               Nudge
             </h1>
 
             <p
               style={{
-                color: "#6b7280",
+                margin: 0,
+
+                color: darkMode
+                  ? "#d1d5db"
+                  : "#6b7280",
               }}
             >
               Create your account
             </p>
+          </header>
+
+          <div className="input-icon-wrapper">
+            <FaUser
+              className="input-icon"
+              aria-hidden="true"
+            />
+
+            <input
+              id="register-full-name"
+              className="input-glow"
+              type="text"
+              name="fullName"
+              autoComplete="name"
+              placeholder="Full Name"
+              aria-label="Full name"
+              value={fullName}
+              disabled={isBusy}
+              onChange={(event) =>
+                setFullName(
+                  event.target.value
+                )
+              }
+            />
           </div>
 
-          
-            <div style={{ position: "relative" }}>
-              <FaUser
-                style={{
-                  position: "absolute",
-                  left: "14px",
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  opacity: 0.7,
-                }}
-              />
+          <div className="input-icon-wrapper">
+            <FaAt
+              className="input-icon"
+              aria-hidden="true"
+            />
 
-              <input
-                type="text"
-                placeholder="Full Name"
-                value={fullName}
-                disabled={loading}
-                onChange={(e) => setFullName(e.target.value)}
-                style={{ paddingLeft: "42px" }}
-              />
-            </div>
+            <input
+              id="register-username"
+              className="input-glow"
+              type="text"
+              name="username"
+              autoComplete="username"
+              autoCapitalize="none"
+              spellCheck="false"
+              placeholder="Username"
+              aria-label="Username"
+              value={username}
+              disabled={isBusy}
+              onChange={(event) =>
+                setUsername(
+                  event.target.value
+                )
+              }
+            />
+          </div>
 
-            <div style={{ position: "relative" }}>
-  <FaAt
-    style={{
-      position: "absolute",
-      left: "14px",
-      top: "50%",
-      transform: "translateY(-50%)",
-      opacity: 0.7,
-    }}
-  />
+          <div className="input-icon-wrapper">
+            <FaEnvelope
+              className="input-icon"
+              aria-hidden="true"
+            />
 
-  <input
-    type="text"
-    placeholder="Username"
-    value={username}
-    disabled={loading}
-    onChange={(e) => setUsername(e.target.value)}
-    style={{ paddingLeft: "42px" }}
-  />
-</div>
+            <input
+              id="register-email"
+              className="input-glow"
+              type="email"
+              name="email"
+              inputMode="email"
+              autoComplete="email"
+              autoCapitalize="none"
+              spellCheck="false"
+              placeholder="Email"
+              aria-label="Email address"
+              value={email}
+              disabled={isBusy}
+              onChange={(event) =>
+                setEmail(
+                  event.target.value
+                )
+              }
+            />
+          </div>
 
-            <div style={{ position: "relative" }}>
-  <FaEnvelope
-    style={{
-      position: "absolute",
-      left: "14px",
-      top: "50%",
-      transform: "translateY(-50%)",
-      opacity: 0.7,
-    }}
-  />
+          <div className="input-icon-wrapper">
+            <FaLock
+              className="input-icon"
+              aria-hidden="true"
+            />
 
-  <input
-    type="email"
-    placeholder="Email"
-    value={email}
-    disabled={loading}
-    onChange={(e) => setEmail(e.target.value)}
-    style={{ paddingLeft: "42px" }}
-  />
-</div>
+            <input
+              id="register-password"
+              className="input-glow"
+              type="password"
+              name="password"
+              autoComplete="new-password"
+              placeholder="Password"
+              aria-label="Password"
+              value={password}
+              disabled={isBusy}
+              onChange={(event) =>
+                setPassword(
+                  event.target.value
+                )
+              }
+            />
+          </div>
 
-            <div style={{ position: "relative" }}>
-  <FaLock
-    style={{
-      position: "absolute",
-      left: "14px",
-      top: "50%",
-      transform: "translateY(-50%)",
-      opacity: 0.7,
-    }}
-  />
+          <button
+            type="submit"
+            className="glow-top"
+            disabled={isBusy}
+            aria-busy={loading}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
 
-  <input
-    type="password"
-    placeholder="Password"
-    value={password}
-    disabled={loading}
-    onChange={(e) => setPassword(e.target.value)}
-    style={{ paddingLeft: "42px" }}
-  />
-</div>
-
-            <button
-  className="glow-top"
-  type="submit"
-  disabled={loading}
-  style={{
-    width: "100%",
-  }}
->
-  <FaUserPlus
-    size={14}
-    style={{ marginRight: "6px" }}
-  />
-
-  {loading
-    ? "Creating Account..."
-    : "Register"}
-</button>
-
-            <div
+              width: "100%",
+              margin: 0,
+            }}
+          >
+            <FaUserPlus
+              aria-hidden="true"
+              size={14}
               style={{
-                display: "flex",
-                alignItems: "center",
-              }}
-            >
-              <div
-                style={{
-                  flex: 1,
-                  height: "1px",
-                  background: "rgba(255,255,255,.2)",
-                }}
-              />
-
-              <span
-                style={{
-                  padding: "0 12px",
-                  color: "#888",
-                  fontSize: ".9rem",
-                }}
-              >
-                OR
-              </span>
-
-              <div
-                style={{
-                  flex: 1,
-                  height: "1px",
-                  background: "rgba(255,255,255,.2)",
-                }}
-              />
-            </div>
-
-            <GoogleLogin
-              onSuccess={async (credentialResponse) => {
-                try {
-                  const res = await api.post("/auth/google", {
-                    credential: credentialResponse.credential,
-                  });
-
-                  login(
-                    res.data.token,
-                    res.data.user
-                  );
-
-                  navigate("/dashboard");
-                } catch (error) {
-                  console.error(error);
-
-                  toast.error(
-                    error.response?.data?.message ||
-                    "Google sign up failed."
-                  );
-                }
-              }}
-              onError={() => {
-                toast.error("Google signup failed.");
+                marginRight: "6px",
               }}
             />
 
-          </form>
+            {loading
+              ? "Creating Account..."
+              : "Register"}
+          </button>
+
+          <div
+            aria-hidden="true"
+            style={{
+              display: "flex",
+              alignItems: "center",
+
+              gap: "12px",
+            }}
+          >
+            <div
+              style={{
+                flexGrow: 1,
+                height: "1px",
+
+                background: darkMode
+                  ? "rgba(255,255,255,.20)"
+                  : "rgba(0,0,0,.12)",
+              }}
+            />
+
+            <span
+              style={{
+                color: darkMode
+                  ? "#9ca3af"
+                  : "#6b7280",
+
+                fontSize: ".9rem",
+              }}
+            >
+              OR
+            </span>
+
+            <div
+              style={{
+                flexGrow: 1,
+                height: "1px",
+
+                background: darkMode
+                  ? "rgba(255,255,255,.20)"
+                  : "rgba(0,0,0,.12)",
+              }}
+            />
+          </div>
+
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+
+              width: "100%",
+              minWidth: 0,
+
+              opacity: googleLoading
+                ? 0.65
+                : 1,
+
+              pointerEvents: isBusy
+                ? "none"
+                : "auto",
+
+              overflow: "hidden",
+
+              transition:
+                "opacity .2s ease",
+            }}
+          >
+            <GoogleLogin
+              onSuccess={
+                handleGoogleSuccess
+              }
+              onError={
+                handleGoogleError
+              }
+              theme={
+                darkMode
+                  ? "filled_black"
+                  : "outline"
+              }
+              shape="pill"
+              text="signup_with"
+              width={
+                isMobile
+                  ? "300"
+                  : "360"
+              }
+            />
+          </div>
+
+          {googleLoading && (
+            <p
+              role="status"
+              style={{
+                margin: "-8px 0 0",
+
+                fontSize: ".9rem",
+                textAlign: "center",
+                opacity: 0.75,
+              }}
+            >
+              Signing up with Google...
+            </p>
+          )}
 
           <p
             style={{
-              textAlign: "center",
               marginTop: "8px",
               marginBottom: 0,
+
+              lineHeight: 1.6,
+              textAlign: "center",
             }}
           >
             Already have an account?{" "}
+
             <Link
               to="/"
               style={{
-                color: darkMode ? "#7dd3fc" : "#0284c7",
+                color: darkMode
+                  ? "#7dd3fc"
+                  : "#0284c7",
+
                 textDecoration: "none",
               }}
             >
               Login here
             </Link>
           </p>
-
-        </Card>
-      </div>
+        </form>
+      </Card>
+    </main>
   );
 }
 

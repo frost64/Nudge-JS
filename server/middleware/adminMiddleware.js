@@ -1,33 +1,93 @@
 const systemLogger = require("../utils/systemLogger");
 
-const adminMiddleware = async (
+/**
+ * Writes a security warning without allowing logging failures
+ * to interrupt the authorization response.
+ *
+ * @param {import("express").Request} req
+ * @param {string} message
+ * @returns {Promise<void>}
+ */
+async function safelyLogUnauthorizedAccess(
   req,
-  res,
-  next
-) => {
-  if (req.user.role !== "admin") {
-
+  message
+) {
+  try {
     await systemLogger({
       level: "warning",
       category: "security",
       source: "Security",
-      message: "Unauthorized admin access attempt",
+      message,
       details: {
-        user: req.user.username,
-        role: req.user.role,
-        endpoint: req.originalUrl,
-        method: req.method,
-        ip: req.ip,
+        userId:
+          req.user?.id ||
+          req.user?._id ||
+          null,
+
+        username:
+          req.user?.username ||
+          "unknown",
+
+        role:
+          req.user?.role ||
+          "unauthenticated",
+
+        endpoint:
+          req.originalUrl,
+
+        method:
+          req.method,
+
+        ip:
+          req.ip,
+
+        userAgent:
+          req.get("user-agent") ||
+          "unknown",
       },
     });
+  } catch (error) {
+    console.error(
+      "Failed to write unauthorized-access log:",
+      error
+    );
+  }
+}
 
-    return res.status(403).json({
+/**
+ * Allows access only to authenticated administrators.
+ */
+async function adminMiddleware(
+  req,
+  res,
+  next
+) {
+  if (!req.user) {
+    await safelyLogUnauthorizedAccess(
+      req,
+      "Unauthenticated admin access attempt"
+    );
+
+    return res.status(401).json({
       success: false,
-      message: "Admin access only",
+      message:
+        "Authentication required.",
     });
   }
 
-  next();
-};
+  if (req.user.role !== "admin") {
+    await safelyLogUnauthorizedAccess(
+      req,
+      "Unauthorized admin access attempt"
+    );
+
+    return res.status(403).json({
+      success: false,
+      message: "Admin access only.",
+    });
+  }
+
+  return next();
+}
 
 module.exports = adminMiddleware;

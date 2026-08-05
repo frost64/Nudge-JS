@@ -1,580 +1,640 @@
-import { useEffect, useState, useRef } from "react";
+import {
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useLocation } from "react-router-dom";
-import { useContext } from "react";
-import { LayoutContext } from "../components/Layout";
-import { AuthContext } from "../context/AuthContext";
-import { useConfirm } from "../context/ConfirmContext";
 import { jsPDF } from "jspdf";
 import toast from "react-hot-toast";
-import api from "../services/api";
-import Layout from "../components/Layout";
-import Card from "../components/Card";
-import noteLightBg from "../assets/backgrounds/note-light.png";
-import noteDarkBg from "../assets/backgrounds/note-dark.png";
-import logo from "../assets/Logo.svg";
-import AutocompleteInput from "../components/AutocompleteInput";
 
 import {
-  FaStickyNote,
-  FaHeading,
-  FaTags,
   FaAlignLeft,
-  FaEdit,
-  FaPlus,
-  FaDownload,
-  FaThumbtack,
-  FaStar,
-  FaTrash,
-  FaClock,
   FaArrowLeft,
+  FaClock,
+  FaDownload,
+  FaEdit,
+  FaHeading,
+  FaPlus,
+  FaStar,
+  FaStickyNote,
+  FaTags,
+  FaThumbtack,
+  FaTrash,
 } from "react-icons/fa";
 import { MdFavorite, MdFavoriteBorder } from "react-icons/md";
 
+import logo from "../assets/Logo.svg";
+import noteDarkBg from "../assets/backgrounds/note-dark.png";
+import noteLightBg from "../assets/backgrounds/note-light.png";
+
+import AutocompleteInput from "../components/AutocompleteInput";
+import Card from "../components/Card";
+import GlassModal from "../components/GlassModal";
+import Layout from "../components/Layout";
+import { AuthContext } from "../context/AuthContext";
+import { useConfirm } from "../context/ConfirmContext";
+import useBreakpoint from "../hooks/useBreakpoint";
+import api from "../services/api";
+
+const HIGHLIGHT_DURATION = 1200;
+
+const NORMAL_HIGHLIGHT_SHADOW = `
+  0 0 25px rgba(0,255,204,.45),
+  0 0 70px rgba(0,255,204,.18),
+  0 20px 60px rgba(0,0,0,.45)
+`;
+
+const PINNED_HIGHLIGHT_SHADOW = `
+  0 0 25px rgba(255,215,0,.45),
+  0 0 70px rgba(255,215,0,.18),
+  0 20px 60px rgba(0,0,0,.45)
+`;
+
+/**
+ * Converts an image URL into a base64 PNG for jsPDF.
+ */
+function getBase64Image(imageUrl) {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+
+    image.onload = () => {
+      try {
+        const canvas = document.createElement("canvas");
+        canvas.width = image.naturalWidth || image.width;
+        canvas.height = image.naturalHeight || image.height;
+
+        const context = canvas.getContext("2d");
+
+        if (!context) {
+          reject(new Error("Unable to create image canvas."));
+          return;
+        }
+
+        context.drawImage(image, 0, 0);
+        resolve(canvas.toDataURL("image/png"));
+      } catch (error) {
+        reject(error);
+      }
+    };
+
+    image.onerror = () => {
+      reject(new Error("Unable to load the Nudge logo."));
+    };
+
+    image.src = imageUrl;
+  });
+}
+
+/**
+ * Formats a note creation date for display and PDF export.
+ */
+function formatCreatedAt(value) {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "Unknown";
+  }
+
+  return date.toLocaleString("en-GB", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+/**
+ * Notes page with create, edit, pin, favorite, delete, and PDF export features.
+ */
 function Notes() {
   const { user } = useContext(AuthContext);
-  const { isMobile } = useContext(LayoutContext);
+  const { isMobile, isTablet } = useBreakpoint();
   const confirm = useConfirm();
-  const darkMode = user?.theme === "dark";
-  const formBackground = darkMode
-  ? noteDarkBg
-  : noteLightBg;
   const location = useLocation();
-  const searchParams = new URLSearchParams(location.search);
-  const shouldCreate = searchParams.get("create");  
-  const selectedNoteId = searchParams.get("noteId");
-  const noteRefs = useRef({});
+
   const [notes, setNotes] = useState([]);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [tags, setTags] = useState("");
   const [editingId, setEditingId] = useState(null);
   const [showForm, setShowForm] = useState(false);
-  const [highlightId, setHighlightId] = useState(null);
   const [showDownloadModal, setShowDownloadModal] = useState(false);
   const [selectedNotes, setSelectedNotes] = useState([]);
-  const highlightTimeout = useRef(null);
-  const allTags = [...new Set(notes.flatMap(note => note.tags))];
+  const [highlightId, setHighlightId] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
-  const recentNotes = [...notes]
-  .sort(
-    (a, b) =>
-      new Date(b.createdAt) - new Date(a.createdAt)
-  )
-  .slice(0, 5);
+  const noteRefs = useRef({});
+  const highlightTimeoutRef = useRef(null);
+  const firstInputRef = useRef(null);
 
-  const highlightNote = (id) => {
-  setHighlightId(id);
+  const darkMode = user?.theme === "dark";
+  const backgroundImage = darkMode
+    ? noteDarkBg
+    : noteLightBg;
 
-  noteRefs.current[id]?.scrollIntoView({
-    behavior: "smooth",
-    block: "center",
-  });
+  const searchParams = useMemo(
+    () => new URLSearchParams(location.search),
+    [location.search]
+  );
 
-  if (highlightTimeout.current) {
-    clearTimeout(highlightTimeout.current);
-  }
+  const selectedNoteId = searchParams.get("noteId");
+  const shouldCreate = searchParams.get("create");
 
-  highlightTimeout.current = setTimeout(() => {
-    setHighlightId(null);
-  }, 1200);
-};
+  const allTags = useMemo(
+    () =>
+      [...new Set(
+        notes.flatMap((note) =>
+          Array.isArray(note.tags) ? note.tags : []
+        )
+      )].sort((a, b) => a.localeCompare(b)),
+    [notes]
+  );
 
-  const fetchNotes = async () => {
-  try {
-    const res = await api.get("/notes");
-    setNotes(res.data.data);
-  } catch (error) {
-    console.log(error);
+  const recentNotes = useMemo(
+    () =>
+      [...notes]
+        .sort(
+          (a, b) =>
+            new Date(b.createdAt) - new Date(a.createdAt)
+        )
+        .slice(0, 5),
+    [notes]
+  );
 
-    toast.error(
-      error.response?.data?.message ||
-      "Failed to load notes."
-    );
-  }
-};
+  const selectedNoteSet = useMemo(
+    () => new Set(selectedNotes),
+    [selectedNotes]
+  );
 
-  const handleSave =
-    async () => {
-      if (!title.trim()) {
-        toast.error("Title is required.");
+  const allNotesSelected =
+    notes.length > 0 && selectedNotes.length === notes.length;
+
+  const resetForm = useCallback(() => {
+    setTitle("");
+    setContent("");
+    setTags("");
+    setEditingId(null);
+  }, []);
+
+  const closeForm = useCallback(() => {
+    resetForm();
+    setShowForm(false);
+  }, [resetForm]);
+
+  const closeDownloadModal = useCallback(() => {
+    setShowDownloadModal(false);
+    setSelectedNotes([]);
+  }, []);
+
+  const fetchNotes = useCallback(async (signal) => {
+    try {
+      const response = await api.get("/notes", {
+        signal,
+      });
+
+      setNotes(
+        Array.isArray(response.data?.data)
+          ? response.data.data
+          : []
+      );
+    } catch (error) {
+      if (
+        error.name === "CanceledError" ||
+        error.code === "ERR_CANCELED"
+      ) {
         return;
       }
-      if (!content.trim()) {
-        toast.error("Description is required");
-        return;
-      }
-      if (!tags.trim()) {
-        toast.error("Please add at least one tag");
-        return;
-      }
-      try {
-        const noteData = {
-          title,
-          content,
-          tags: tags
-            .split(",")
-            .map(
-              (tag) =>
-                tag.trim()
-            )
-            .filter(Boolean)
-        };
-        if (editingId) {
-          await api.put(
-            `/notes/${editingId}`,
-            noteData
-          );
-          toast.success("Note updated successfully.");
-        } else {
-          await api.post(
-            "/notes",
-            noteData
-          );
-          toast.success("Note added successfully.");
-        }
-        setTitle("");
-        setContent("");
-        setTags("");
-        setEditingId(null);
-        setShowForm(false);
-        fetchNotes();
-      } 
-      catch (error) {
-        console.log(error);
-        toast.error(
-          error.response?.data?.message ||
-          "Failed to save note."
-        );
-      }
-    };
 
-  const startEdit =
-    (note) => {
-      setEditingId(note._id);
-      setShowForm(true);
-      setTitle(note.title);
-      setContent(note.content);
-      setTags(note.tags.join(", "));
-    };
+      console.error(error);
+      toast.error(
+        error.response?.data?.message ||
+          "Failed to load notes."
+      );
+    }
+  }, []);
 
-  const cancelEdit =
-    () => {
-      setEditingId(null);
-      setTitle("");
-      setContent("");
-      setTags("");
-      setShowForm(false);
-    };
+  const highlightNote = useCallback((id) => {
+    setHighlightId(id);
 
-  const handleDelete = async (id) => {
-    const confirmed = await confirm({
-      title: "Delete Note",
-      message:
-        "Are you sure you want to delete this note? This action cannot be undone.",
-      confirmText: "Delete",
-      cancelText: "Cancel",
+    noteRefs.current[id]?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
     });
 
-    if (!confirmed) return;
-
-    try {
-      await api.delete(`/notes/${id}`);
-
-      toast.success("Note deleted successfully.");
-
-      fetchNotes();
-    } catch (error) {
-      console.log(error);
-
-      toast.error(
-        error.response?.data?.message ||
-        "Failed to delete note."
-      );
+    if (highlightTimeoutRef.current) {
+      window.clearTimeout(highlightTimeoutRef.current);
     }
-  };
 
-  const handlePin = async (id) => {
+    highlightTimeoutRef.current = window.setTimeout(() => {
+      setHighlightId(null);
+    }, HIGHLIGHT_DURATION);
+  }, []);
+
+  const handleSave = useCallback(async () => {
+    if (saving) return;
+
+    const normalizedTitle = title.trim();
+    const normalizedContent = content.trim();
+    const normalizedTags = [
+      ...new Set(
+        tags
+          .split(",")
+          .map((tag) => tag.trim())
+          .filter(Boolean)
+      ),
+    ];
+
+    if (!normalizedTitle) {
+      toast.error("Title is required.");
+      return;
+    }
+
+    if (!normalizedContent) {
+      toast.error("Description is required.");
+      return;
+    }
+
+    if (normalizedTags.length === 0) {
+      toast.error("Please add at least one tag.");
+      return;
+    }
+
+    const noteData = {
+      title: normalizedTitle,
+      content: normalizedContent,
+      tags: normalizedTags,
+    };
+
     try {
-      await api.patch(`/notes/${id}/pin`);
-      toast.success("Pin updated.");
+      setSaving(true);
+
+      if (editingId) {
+        await api.put(`/notes/${editingId}`, noteData);
+        toast.success("Note updated successfully.");
+      } else {
+        await api.post("/notes", noteData);
+        toast.success("Note added successfully.");
+      }
+
+      closeForm();
       await fetchNotes();
-      highlightNote(id);
-
     } catch (error) {
-      console.log(error);
+      console.error(error);
       toast.error(
         error.response?.data?.message ||
-        "Failed to update note."
+          "Failed to save note."
       );
+    } finally {
+      setSaving(false);
     }
-  };
+  }, [
+    closeForm,
+    content,
+    editingId,
+    fetchNotes,
+    saving,
+    tags,
+    title,
+  ]);
 
-  const handleFavorite =
+  const startEdit = useCallback((note) => {
+    setEditingId(note._id);
+    setTitle(note.title || "");
+    setContent(note.content || "");
+    setTags(
+      Array.isArray(note.tags)
+        ? note.tags.join(", ")
+        : ""
+    );
+    setShowForm(true);
+  }, []);
+
+  const handleDelete = useCallback(
+    async (id) => {
+      const confirmed = await confirm({
+        title: "Delete Note",
+        message:
+          "Are you sure you want to delete this note? This action cannot be undone.",
+        confirmText: "Delete",
+        cancelText: "Cancel",
+      });
+
+      if (!confirmed) return;
+
+      try {
+        await api.delete(`/notes/${id}`);
+        toast.success("Note deleted successfully.");
+        await fetchNotes();
+      } catch (error) {
+        console.error(error);
+        toast.error(
+          error.response?.data?.message ||
+            "Failed to delete note."
+        );
+      }
+    },
+    [confirm, fetchNotes]
+  );
+
+  const handlePin = useCallback(
     async (id) => {
       try {
-        await api.patch(
-          `/notes/${id}/favorite`
-        );
-        toast.success("Favorite updated.");
-        fetchNotes();
-      } 
-      catch (error) {
-        console.log(error);
+        await api.patch(`/notes/${id}/pin`);
+        toast.success("Pin updated.");
+        await fetchNotes();
+        highlightNote(id);
+      } catch (error) {
+        console.error(error);
         toast.error(
           error.response?.data?.message ||
-          "Failed to update favorite."
+            "Failed to update note."
         );
       }
-    };
-
-const getBase64Image = (imgUrl) =>
-  new Promise((resolve) => {
-    const img = new Image();
-    img.src = imgUrl;
-
-    img.onload = () => {
-      const canvas = document.createElement("canvas");
-      canvas.width = img.width;
-      canvas.height = img.height;
-
-      const ctx = canvas.getContext("2d");
-      ctx.drawImage(img, 0, 0);
-
-      resolve(canvas.toDataURL("image/png"));
-    };
-  });
-
-
-
-
-const downloadSelectedNotes = async () => {
-  const selected = notes.filter((note) =>
-    selectedNotes.includes(note._id)
+    },
+    [fetchNotes, highlightNote]
   );
 
-  if (selected.length === 0) {
-    toast.error("Please select at least one note.");
-    return;
-  }
+  const handleFavorite = useCallback(
+    async (id) => {
+      try {
+        await api.patch(`/notes/${id}/favorite`);
+        toast.success("Favorite updated.");
+        await fetchNotes();
+      } catch (error) {
+        console.error(error);
+        toast.error(
+          error.response?.data?.message ||
+            "Failed to update favorite."
+        );
+      }
+    },
+    [fetchNotes]
+  );
 
-  const logoData = await getBase64Image(logo);
+  const toggleSelectedNote = useCallback((id) => {
+    setSelectedNotes((current) =>
+      current.includes(id)
+        ? current.filter((noteId) => noteId !== id)
+        : [...current, id]
+    );
+  }, []);
 
-  const doc = new jsPDF({
-    unit: "mm",
-    format: "a4",
-  });
+  const toggleSelectAll = useCallback(() => {
+    setSelectedNotes((current) =>
+      current.length === notes.length
+        ? []
+        : notes.map((note) => note._id)
+    );
+  }, [notes]);
 
-  const pageWidth = 210;
-  const pageHeight = 297;
+  const downloadSelectedNotes = useCallback(async () => {
+    if (exporting) return;
 
-  const margin = 18;
-  const usableWidth = pageWidth - margin * 2;
+    const selected = notes.filter((note) =>
+      selectedNoteSet.has(note._id)
+    );
 
-  let y = 22;
-
-  // ---------------- HEADER ----------------
-
-  const drawHeader = (firstPage = false) => {
-    if (firstPage) {
-      doc.addImage(logoData, "PNG", margin, 12, 11, 11);
+    if (selected.length === 0) {
+      toast.error("Please select at least one note.");
+      return;
     }
 
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(20);
-    doc.setTextColor(32, 118, 199);
+    try {
+      setExporting(true);
 
-    doc.text(
-      "Nudge Notes",
-      firstPage ? margin + 15 : margin,
-      20
-    );
+      const logoData = await getBase64Image(logo);
+      const documentPdf = new jsPDF({
+        unit: "mm",
+        format: "a4",
+      });
 
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(9);
-    doc.setTextColor(120);
+      const pageWidth = 210;
+      const pageHeight = 297;
+      const margin = 18;
+      const usableWidth = pageWidth - margin * 2;
+      let y = 22;
 
-    doc.text(
-      "Generated by Nudge",
-      firstPage ? margin + 15 : margin,
-      26
-    );
+      const drawHeader = (firstPage = false) => {
+        if (firstPage) {
+          documentPdf.addImage(
+            logoData,
+            "PNG",
+            margin,
+            12,
+            11,
+            11
+          );
+        }
 
-    doc.text(
-      new Date().toLocaleDateString("en-GB"),
-      pageWidth - margin,
-      20,
-      { align: "right" }
-    );
+        documentPdf.setFont("helvetica", "bold");
+        documentPdf.setFontSize(20);
+        documentPdf.setTextColor(32, 118, 199);
+        documentPdf.text(
+          "Nudge Notes",
+          firstPage ? margin + 15 : margin,
+          20
+        );
 
-    doc.setDrawColor(220);
-    doc.line(
-      margin,
-      32,
-      pageWidth - margin,
-      32
-    );
+        documentPdf.setFont("helvetica", "normal");
+        documentPdf.setFontSize(9);
+        documentPdf.setTextColor(120);
+        documentPdf.text(
+          "Generated by Nudge",
+          firstPage ? margin + 15 : margin,
+          26
+        );
+        documentPdf.text(
+          new Date().toLocaleDateString("en-GB"),
+          pageWidth - margin,
+          20,
+          { align: "right" }
+        );
 
-    y = 42;
-  };
+        documentPdf.setDrawColor(220);
+        documentPdf.line(
+          margin,
+          32,
+          pageWidth - margin,
+          32
+        );
 
-  // First page header
-  drawHeader(true);
+        y = 42;
+      };
 
-  // ---------------- NOTES ----------------
+      const addPageIfNeeded = (requiredHeight = 0) => {
+        if (y + requiredHeight <= pageHeight - 25) {
+          return;
+        }
 
-  selected.forEach((note) => {
-
-    // Set font BEFORE wrapping so splitTextToSize measures at the same
-    // size the description is actually drawn with.
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(11);
-
-    const wrappedContent = note.content
-  .split("\n")
-  .flatMap((paragraph) => {
-
-    // Preserve blank lines
-    if (paragraph.trim() === "") {
-      return [""];
-    }
-
-    return doc.splitTextToSize(
-      paragraph,
-      usableWidth
-    );
-  });
-
-    // Rough estimate to determine if a new page is needed
-    const estimatedHeight =
-      wrappedContent.length * 6 +
-      45;
-
-    if (y + estimatedHeight > pageHeight - 25) {
-      doc.addPage();
-      drawHeader(false);
-    }
-
-    // ---------- TITLE ----------
-
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(14);
-    doc.setTextColor(25);
-
-    doc.text("Title:", margin, y);
-
-    doc.setFont("helvetica", "normal");
-    doc.text(
-      note.title,
-      margin + 18,
-      y
-    );
-
-    y += 9;
-
-    // ---------- DESCRIPTION ----------
-
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(11);
-
-    doc.text(
-      "Description:",
-      margin,
-      y
-    );
-
-    y += 7;
-
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(11);
-
-    wrappedContent.forEach((line) => {
-
-      if (y > pageHeight - 25) {
-        doc.addPage();
+        documentPdf.addPage();
         drawHeader(false);
-      }
+      };
 
-      if (line === "") {
-        // Preserve blank lines between paragraphs
+      drawHeader(true);
+
+      selected.forEach((note) => {
+        documentPdf.setFont("helvetica", "normal");
+        documentPdf.setFontSize(11);
+
+        const wrappedContent = String(note.content || "")
+          .split("\n")
+          .flatMap((paragraph) =>
+            paragraph.trim()
+              ? documentPdf.splitTextToSize(
+                  paragraph,
+                  usableWidth
+                )
+              : [""]
+          );
+
+        addPageIfNeeded(
+          wrappedContent.length * 6 + 45
+        );
+
+        documentPdf.setFont("helvetica", "bold");
+        documentPdf.setFontSize(14);
+        documentPdf.setTextColor(25);
+        documentPdf.text("Title:", margin, y);
+
+        documentPdf.setFont("helvetica", "normal");
+        const wrappedTitle = documentPdf.splitTextToSize(
+          String(note.title || "Untitled"),
+          usableWidth - 18
+        );
+        documentPdf.text(wrappedTitle, margin + 18, y);
+        y += Math.max(9, wrappedTitle.length * 6);
+
+        documentPdf.setFont("helvetica", "bold");
+        documentPdf.setFontSize(11);
+        documentPdf.text("Description:", margin, y);
+        y += 7;
+
+        documentPdf.setFont("helvetica", "normal");
+
+        wrappedContent.forEach((line) => {
+          addPageIfNeeded(6);
+
+          if (line === "") {
+            y += 6;
+            return;
+          }
+
+          documentPdf.text(line, margin, y);
+          y += 6;
+        });
+
+        y += 3;
+        addPageIfNeeded(12);
+
+        documentPdf.setFont("helvetica", "bold");
+        documentPdf.setFontSize(11);
+        documentPdf.setTextColor(25);
+        documentPdf.text("Tags:", margin, y);
+
+        let x = margin + 14;
+        const noteTags = Array.isArray(note.tags)
+          ? note.tags
+          : [];
+
+        noteTags.forEach((tag) => {
+          const tagText = String(tag);
+          const tagWidth =
+            documentPdf.getTextWidth(tagText) + 8;
+
+          if (x + tagWidth > pageWidth - margin) {
+            x = margin + 14;
+            y += 8;
+            addPageIfNeeded(8);
+          }
+
+          documentPdf.setFillColor(32, 118, 199);
+          documentPdf.roundedRect(
+            x,
+            y - 4,
+            tagWidth,
+            6,
+            2,
+            2,
+            "F"
+          );
+
+          documentPdf.setTextColor(255);
+          documentPdf.setFontSize(9);
+          documentPdf.setFont("helvetica", "bold");
+          documentPdf.text(tagText, x + 4, y);
+
+          x += tagWidth + 4;
+        });
+
+        y += 10;
+        addPageIfNeeded(12);
+
+        documentPdf.setFont("helvetica", "normal");
+        documentPdf.setFontSize(8);
+        documentPdf.setTextColor(140);
+        documentPdf.text(
+          `Created: ${formatCreatedAt(note.createdAt)}`,
+          pageWidth - margin,
+          y,
+          { align: "right" }
+        );
+
         y += 6;
-        return;
+        documentPdf.setDrawColor(225);
+        documentPdf.line(
+          margin,
+          y,
+          pageWidth - margin,
+          y
+        );
+        y += 10;
+      });
+
+      const pageCount = documentPdf.getNumberOfPages();
+
+      for (let page = 1; page <= pageCount; page += 1) {
+        documentPdf.setPage(page);
+        documentPdf.setFont("helvetica", "normal");
+        documentPdf.setFontSize(9);
+        documentPdf.setTextColor(150);
+        documentPdf.text(
+          `Page ${page} of ${pageCount}`,
+          pageWidth / 2,
+          pageHeight - 10,
+          { align: "center" }
+        );
       }
 
-      doc.text(
-        line,
-        margin,
-        y
-      );
-
-      y += 6;
-    });
-
-    y += 3;
-
-    // ---------- TAGS ----------
-
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(11);
-
-    doc.setTextColor(25);
-
-    doc.text("Tags:", margin, y);
-
-    let x = margin + 14;
-
-    note.tags.forEach((tag) => {
-
-      const width =
-        doc.getTextWidth(tag) + 8;
-
-      if (x + width > pageWidth - margin) {
-        x = margin + 14;
-        y += 8;
-      }
-
-      doc.setFillColor(
-        32,
-        118,
-        199
-      );
-
-      doc.roundedRect(
-        x,
-        y - 4,
-        width,
-        6,
-        2,
-        2,
-        "F"
-      );
-
-      doc.setTextColor(255);
-
-      doc.setFontSize(9);
-      doc.setFont(
-        "helvetica",
-        "bold"
-      );
-
-      doc.text(
-        tag,
-        x + 4,
-        y
-      );
-
-      x += width + 4;
-    });
-
-    y += 10;
-
-    // ---------- PAGE BREAK CHECK (tags may have wrapped past bottom) ----------
-
-    if (y > pageHeight - 25) {
-      doc.addPage();
-      drawHeader(false);
+      documentPdf.save("Nudge Notes.pdf");
+      toast.success("PDF downloaded successfully.");
+      closeDownloadModal();
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to generate the PDF.");
+    } finally {
+      setExporting(false);
     }
+  }, [
+    closeDownloadModal,
+    exporting,
+    notes,
+    selectedNoteSet,
+  ]);
 
-    // ---------- CREATED ----------
+  useEffect(() => {
+    const controller = new AbortController();
+    fetchNotes(controller.signal);
 
-    doc.setFont(
-      "helvetica",
-      "normal"
-    );
+    return () => {
+      controller.abort();
+    };
+  }, [fetchNotes]);
 
-    doc.setFontSize(8);
-
-    doc.setTextColor(140);
-
-    doc.text(
-      `Created: ${new Date(
-        note.createdAt
-      ).toLocaleString("en-GB", {
-        day: "2-digit",
-        month: "long",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      })}`,
-      pageWidth - margin,
-      y,
-      {
-        align: "right",
-      }
-    );
-
-    y += 6;
-
-    // ---------- DIVIDER ----------
-
-    doc.setDrawColor(225);
-
-    doc.line(
-      margin,
-      y,
-      pageWidth - margin,
-      y
-    );
-
-    y += 10;
-  });
-
-  // ---------------- FOOTER ----------------
-
-  const pages =
-    doc.getNumberOfPages();
-
-  for (let i = 1; i <= pages; i++) {
-
-    doc.setPage(i);
-
-    doc.setFont(
-      "helvetica",
-      "normal"
-    );
-
-    doc.setFontSize(9);
-
-    doc.setTextColor(150);
-
-    doc.text(
-      `Page ${i} of ${pages}`,
-      pageWidth / 2,
-      pageHeight - 10,
-      {
-        align: "center",
-      }
-    );
-  }
-
-  doc.save("Nudge Notes.pdf");
-
-  toast.success(
-    "PDF downloaded successfully."
-  );
-
-  setShowDownloadModal(false);
-  setSelectedNotes([]);
-};
-
-
-
-const toggleSelectedNote = (id) => {
-  setSelectedNotes((prev) =>
-    prev.includes(id)
-      ? prev.filter((noteId) => noteId !== id)
-      : [...prev, id]
-  );
-};
-const toggleSelectAll = () => {
-  if (selectedNotes.length === notes.length) {
-    setSelectedNotes([]);
-  } else {
-    setSelectedNotes(notes.map((note) => note._id));
-  }
-};
-
-  useEffect(() => {fetchNotes();}, []);
-  
   useEffect(() => {
     if (
       selectedNoteId &&
@@ -582,106 +642,113 @@ const toggleSelectAll = () => {
     ) {
       highlightNote(selectedNoteId);
     }
-  }, [notes, selectedNoteId]);
+  }, [highlightNote, notes, selectedNoteId]);
 
   useEffect(() => {
     if (shouldCreate === "true") {
+      resetForm();
       setShowForm(true);
     }
-  }, [shouldCreate]);
-
+  }, [resetForm, shouldCreate]);
 
   useEffect(() => {
-    return () => {
-      if (highlightTimeout.current) {
-        clearTimeout(highlightTimeout.current);
-      }
-    };
-  }, []);
-
-
-useEffect(() => {
     if (showForm) {
-        document.body.style.overflow = "hidden";
-    } else {
-        document.body.style.overflow = "";
+      window.requestAnimationFrame(() => {
+        firstInputRef.current?.focus();
+      });
     }
+  }, [showForm]);
 
-    return () => {
-        document.body.style.overflow = "";
-    };
-}, [showForm]);
+  useEffect(
+    () => () => {
+      if (highlightTimeoutRef.current) {
+        window.clearTimeout(highlightTimeoutRef.current);
+      }
+    },
+    []
+  );
 
-
-  const sidebar = (
-  <Card
-  variant="glass"
-  style={{
-    position: isMobile ? "static" : "fixed",
-    top: isMobile ? undefined : "15%",
-    left: isMobile ? undefined : "2%",
-    width: isMobile ? "100%" : "20%",
-    minHeight: isMobile ? "auto" : "75%",
-    padding: "24px",
-    borderRadius: "22px",
-  }}
->
-    <h1 style={{ textAlign: "center" }}>
-      <>
-        <FaStickyNote
-          style={{ marginRight: "8px" }}
-        />
-        Recent Notes
-      </>
-    </h1>
-
-    {recentNotes.length === 0 ? (
-      <p style={{ paddingLeft: "20px" }}>
-        No recent notes
-      </p>
-    ) : (
-      recentNotes.map((note) => (
-        <div
-          key={note._id}
-          className="glow-top left"
+  const sidebar = useMemo(
+    () => (
+      <Card
+        variant="glass"
+        style={{
+          width: "100%",
+          minWidth: 0,
+          margin: 0,
+          padding: isTablet ? "20px" : "24px",
+          borderRadius: "22px",
+        }}
+      >
+        <h1
           style={{
-            paddingLeft: "20px",
-            marginBottom: "10px",
-            cursor: "pointer",
-            borderRadius: "10px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "8px",
+            marginTop: 0,
+            marginBottom: "16px",
+            fontSize: isTablet ? "1.6rem" : "1.8rem",
+            textAlign: "center",
           }}
-          onClick={() => highlightNote(note._id)}
         >
-          {note.title}
-        </div>
-      ))
-    )}
-  </Card>
-);
+          <FaStickyNote aria-hidden="true" />
+          Recent Notes
+        </h1>
+
+        {recentNotes.length === 0 ? (
+          <p
+            style={{
+              margin: 0,
+              textAlign: "center",
+              opacity: 0.75,
+            }}
+          >
+            No recent notes
+          </p>
+        ) : (
+          recentNotes.map((note) => (
+            <button
+              key={note._id}
+              type="button"
+              className="glow-top left"
+              onClick={() => highlightNote(note._id)}
+              style={{
+                width: "100%",
+                margin: "0 0 10px",
+                padding: "12px 20px",
+                borderRadius: "10px",
+                textAlign: "left",
+                overflowWrap: "anywhere",
+              }}
+            >
+              {note.title}
+            </button>
+          ))
+        )}
+      </Card>
+    ),
+    [highlightNote, isTablet, recentNotes]
+  );
 
   return (
-    <Layout 
+    <Layout
       sidebar={sidebar}
-      backgroundImage={formBackground}
+      backgroundImage={backgroundImage}
       blurBackground={showForm || showDownloadModal}
       cardVariant="glass"
     >
       {showForm && (
-      <div
-        style={{
-          position: "fixed",
-          inset: 0,
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          zIndex: 1100,
-        }}
-      >
-        <Card
-          variant="glass"
-          style={{
+        <GlassModal
+          ariaLabel={editingId ? "Edit note" : "Create note"}
+        >
+          <Card
+            variant="glass"
+            style={{
               width: "100%",
-              maxWidth: "400px",
+              maxWidth: "430px",
+              minWidth: 0,
+              margin: 0,
               borderRadius: "24px",
               boxShadow: darkMode
                 ? `
@@ -694,326 +761,426 @@ useEffect(() => {
                     0 0 70px rgba(0,255,200,.14),
                     0 25px 70px rgba(0,0,0,.18)
                   `,
-          }}
-        >
-        <h2>
-          {editingId ? (
-            <>
-              <FaEdit style={{ marginRight: "8px" }} />
-              Edit Note
-            </>
-          ) : (
-            <>
-              <FaStickyNote style={{ marginRight: "8px" }} />
-              New Note
-            </>
-          )}
-        </h2>
-
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "15px"
-          }}
-        >
-          <div className="input-icon-wrapper">
-            <FaHeading className="input-icon" />
-              <input
-                className="input-glow"
-                type="text"
-                placeholder="Title"
-                value={title}
-                onChange={(e) =>
-                  setTitle(
-                    e.target.value
-                  )
-                }
-              />
-          </div>
-
-          <div className="input-icon-wrapper textarea-icon-wrapper">
-          <FaAlignLeft className="input-icon textarea-icon" />
-            <textarea
-              className="input-glow"
-              placeholder="Note Description"
-              rows="10"
-              value={content}
-              onChange={(e) =>
-                setContent(
-                  e.target.value
-                )
-              }
-            />
-          </div>
-          
-          <div className="input-icon-wrapper">
-          <FaTags className="input-icon" />
-          <AutocompleteInput
-            value={tags}
-            onChange={setTags}
-            options={allTags}
-            placeholder="Create/Select Tags"
-            multiple
-            darkMode={darkMode}
-          />
-          </div>
-        </div>
-        <div
-          style={{
-            display: "flex",
-            gap: "10px",
-            marginTop: "15px"
-          }}
-        >
-          <button
-            className="glow-top"
-            onClick={handleSave}
+            }}
           >
-            <>
+            <h2
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                marginTop: 0,
+              }}
+            >
               {editingId ? (
                 <>
-                  <FaEdit
-                    size={13}
-                    style={{ marginRight: "6px" }}
-                  />
-                  Update Note
+                  <FaEdit aria-hidden="true" />
+                  Edit Note
                 </>
               ) : (
                 <>
-                  <FaPlus
-                    size={13}
-                    style={{ marginRight: "5px" }}
-                  />
-                  Add Note
+                  <FaStickyNote aria-hidden="true" />
+                  New Note
                 </>
               )}
-            </>
-          </button>
+            </h2>
 
-          <button
-            className="glow-top delete"
-            onClick={cancelEdit}
-          >
-            <>
-              <FaArrowLeft style={{ marginRight: "6px" }} />
-              Cancel
-            </>
-          </button>
-        </div>
-      </Card>
-      </div>
-)}
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "15px",
+              }}
+            >
+              <div className="input-icon-wrapper">
+                <FaHeading
+                  className="input-icon"
+                  aria-hidden="true"
+                />
 
+                <input
+                  ref={firstInputRef}
+                  className="input-glow"
+                  type="text"
+                  name="title"
+                  autoComplete="off"
+                  placeholder="Title"
+                  value={title}
+                  disabled={saving}
+                  onChange={(event) =>
+                    setTitle(event.target.value)
+                  }
+                />
+              </div>
 
-{showDownloadModal && (
-  <div
-    style={{
-      position: "fixed",
-      inset: 0,
-      display: "flex",
-      justifyContent: "center",
-      alignItems: "center",
-      overflowY: "auto",      // add this
-      padding: "40px 20px",
-      zIndex: 1100,
-    }}
-  >
-    <Card
-      variant="glass"
-      style={{
-        width: "100%",
-        maxWidth: "450px",
-        maxHeight: "75vh",
+              <div className="input-icon-wrapper">
+                <FaAlignLeft
+                  className="input-icon textarea-icon"
+                  aria-hidden="true"
+                />
 
-        display: "flex",
-        flexDirection: "column",
+                <textarea
+                  className="input-glow"
+                  name="content"
+                  placeholder="Note Description"
+                  rows={isMobile ? 7 : 10}
+                  value={content}
+                  disabled={saving}
+                  onChange={(event) =>
+                    setContent(event.target.value)
+                  }
+                  style={{
+                    resize: "vertical",
+                    minHeight: isMobile ? "160px" : "220px",
+                  }}
+                />
+              </div>
 
-        padding: "30px",
-        borderRadius: "24px",
+              <div className="input-icon-wrapper">
+                <FaTags
+                  className="input-icon"
+                  aria-hidden="true"
+                />
 
-        boxShadow: darkMode
-          ? `
-              0 0 35px rgba(0,255,204,.22),
-              0 0 90px rgba(0,160,255,.14),
-              0 30px 80px rgba(0,0,0,.55)
-            `
-          : `
-              0 0 30px rgba(0,180,255,.18),
-              0 0 70px rgba(0,255,200,.14),
-              0 25px 70px rgba(0,0,0,.18)
-            `,
-      }}
-    >
-      <h2 style={{ marginBottom: "18px" }}>
-          Download Notes
-      </h2>
+                <AutocompleteInput
+                  value={tags}
+                  onChange={setTags}
+                  options={allTags}
+                  placeholder="Create/Select Tags"
+                  multiple
+                  darkMode={darkMode}
+                  className="input-glow"
+                  emptyMessage="No matching tags"
+                />
+              </div>
+            </div>
 
-      
-
-        <div
-          style={{
-            flex: 1,
-            overflowY: "auto",
-            display: "flex",
-            flexDirection: "column",
-            gap: "10px",
-            minHeight: 0,
-            paddingRight: "6px",
-          }}
-        >
-        {notes.map((note) => (
-          <label
-            key={note._id}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "12px",
-              padding: "12px 16px",
-              borderRadius: "12px",
-              cursor: "pointer",
-              border: selectedNotes.includes(note._id)
-                ? "1px solid rgba(0,190,159,.6)"
-                : "1px solid rgba(0,190,159,.6)",
-              background: selectedNotes.includes(note._id)
-                ? "rgba(0,190,159,.12)"
-                : "rgba(255,255,255,.04)",
-              transition: ".2s",
-            }}
-          >
-              <input
-                type="checkbox"
-                checked={selectedNotes.includes(note._id)}
-                onChange={() => toggleSelectedNote(note._id)}
+            <div
+              style={{
+                display: "flex",
+                flexDirection: isMobile
+                  ? "column-reverse"
+                  : "row",
+                justifyContent: isMobile
+                  ? "stretch"
+                  : "flex-end",
+                gap: "10px",
+                marginTop: "20px",
+              }}
+            >
+              <button
+                type="button"
+                className="glow-top delete"
+                disabled={saving}
+                onClick={closeForm}
                 style={{
-                  width: "18px",
-                  height: "18px",
+                  width: isMobile ? "100%" : "auto",
                   margin: 0,
                 }}
-              />
+              >
+                <FaArrowLeft
+                  aria-hidden="true"
+                  style={{ marginRight: "6px" }}
+                />
+                Cancel
+              </button>
 
-              <strong>{note.title}</strong>
-          </label>
-        ))}
-      </div>
+              <button
+                type="button"
+                className="glow-top"
+                disabled={saving}
+                aria-busy={saving}
+                onClick={handleSave}
+                style={{
+                  width: isMobile ? "100%" : "auto",
+                  margin: 0,
+                }}
+              >
+                {editingId ? (
+                  <>
+                    <FaEdit
+                      aria-hidden="true"
+                      size={13}
+                      style={{ marginRight: "6px" }}
+                    />
+                    {saving ? "Updating..." : "Update Note"}
+                  </>
+                ) : (
+                  <>
+                    <FaPlus
+                      aria-hidden="true"
+                      size={13}
+                      style={{ marginRight: "6px" }}
+                    />
+                    {saving ? "Adding..." : "Add Note"}
+                  </>
+                )}
+              </button>
+            </div>
+          </Card>
+        </GlassModal>
+      )}
+
+      {showDownloadModal && (
+        <GlassModal ariaLabel="Download notes">
+          <Card
+            variant="glass"
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              width: "100%",
+              maxWidth: "470px",
+              maxHeight: isMobile
+                ? "calc(100dvh - 110px)"
+                : "75dvh",
+              minWidth: 0,
+              margin: 0,
+              padding: isMobile ? "20px" : "30px",
+              borderRadius: "24px",
+              boxShadow: darkMode
+                ? `
+                    0 0 35px rgba(0,255,204,.22),
+                    0 0 90px rgba(0,160,255,.14),
+                    0 30px 80px rgba(0,0,0,.55)
+                  `
+                : `
+                    0 0 30px rgba(0,180,255,.18),
+                    0 0 70px rgba(0,255,200,.14),
+                    0 25px 70px rgba(0,0,0,.18)
+                  `,
+            }}
+          >
+            <h2
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                marginTop: 0,
+                marginBottom: "18px",
+              }}
+            >
+              <FaDownload aria-hidden="true" />
+              Download Notes
+            </h2>
+
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                flexGrow: 1,
+                flexShrink: 1,
+                flexBasis: "auto",
+                minHeight: 0,
+                gap: "10px",
+                paddingRight: "6px",
+                overflowY: "auto",
+                overscrollBehavior: "contain",
+              }}
+            >
+              {notes.map((note) => {
+                const selected = selectedNoteSet.has(note._id);
+
+                return (
+                  <label
+                    key={note._id}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "12px",
+                      padding: "12px 16px",
+                      borderRadius: "12px",
+                      cursor: "pointer",
+                      border: "1px solid rgba(0,190,159,.6)",
+                      background: selected
+                        ? "rgba(0,190,159,.12)"
+                        : "rgba(255,255,255,.04)",
+                      transition:
+                        "background .2s ease, border-color .2s ease",
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selected}
+                      disabled={exporting}
+                      onChange={() =>
+                        toggleSelectedNote(note._id)
+                      }
+                      style={{
+                        width: "18px",
+                        height: "18px",
+                        margin: 0,
+                        flexShrink: 0,
+                      }}
+                    />
+
+                    <strong
+                      style={{
+                        minWidth: 0,
+                        overflowWrap: "anywhere",
+                      }}
+                    >
+                      {note.title}
+                    </strong>
+                  </label>
+                );
+              })}
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                flexDirection: isMobile
+                  ? "column"
+                  : "row",
+                flexWrap: "wrap",
+                gap: "10px",
+                marginTop: "20px",
+              }}
+            >
+              <button
+                type="button"
+                className="glow-top"
+                disabled={exporting || notes.length === 0}
+                onClick={toggleSelectAll}
+                style={{
+                  width: isMobile ? "100%" : "auto",
+                  margin: 0,
+                }}
+              >
+                {allNotesSelected
+                  ? "Deselect All"
+                  : "Select All"}
+              </button>
+
+              <button
+                type="button"
+                className="glow-top"
+                disabled={exporting}
+                aria-busy={exporting}
+                onClick={downloadSelectedNotes}
+                style={{
+                  width: isMobile ? "100%" : "auto",
+                  margin: 0,
+                }}
+              >
+                <FaDownload
+                  aria-hidden="true"
+                  style={{ marginRight: "6px" }}
+                />
+                {exporting ? "Preparing..." : "Download PDF"}
+              </button>
+
+              <button
+                type="button"
+                className="glow-top delete"
+                disabled={exporting}
+                onClick={closeDownloadModal}
+                style={{
+                  width: isMobile ? "100%" : "auto",
+                  margin: 0,
+                }}
+              >
+                <FaArrowLeft
+                  aria-hidden="true"
+                  style={{ marginRight: "6px" }}
+                />
+                Cancel
+              </button>
+            </div>
+          </Card>
+        </GlassModal>
+      )}
 
       <div
         style={{
           display: "flex",
-          gap: "10px",
-          marginTop: "20px",
+          flexDirection: "column",
+          width: "100%",
+          minWidth: 0,
+          gap: isMobile ? "20px" : "28px",
+          padding: isMobile ? 0 : "10px 10px 40px",
+          boxSizing: "border-box",
         }}
       >
-        <button
-          className="glow-top"
-          onClick={toggleSelectAll}
-        >
-          {selectedNotes.length === notes.length
-            ? "Deselect All"
-            : "Select All"}
-        </button>
-        
-        <button
-          className="glow-top"
-          onClick={downloadSelectedNotes}
-        >
-          <>
-            <FaDownload
-              style={{ marginRight: "6px" }}
-            />
-            Download PDF
-          </>
-        </button>
-
-        <button
-          className="glow-top delete"
-          onClick={() => {
-            setShowDownloadModal(false);
-            setSelectedNotes([]);
+        <div
+          style={{
+            display: "flex",
+            flexDirection: isMobile ? "column" : "row",
+            alignItems: isMobile ? "stretch" : "center",
+            justifyContent: "space-between",
+            width: "100%",
+            gap: isMobile ? "14px" : "20px",
+            marginBottom: isMobile ? "8px" : "20px",
           }}
         >
-          <>
-            <FaTrash style={{ marginRight: "6px" }} />
-            Cancel
-          </>
-        </button>
-      </div>
-    </Card>
-  </div>
-)}
+          <h1
+            style={{
+              margin: 0,
+              fontSize: isMobile
+                ? "2rem"
+                : isTablet
+                  ? "2.2rem"
+                  : "2.5rem",
+            }}
+          >
+            Notes
+          </h1>
 
-{/* ------------------------ Content ------------------------- */}
-<div
-  style={{
-    display: "flex",
-    flexDirection: "column",
-    gap: "28px",
-    padding: "10px 10px 40px",
-  }}
->
-<div
-  style={{
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: "30px",
-    width: "100%"
-  }}
->
-  <h1
-    style={{
-      margin: 0,
-      fontSize: "2.5rem",
-    }}
-  >
-    Notes
-  </h1>
-
-    <div
-      style={{
-        display: "flex",
-        gap: "12px",
-      }}
-    >
-      <button
-        className="glow-top"
-        onClick={() => setShowDownloadModal(true)}
-      >
-        <>
-          <FaDownload
-            style={{ marginRight: "6px" }}
-          />
-          Download PDF
-        </>
-      </button>
-
-      <button
-        className="glow-top"
-        style={{
-          padding: "12px 22px",
-          fontSize: "1rem",
-        }}
-        onClick={() => setShowForm(true)}
-      >
-        <>
-          <FaPlus
-            style={{ marginRight: "6px" }}
-          />
-          Create Note
-        </>
-      </button>
-    </div>
-</div>
-
-      {notes.length === 0 ? (
           <div
             style={{
+              display: "flex",
+              flexDirection: isMobile ? "column" : "row",
+              gap: "12px",
+            }}
+          >
+            <button
+              type="button"
+              className="glow-top"
+              onClick={() => setShowDownloadModal(true)}
+              style={{
+                width: isMobile ? "100%" : "auto",
+                margin: 0,
+              }}
+            >
+              <FaDownload
+                aria-hidden="true"
+                style={{ marginRight: "6px" }}
+              />
+              Download PDF
+            </button>
+
+            <button
+              type="button"
+              className="glow-top"
+              onClick={() => {
+                resetForm();
+                setShowForm(true);
+              }}
+              style={{
+                width: isMobile ? "100%" : "auto",
+                margin: 0,
+                padding: "12px 22px",
+                fontSize: "1rem",
+              }}
+            >
+              <FaPlus
+                aria-hidden="true"
+                style={{ marginRight: "6px" }}
+              />
+              Create Note
+            </button>
+          </div>
+        </div>
+
+        {notes.length === 0 ? (
+          <div
+            style={{
+              padding: "50px 20px",
               textAlign: "center",
               opacity: 0.8,
-              padding: "50px 20px",
             }}
           >
             <FaStickyNote
+              aria-hidden="true"
               size={42}
               style={{
                 marginBottom: "15px",
@@ -1023,178 +1190,225 @@ useEffect(() => {
 
             <h2>No Notes Yet</h2>
 
-            <p>
+            <p style={{ marginBottom: 0 }}>
               Start capturing your ideas by creating your first note.
             </p>
           </div>
         ) : (
-          notes.map(
-            (note) => (
+          notes.map((note) => {
+            const tagsList = Array.isArray(note.tags)
+              ? note.tags
+              : [];
+
+            const highlightShadow =
+              highlightId === note._id
+                ? note.pinned
+                  ? PINNED_HIGHLIGHT_SHADOW
+                  : NORMAL_HIGHLIGHT_SHADOW
+                : undefined;
+
+            return (
               <Card
                 key={note._id}
-                ref={(el) => {
-                  noteRefs.current[note._id] = el;
+                ref={(element) => {
+                  if (element) {
+                    noteRefs.current[note._id] = element;
+                  } else {
+                    delete noteRefs.current[note._id];
+                  }
                 }}
                 variant="glass"
                 style={{
-                  boxShadow:
-                    highlightId === note._id
-                      ? note.pinned
-                        ? `
-                            0 0 25px rgba(255,215,0,.45),
-                            0 0 70px rgba(255,215,0,.18),
-                            0 20px 60px rgba(0,0,0,.45)
-                          `
-                        : `
-                            0 0 25px rgba(0,255,204,.45),
-                            0 0 70px rgba(0,255,204,.18),
-                            0 20px 60px rgba(0,0,0,.45)
-                          `
-                      : undefined,
-
-                  transition: "box-shadow .35s ease",
+                  width: "100%",
+                  minWidth: 0,
+                  margin: 0,
+                  boxShadow: highlightShadow,
+                  transition:
+                    "background .25s ease, border .25s ease, box-shadow .35s ease",
                 }}
               >
                 <h3
                   style={{
                     display: "flex",
+                    alignItems: "flex-start",
                     justifyContent: "space-between",
-                    alignItems: "center",
+                    gap: "12px",
+                    marginTop: 0,
                   }}
                 >
-                  <span>
+                  <span
+                    style={{
+                      minWidth: 0,
+                      overflowWrap: "anywhere",
+                    }}
+                  >
                     <strong>Title: </strong>
                     {note.title}
                   </span>
 
                   <span
+                    aria-label={[
+                      note.pinned ? "Pinned" : null,
+                      note.favorite ? "Favorite" : null,
+                    ]
+                      .filter(Boolean)
+                      .join(", ")}
                     style={{
                       display: "flex",
                       alignItems: "center",
+                      flexShrink: 0,
                       gap: "8px",
                       color: "#f5c542",
                     }}
                   >
-                    {note.pinned && <FaThumbtack />}
-                    {note.favorite && <FaStar />}
+                    {note.pinned && (
+                      <FaThumbtack aria-hidden="true" />
+                    )}
+                    {note.favorite && (
+                      <FaStar aria-hidden="true" />
+                    )}
                   </span>
                 </h3>
 
-                <p><FaAlignLeft
+                <p
                   style={{
-                    marginRight: "6px",
-                    color: "#00be9f",
+                    lineHeight: 1.7,
+                    whiteSpace: "pre-wrap",
+                    overflowWrap: "anywhere",
                   }}
-                />
-                <strong>Description: </strong>
-                  {note.content}</p>
+                >
+                  <FaAlignLeft
+                    aria-hidden="true"
+                    style={{
+                      marginRight: "6px",
+                      color: "#00be9f",
+                    }}
+                  />
+                  <strong>Description: </strong>
+                  {note.content}
+                </p>
 
-                <p><FaTags
-                      style={{
-                        marginRight: "6px",
-                        color: "#00be9f",
-                      }}
-                    />
-                    <strong>Tags: </strong>
-                    {note.tags.join(", ")}</p>
+                <p
+                  style={{
+                    lineHeight: 1.7,
+                    overflowWrap: "anywhere",
+                  }}
+                >
+                  <FaTags
+                    aria-hidden="true"
+                    style={{
+                      marginRight: "6px",
+                      color: "#00be9f",
+                    }}
+                  />
+                  <strong>Tags: </strong>
+                  {tagsList.join(", ")}
+                </p>
+
                 <p>
                   <FaClock
+                    aria-hidden="true"
                     style={{
                       marginRight: "6px",
                       color: "#00be9f",
                     }}
                   />
                   <strong>Created: </strong>
-                  {new Date(note.createdAt).toLocaleString("en-GB", {
-                    day: "2-digit",
-                    month: "long",
-                    year: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
+                  {formatCreatedAt(note.createdAt)}
                 </p>
+
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: isMobile ? "column" : "row",
+                    flexWrap: "wrap",
+                    gap: "10px",
+                    marginTop: "16px",
+                  }}
+                >
                   <button
+                    type="button"
                     className="glow-top"
-                    onClick={() =>
-                      startEdit(
-                        note
-                      )
-                    }
+                    onClick={() => startEdit(note)}
+                    style={{
+                      width: isMobile ? "100%" : "auto",
+                      margin: 0,
+                    }}
                   >
-                    <>
-                      <FaEdit
-                        size={13}
-                        style={{ marginRight: "6px" }}
-                      />
-                      Edit
-                    </>
+                    <FaEdit
+                      aria-hidden="true"
+                      size={13}
+                      style={{ marginRight: "6px" }}
+                    />
+                    Edit
                   </button>
 
                   <button
+                    type="button"
                     className="glow-top"
-                    onClick={() =>
-                      handlePin(
-                        note._id
-                      )
-                    }
+                    onClick={() => handlePin(note._id)}
+                    style={{
+                      width: isMobile ? "100%" : "auto",
+                      margin: 0,
+                    }}
                   >
-                    <>
-                      <FaThumbtack
-                        size={13}
-                        style={{ marginRight: "6px" }}
-                      />
-                      {note.pinned ? "Unpin" : "Pin"}
-                    </>
+                    <FaThumbtack
+                      aria-hidden="true"
+                      size={13}
+                      style={{ marginRight: "6px" }}
+                    />
+                    {note.pinned ? "Unpin" : "Pin"}
                   </button>
 
                   <button
+                    type="button"
                     className="glow-top"
-                    onClick={() =>
-                      handleFavorite(
-                        note._id
-                      )
-                    }
+                    onClick={() => handleFavorite(note._id)}
+                    style={{
+                      width: isMobile ? "100%" : "auto",
+                      margin: 0,
+                    }}
                   >
                     {note.favorite ? (
-                      <>
-                        <MdFavorite
-                          size={15}
-                          style={{ marginRight: "5px" }}
-                        />
-                        Unfavorite
-                      </>
+                      <MdFavorite
+                        aria-hidden="true"
+                        size={15}
+                        style={{ marginRight: "5px" }}
+                      />
                     ) : (
-                      <>
-                        <MdFavoriteBorder
-                          size={15}
-                          style={{ marginRight: "5px" }}
-                        />
-                        Favorite
-                      </>
+                      <MdFavoriteBorder
+                        aria-hidden="true"
+                        size={15}
+                        style={{ marginRight: "5px" }}
+                      />
                     )}
+                    {note.favorite ? "Unfavorite" : "Favorite"}
                   </button>
 
                   <button
+                    type="button"
                     className="glow-top delete"
-                    onClick={() =>
-                      handleDelete(
-                        note._id
-                      )
-                    }
+                    onClick={() => handleDelete(note._id)}
+                    style={{
+                      width: isMobile ? "100%" : "auto",
+                      margin: 0,
+                    }}
                   >
-                    <>
-                      <FaTrash
-                        size={13}
-                        style={{ marginRight: "6px" }}
-                      />
-                      Delete
-                    </>
+                    <FaTrash
+                      aria-hidden="true"
+                      size={13}
+                      style={{ marginRight: "6px" }}
+                    />
+                    Delete
                   </button>
+                </div>
               </Card>
-            )
-          )
+            );
+          })
         )}
       </div>
     </Layout>
-  );}
+  );
+}
+
 export default Notes;

@@ -1,146 +1,372 @@
+const mongoose = require("mongoose");
+
 const Suggestion = require("../models/Suggestion");
 const User = require("../models/User");
+
 const logActivity = require("../utils/activityLogger");
 
-/*
-=========================================
-Create Suggestion
-=========================================
-*/
-exports.createSuggestion = async (req, res) => {
-  try {
-    const { title, message } = req.body;
+/**
+ * Sends a consistent server-error response.
+ *
+ * @param {import("express").Response} res
+ * @param {Error} error
+ * @param {string} fallbackMessage
+ * @returns {import("express").Response}
+ */
+function sendServerError(
+  res,
+  error,
+  fallbackMessage = "Internal server error."
+) {
+  console.error(error);
 
-    if (!title || !message) {
-      return res.status(400).json({
-        message: "Please fill all fields.",
-      });
-    }
+  if (error?.name === "ValidationError") {
+    const validationMessage = Object.values(
+      error.errors
+    )
+      .map((item) => item.message)
+      .join(" ");
 
-    const suggestion = await Suggestion.create({
-      user: req.user._id,
-      fullName: req.user.fullName,
-      username: req.user.username,
+    return res.status(400).json({
+      success: false,
+      message:
+        validationMessage ||
+        "Suggestion validation failed.",
+    });
+  }
+
+  return res.status(500).json({
+    success: false,
+    message:
+      process.env.NODE_ENV === "production"
+        ? fallbackMessage
+        : error.message || fallbackMessage,
+  });
+}
+
+/**
+ * Returns the authenticated user's ID.
+ *
+ * Supports middleware that stores the ID as either
+ * req.user.id or req.user._id.
+ *
+ * @param {import("express").Request} req
+ * @returns {string|null}
+ */
+function getAuthenticatedUserId(req) {
+  return (
+    req.user?.id ||
+    req.user?._id?.toString() ||
+    null
+  );
+}
+
+/**
+ * Validates and normalizes suggestion input.
+ *
+ * @param {object} body
+ * @returns {{
+ *   error: string|null,
+ *   data: object|null
+ * }}
+ */
+function validateSuggestionPayload(
+  body = {}
+) {
+  const title = String(
+    body.title ?? ""
+  ).trim();
+
+  const message = String(
+    body.message ?? ""
+  ).trim();
+
+  if (!title || !message) {
+    return {
+      error:
+        "Please fill all fields.",
+      data: null,
+    };
+  }
+
+  return {
+    error: null,
+    data: {
       title,
       message,
-    });
-    const user = await User.findById(req.user.id);
+    },
+  };
+}
 
+/**
+ * Records suggestion activity without allowing an
+ * activity-log failure to break the main request.
+ *
+ * @param {object} user
+ * @returns {Promise<void>}
+ */
+async function safelyLogSuggestionActivity(
+  user
+) {
+  try {
     await logActivity({
       type: "suggestion_created",
-      message: `${user.username} submitted a suggestion`,
+      message:
+        `${user.username} submitted a suggestion`,
       user: user._id,
     });
-
-    res.status(201).json(suggestion);
   } catch (error) {
-    console.error(error);
-
-    res.status(500).json({
-      message: "Failed to create suggestion.",
-    });
-  }
-};
-
-/*
-=========================================
-Get Logged-in User Suggestions
-=========================================
-*/
-exports.getMySuggestions = async (req, res) => {
-  try {
-    const suggestions = await Suggestion.find({
-      user: req.user._id,
-    }).sort({ createdAt: -1 });
-
-    res.json(suggestions);
-  } catch (error) {
-    console.error(error);
-
-    res.status(500).json({
-      message: "Failed to fetch suggestions.",
-    });
-  }
-};
-
-/*
-=========================================
-Admin - Get All Suggestions
-=========================================
-*/
-exports.getAllSuggestions = async (req, res) => {
-  try {
-    const suggestions = await Suggestion.find()
-      .sort({ createdAt: -1 });
-
-    res.json(suggestions);
-  } catch (error) {
-    console.error(error);
-
-    res.status(500).json({
-      message: "Failed to fetch suggestions.",
-    });
-  }
-};
-
-/*
-=========================================
-Admin - Mark As Read
-=========================================
-*/
-exports.markSuggestionRead = async (req, res) => {
-  try {
-    const suggestion = await Suggestion.findByIdAndUpdate(
-      req.params.id,
-      {
-        status: "read",
-      },
-      {
-        new: true,
-      }
+    console.error(
+      "Failed to write suggestion activity:",
+      error
     );
+  }
+}
 
-    if (!suggestion) {
-      return res.status(404).json({
-        message: "Suggestion not found.",
+/**
+ * Creates a suggestion for the authenticated user.
+ */
+async function createSuggestion(req, res) {
+  try {
+    const userId =
+      getAuthenticatedUserId(req);
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message:
+          "Authentication required.",
       });
     }
 
-    res.json(suggestion);
-  } catch (error) {
-    console.error(error);
+    const { error, data } =
+      validateSuggestionPayload(
+        req.body
+      );
 
-    res.status(500).json({
-      message: "Failed to update suggestion.",
-    });
-  }
-};
-
-/*
-=========================================
-Admin - Delete Suggestion
-=========================================
-*/
-exports.deleteSuggestion = async (req, res) => {
-  try {
-    const suggestion = await Suggestion.findByIdAndDelete(
-      req.params.id
-    );
-
-    if (!suggestion) {
-      return res.status(404).json({
-        message: "Suggestion not found.",
+    if (error) {
+      return res.status(400).json({
+        success: false,
+        message: error,
       });
     }
 
-    res.json({
-      message: "Suggestion deleted successfully.",
+    const user = await User.findById(
+      userId
+    )
+      .select(
+        "fullName username"
+      )
+      .lean();
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found.",
+      });
+    }
+
+    const suggestion =
+      await Suggestion.create({
+        user: user._id,
+        fullName: user.fullName,
+        username: user.username,
+        title: data.title,
+        message: data.message,
+      });
+
+    await safelyLogSuggestionActivity(
+      user
+    );
+
+    return res.status(201).json(
+      suggestion
+    );
+  } catch (error) {
+    return sendServerError(
+      res,
+      error,
+      "Failed to create suggestion."
+    );
+  }
+}
+
+/**
+ * Returns suggestions submitted by the authenticated user.
+ */
+async function getMySuggestions(req, res) {
+  try {
+    const userId =
+      getAuthenticatedUserId(req);
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message:
+          "Authentication required.",
+      });
+    }
+
+    const suggestions =
+      await Suggestion.find({
+        user: userId,
+      })
+        .sort({
+          createdAt: -1,
+          _id: -1,
+        })
+        .select("-__v")
+        .lean();
+
+    return res.status(200).json(
+      suggestions
+    );
+  } catch (error) {
+    return sendServerError(
+      res,
+      error,
+      "Failed to fetch suggestions."
+    );
+  }
+}
+
+/**
+ * Returns all suggestions for an authenticated admin.
+ *
+ * The admin authorization check should remain in
+ * the route middleware.
+ */
+async function getAllSuggestions(req, res) {
+  try {
+    const suggestions =
+      await Suggestion.find()
+        .sort({
+          createdAt: -1,
+          _id: -1,
+        })
+        .select("-__v")
+        .lean();
+
+    return res.status(200).json(
+      suggestions
+    );
+  } catch (error) {
+    return sendServerError(
+      res,
+      error,
+      "Failed to fetch suggestions."
+    );
+  }
+}
+
+/**
+ * Marks one suggestion as read.
+ *
+ * The admin authorization check should remain in
+ * the route middleware.
+ */
+async function markSuggestionRead(
+  req,
+  res
+) {
+  try {
+    const { id } = req.params;
+
+    if (
+      !mongoose.isValidObjectId(id)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Invalid suggestion ID.",
+      });
+    }
+
+    const suggestion =
+      await Suggestion.findByIdAndUpdate(
+        id,
+        {
+          $set: {
+            status: "read",
+          },
+        },
+        {
+          new: true,
+          runValidators: true,
+        }
+      );
+
+    if (!suggestion) {
+      return res.status(404).json({
+        success: false,
+        message:
+          "Suggestion not found.",
+      });
+    }
+
+    return res.status(200).json(
+      suggestion
+    );
+  } catch (error) {
+    return sendServerError(
+      res,
+      error,
+      "Failed to update suggestion."
+    );
+  }
+}
+
+/**
+ * Deletes one suggestion.
+ *
+ * The admin authorization check should remain in
+ * the route middleware.
+ */
+async function deleteSuggestion(req, res) {
+  try {
+    const { id } = req.params;
+
+    if (
+      !mongoose.isValidObjectId(id)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Invalid suggestion ID.",
+      });
+    }
+
+    const suggestion =
+      await Suggestion.findByIdAndDelete(
+        id
+      );
+
+    if (!suggestion) {
+      return res.status(404).json({
+        success: false,
+        message:
+          "Suggestion not found.",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message:
+        "Suggestion deleted successfully.",
     });
   } catch (error) {
-    console.error(error);
-
-    res.status(500).json({
-      message: "Failed to delete suggestion.",
-    });
+    return sendServerError(
+      res,
+      error,
+      "Failed to delete suggestion."
+    );
   }
+}
+
+module.exports = {
+  createSuggestion,
+  deleteSuggestion,
+  getAllSuggestions,
+  getMySuggestions,
+  markSuggestionRead,
 };

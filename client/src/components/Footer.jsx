@@ -1,46 +1,73 @@
-import { useContext, useEffect, useRef } from "react";
-import { AuthContext } from "../context/AuthContext";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+} from "react";
 import { Link } from "react-router-dom";
-import Card from "./Card";
+
 import logo from "../assets/Logo.svg";
+import useBreakpoint from "../hooks/useBreakpoint";
+import Card from "./Card";
 
-function Footer({ onVisibilityChange }) {
-  const { user } = useContext(AuthContext);
+const FOOTER_SECTIONS = [
+  {
+    title: "Product",
+    links: [
+      { label: "Dashboard", to: "/dashboard" },
+      { label: "Profile", to: "/profile" },
+    ],
+  },
+  {
+    title: "Features",
+    hideOnMobile: true,
+    links: [
+      { label: "Birthdays", to: "/birthdays" },
+      { label: "Notes", to: "/notes" },
+      { label: "Links", to: "/links" },
+      { label: "Reminders", to: "/reminders" },
+    ],
+  },
+  {
+    title: "Resources",
+    links: [
+      { label: "About", to: "/about" },
+      { label: "Privacy Policy", to: "/privacy" },
+      { label: "Terms of Service", to: "/terms" },
+      { label: "Contact", to: "/contact" },
+    ],
+  },
+];
+
+/**
+ * Global responsive footer displayed beneath Layout content.
+ *
+ * Reports its viewport visibility to Layout so sticky sidebars
+ * can be hidden while the footer is visible.
+ */
+function Footer({
+  onVisibilityChange = () => {},
+}) {
   const footerRef = useRef(null);
+  const { isMobile, isTablet } = useBreakpoint();
 
-  const darkMode = user?.theme === "dark";
-
-  const footerSections = [
-    {
-      title: "Product",
-      links: [
-        { label: "Dashboard", to: "/dashboard" },
-        { label: "Profile", to: "/profile" },
-      ],
-    },
-
-    {
-      title: "Features",
-      links: [
-        { label: "Birthdays", to: "/birthdays" },
-        { label: "Notes", to: "/notes" },
-        { label: "Links", to: "/links" },
-        { label: "Reminders", to: "/reminders" },
-      ],
-    },
-    {
-      title: "Resources",
-      links: [
-        { label: "About", to: "/about" },
-        { label: "Privacy Policy", to: "/privacy" },
-        { label: "Terms of Service", to: "/terms" },
-        { label: "Contact", to: "/contact" },
-      ],
-    },
-  ];
+  const visibleSections = useMemo(
+    () =>
+      FOOTER_SECTIONS.filter(
+        (section) =>
+          !(isMobile && section.hideOnMobile)
+      ),
+    [isMobile]
+  );
 
   useEffect(() => {
-    if (!footerRef.current) return;
+    const footerElement = footerRef.current;
+
+    if (
+      !footerElement ||
+      typeof IntersectionObserver === "undefined"
+    ) {
+      return undefined;
+    }
 
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -51,9 +78,12 @@ function Footer({ onVisibilityChange }) {
       }
     );
 
-    observer.observe(footerRef.current);
+    observer.observe(footerElement);
 
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      onVisibilityChange(false);
+    };
   }, [onVisibilityChange]);
 
   return (
@@ -61,29 +91,61 @@ function Footer({ onVisibilityChange }) {
       ref={footerRef}
       id="app-footer"
       style={{
-        marginTop: "600px",
-        marginBottom: "10px",
+        width: "100%",
+        minWidth: 0,
+        flexShrink: 0,
+        boxSizing: "border-box",
+
+        marginTop: isMobile
+          ? "80px"
+          : "150px",
+
+        padding: isMobile
+          ? "0 12px calc(24px + env(safe-area-inset-bottom))"
+          : "0 20px 20px",
       }}
     >
       <Card
         variant="glass"
         style={{
-          padding: "10px 46px",
+          width: "100%",
+          minWidth: 0,
+          margin: 0,
+
+          padding: isMobile
+            ? "20px"
+            : isTablet
+              ? "28px"
+              : "18px 46px",
+
           borderRadius: "24px",
         }}
       >
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "2fr 1fr 1fr 1fr",
-            gap: "20px",
+
+            gridTemplateColumns: isMobile
+              ? "minmax(0, 1fr)"
+              : isTablet
+                ? "repeat(2, minmax(0, 1fr))"
+                : "minmax(0, 2fr) repeat(3, minmax(0, 1fr))",
+
+            gap: isMobile
+              ? "28px"
+              : "20px",
+
             alignItems: "flex-start",
           }}
         >
-          {/* Brand */}
-          <div
+          <section
+            aria-label="Nudge information"
             style={{
-              maxWidth: "380px",
+              width: "100%",
+              minWidth: 0,
+              maxWidth: isMobile
+                ? "100%"
+                : "380px",
             }}
           >
             <div
@@ -96,18 +158,35 @@ function Footer({ onVisibilityChange }) {
             >
               <img
                 src={logo}
-                alt="Nudge Logo"
+                alt="Nudge"
                 style={{
-                  width: "55px",
-                  height: "55px",
+                  width: isMobile
+                    ? "42px"
+                    : isTablet
+                      ? "48px"
+                      : "55px",
+
+                  height: isMobile
+                    ? "42px"
+                    : isTablet
+                      ? "48px"
+                      : "55px",
+
+                  flexShrink: 0,
+                  objectFit: "contain",
                 }}
               />
 
-              <div>
+              <div style={{ minWidth: 0 }}>
                 <h2
                   style={{
                     margin: 0,
-                    fontSize: "2rem",
+
+                    fontSize: isMobile
+                      ? "1.5rem"
+                      : isTablet
+                        ? "1.7rem"
+                        : "2rem",
                   }}
                 >
                   Nudge
@@ -115,6 +194,7 @@ function Footer({ onVisibilityChange }) {
 
                 <span
                   style={{
+                    display: "block",
                     opacity: 0.75,
                     fontSize: ".95rem",
                   }}
@@ -126,24 +206,30 @@ function Footer({ onVisibilityChange }) {
 
             <p
               style={{
+                margin: 0,
                 lineHeight: 1.8,
                 opacity: 0.8,
-                margin: 0,
+                overflowWrap: "anywhere",
               }}
             >
-              Capture ideas, organize notes, save useful links,
-              and stay on top of reminders—all in one beautiful,
-              modern workspace.
+              Capture ideas, organize notes, save useful
+              links, and stay on top of reminders—all in one
+              beautiful, modern workspace.
             </p>
-          </div>
+          </section>
 
-          {/* Product / Resources */}
-          {footerSections.map((section) => (
-            <div key={section.title}>
+          {visibleSections.map((section) => (
+            <nav
+              key={section.title}
+              aria-label={`${section.title} links`}
+              style={{
+                minWidth: 0,
+              }}
+            >
               <h3
                 style={{
                   marginTop: 0,
-                  marginBottom: "5px",
+                  marginBottom: "8px",
                 }}
               >
                 {section.title}
@@ -151,29 +237,37 @@ function Footer({ onVisibilityChange }) {
 
               {section.links.map((link) => (
                 <Link
-                  key={link.label}
+                  key={link.to}
                   to={link.to}
                   style={{
                     display: "block",
-                    marginBottom: "1px",
+                    width: "fit-content",
+                    maxWidth: "100%",
+                    marginBottom: "3px",
+
                     color: "inherit",
                     textDecoration: "none",
                     opacity: 0.85,
-                    transition: ".25s",
+                    overflowWrap: "anywhere",
+
+                    transition:
+                      "opacity .25s ease, transform .25s ease",
                   }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.opacity = "1";
-                    e.currentTarget.style.transform = "translateX(6px)";
+                  onMouseEnter={(event) => {
+                    event.currentTarget.style.opacity = "1";
+                    event.currentTarget.style.transform =
+                      "translateX(6px)";
                   }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.opacity = ".85";
-                    e.currentTarget.style.transform = "translateX(0)";
+                  onMouseLeave={(event) => {
+                    event.currentTarget.style.opacity = ".85";
+                    event.currentTarget.style.transform =
+                      "translateX(0)";
                   }}
                 >
                   {link.label}
                 </Link>
               ))}
-            </div>
+            </nav>
           ))}
         </div>
 
@@ -187,14 +281,27 @@ function Footer({ onVisibilityChange }) {
         <div
           style={{
             display: "flex",
+            flexDirection: isMobile
+              ? "column"
+              : "row",
+
             justifyContent: "space-between",
             alignItems: "center",
             flexWrap: "wrap",
+
             gap: "12px",
+            textAlign: isMobile
+              ? "center"
+              : "left",
+
+            fontSize: isMobile
+              ? ".9rem"
+              : "1rem",
           }}
         >
           <span>
-            © {new Date().getFullYear()} Nudge. All rights reserved.
+            © {new Date().getFullYear()} Nudge. All rights
+            reserved.
           </span>
 
           <span>Nudge. Remember Everything</span>

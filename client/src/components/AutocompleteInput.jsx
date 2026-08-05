@@ -1,5 +1,23 @@
-import { useState, useRef, useEffect } from "react";
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
+const MAX_SUGGESTIONS = 8;
+
+/**
+ * Reusable autocomplete text input.
+ *
+ * Supports:
+ * - Single-value selection
+ * - Comma-separated multiple values
+ * - Keyboard navigation
+ * - Accessible combobox semantics
+ */
 function AutocompleteInput({
   value,
   onChange,
@@ -8,159 +26,213 @@ function AutocompleteInput({
   multiple = false,
   darkMode = false,
   className = "input-glow",
-  emptyMessage = "No matching results"
+  emptyMessage = "No matching results",
 }) {
   const wrapperRef = useRef(null);
+  const inputId = useId();
+  const listboxId = `${inputId}-listbox`;
+
   const [open, setOpen] = useState(false);
-  const [filteredOptions, setFilteredOptions] = useState([]);
   const [selectedIndex, setSelectedIndex] = useState(-1);
-  const MAX_SUGGESTIONS = 8;
 
-  // Get current search term
-  const getSearchTerm = () => {
-    if (!multiple) return value.trim();
+  /**
+   * Returns the text currently being searched.
+   * For multiple values, only the final comma-separated value is used.
+   */
+  const searchTerm = useMemo(() => {
+    const normalizedValue = String(value ?? "");
 
-    const parts = value.split(",");
-    return parts[parts.length - 1].trim();
-  };
+    if (!multiple) {
+      return normalizedValue.trim().toLowerCase();
+    }
 
-  const getSelectedValues = () => {
-  if (!multiple) return [];
+    const parts = normalizedValue.split(",");
+    return parts.at(-1)?.trim().toLowerCase() ?? "";
+  }, [multiple, value]);
 
-  return value
-    .split(",")
-    .map(tag => tag.trim().toLowerCase())
-    .filter(Boolean);
-};
+  /**
+   * Returns already selected values when multiple selection is enabled.
+   */
+  const selectedValues = useMemo(() => {
+    if (!multiple) return new Set();
 
-const sortOptions = (options, search) => {
-  return [...options].sort((a, b) => {
-    const aStarts = a.toLowerCase().startsWith(search);
-    const bStarts = b.toLowerCase().startsWith(search);
-
-    if (aStarts && !bStarts) return -1;
-    if (!aStarts && bStarts) return 1;
-
-    return a.localeCompare(b);
-  });
-};
-
-const filterOptions = () => {
-  const search = getSearchTerm().toLowerCase();
-
-  const selected = getSelectedValues();
-
-  // Show all options when input is empty
-  if (!search) {
-    return multiple
-      ? options.filter(
-          option => !selected.includes(option.toLowerCase())
-        )
-      : options;
-  }
-
-  let filtered = options.filter(option =>
-    option.toLowerCase().includes(search)
-  );
-
-  filtered = sortOptions(filtered, search);
-
-  if (multiple) {
-    filtered = filtered.filter(
-      option => !selected.includes(option.toLowerCase())
+    return new Set(
+      String(value ?? "")
+        .split(",")
+        .map((item) => item.trim().toLowerCase())
+        .filter(Boolean)
     );
-  }
+  }, [multiple, value]);
 
-  return filtered;
-};
+  /**
+   * Normalizes, filters, sorts, and limits available suggestions.
+   */
+  const visibleOptions = useMemo(() => {
+    const uniqueOptions = Array.from(
+      new Set(
+        options
+          .filter((option) => typeof option === "string")
+          .map((option) => option.trim())
+          .filter(Boolean)
+      )
+    );
 
-const buildNewValue = (option) => {
-  if (!multiple) return option;
+    const availableOptions = multiple
+      ? uniqueOptions.filter(
+          (option) => !selectedValues.has(option.toLowerCase())
+        )
+      : uniqueOptions;
 
-  const parts = value
-    .split(",")
-    .map(part => part.trim());
+    const filtered = searchTerm
+      ? availableOptions.filter((option) =>
+          option.toLowerCase().includes(searchTerm)
+        )
+      : availableOptions;
 
-  parts[parts.length - 1] = option;
+    return filtered
+      .sort((a, b) => {
+        const normalizedA = a.toLowerCase();
+        const normalizedB = b.toLowerCase();
 
-  return `${parts.join(", ")}, `;
-};
+        const aStartsWithSearch =
+          searchTerm && normalizedA.startsWith(searchTerm);
+        const bStartsWithSearch =
+          searchTerm && normalizedB.startsWith(searchTerm);
 
+        if (aStartsWithSearch && !bStartsWithSearch) return -1;
+        if (!aStartsWithSearch && bStartsWithSearch) return 1;
 
- const selectOption = (option) => {
-  onChange(buildNewValue(option));
-  setOpen(false);
-};
+        return a.localeCompare(b, undefined, {
+          sensitivity: "base",
+        });
+      })
+      .slice(0, MAX_SUGGESTIONS);
+  }, [multiple, options, searchTerm, selectedValues]);
 
- const handleKeyDown = (e) => {
-  switch (e.key) {
-    case "ArrowDown":
-      if (!open || filteredOptions.length === 0) return;
+  /**
+   * Builds the final input value after selecting a suggestion.
+   */
+  const buildNewValue = useCallback(
+    (option) => {
+      if (!multiple) return option;
 
-      e.preventDefault();
+      const parts = String(value ?? "")
+        .split(",")
+        .map((part) => part.trim());
 
-      setSelectedIndex((prev) =>
-        prev < filteredOptions.length - 1 ? prev + 1 : 0
-      );
-      break;
-
-    case "ArrowUp":
-      if (!open || filteredOptions.length === 0) return;
-
-      e.preventDefault();
-
-      setSelectedIndex((prev) =>
-        prev > 0 ? prev - 1 : filteredOptions.length - 1
-      );
-      break;
-
-    case "Enter":
-      e.preventDefault();
-
-      if (selectedIndex >= 0 && filteredOptions.length > 0) {
-        selectOption(filteredOptions[selectedIndex]);
-      } else {
-        onChange(value.trim());
-        setOpen(false);
+      if (parts.length === 0) {
+        return `${option}, `;
       }
 
-      break;
+      parts[parts.length - 1] = option;
 
-    case "Escape":
-      setOpen(false);
-      break;
+      return `${parts.filter(Boolean).join(", ")}, `;
+    },
+    [multiple, value]
+  );
 
-    default:
-      break;
-  }
-};
+  const closeDropdown = useCallback(() => {
+    setOpen(false);
+    setSelectedIndex(-1);
+  }, []);
 
-  // Filter suggestions
+  const selectOption = useCallback(
+    (option) => {
+      onChange(buildNewValue(option));
+      closeDropdown();
+    },
+    [buildNewValue, closeDropdown, onChange]
+  );
+
+  const handleKeyDown = useCallback(
+    (event) => {
+      if (event.key === "ArrowDown") {
+        event.preventDefault();
+
+        if (!open) {
+          setOpen(true);
+        }
+
+        if (visibleOptions.length > 0) {
+          setSelectedIndex((currentIndex) =>
+            currentIndex < visibleOptions.length - 1
+              ? currentIndex + 1
+              : 0
+          );
+        }
+
+        return;
+      }
+
+      if (event.key === "ArrowUp") {
+        if (!open || visibleOptions.length === 0) return;
+
+        event.preventDefault();
+
+        setSelectedIndex((currentIndex) =>
+          currentIndex > 0
+            ? currentIndex - 1
+            : visibleOptions.length - 1
+        );
+
+        return;
+      }
+
+      if (event.key === "Enter") {
+        if (
+          open &&
+          selectedIndex >= 0 &&
+          visibleOptions[selectedIndex]
+        ) {
+          event.preventDefault();
+          selectOption(visibleOptions[selectedIndex]);
+        }
+
+        return;
+      }
+
+      if (event.key === "Escape" && open) {
+        event.preventDefault();
+        closeDropdown();
+      }
+    },
+    [
+      closeDropdown,
+      open,
+      selectOption,
+      selectedIndex,
+      visibleOptions,
+    ]
+  );
+
   useEffect(() => {
-  setFilteredOptions(filterOptions());
-  setSelectedIndex(-1);
-}, [value, options, multiple]);
+    setSelectedIndex(-1);
+  }, [searchTerm, options, multiple]);
 
-  // Close dropdown on outside click
   useEffect(() => {
-    const handleClick = (e) => {
+    const handlePointerDown = (event) => {
       if (
         wrapperRef.current &&
-        !wrapperRef.current.contains(e.target)
+        !wrapperRef.current.contains(event.target)
       ) {
-        setOpen(false);
+        closeDropdown();
       }
     };
 
-    document.addEventListener("mousedown", handleClick);
+    document.addEventListener("pointerdown", handlePointerDown);
 
-    return () =>
+    return () => {
       document.removeEventListener(
-        "mousedown",
-        handleClick
+        "pointerdown",
+        handlePointerDown
       );
-  }, []);
+    };
+  }, [closeDropdown]);
 
+  const activeOptionId =
+    selectedIndex >= 0
+      ? `${listboxId}-option-${selectedIndex}`
+      : undefined;
 
   return (
     <div
@@ -168,16 +240,24 @@ const buildNewValue = (option) => {
       style={{
         position: "relative",
         width: "100%",
+        minWidth: 0,
       }}
     >
       <input
+        id={inputId}
         className={className}
         type="text"
         value={value}
         placeholder={placeholder}
+        autoComplete="off"
+        role="combobox"
+        aria-autocomplete="list"
+        aria-expanded={open}
+        aria-controls={listboxId}
+        aria-activedescendant={activeOptionId}
         onFocus={() => setOpen(true)}
-        onChange={(e) => {
-          onChange(e.target.value);
+        onChange={(event) => {
+          onChange(event.target.value);
           setOpen(true);
         }}
         onKeyDown={handleKeyDown}
@@ -185,14 +265,25 @@ const buildNewValue = (option) => {
 
       {open && (
         <div
+          id={listboxId}
+          role="listbox"
+          aria-label={`${placeholder || "Autocomplete"} suggestions`}
           style={{
             position: "absolute",
             top: "calc(100% + 8px)",
             left: 0,
             right: 0,
-            maxHeight: "220px",
+            width: "100%",
+            minWidth: 0,
+            maxHeight:
+              "min(220px, calc(100dvh - 160px))",
+            overflowX: "hidden",
             overflowY: "auto",
+            overscrollBehavior: "contain",
+            WebkitOverflowScrolling: "touch",
 
+            padding: "8px",
+            boxSizing: "border-box",
             borderRadius: "18px",
 
             backdropFilter: "blur(20px)",
@@ -207,62 +298,83 @@ const buildNewValue = (option) => {
               : "1px solid rgba(255,255,255,.45)",
 
             boxShadow: darkMode
-  ? `
-                0 10px 40px rgba(0,0,0,.45),
-                0 0 18px rgba(0,255,204,.08)
+              ? `
+                  0 10px 40px rgba(0,0,0,.45),
+                  0 0 18px rgba(0,255,204,.08)
                 `
-            : `
-                0 10px 35px rgba(0,0,0,.12),
-                0 0 15px rgba(0,190,159,.08)
+              : `
+                  0 10px 35px rgba(0,0,0,.12),
+                  0 0 15px rgba(0,190,159,.08)
                 `,
 
             zIndex: 9999,
-            padding: "8px",
           }}
         >
-          {filteredOptions.length === 0 ? (
+          {visibleOptions.length === 0 ? (
             <div
-                style={{
+              role="status"
+              style={{
                 padding: "14px",
                 textAlign: "center",
                 opacity: 0.7,
                 fontSize: ".95rem",
-                }}
+              }}
             >
-                {emptyMessage}
+              {emptyMessage}
             </div>
-            ) : (
-            filteredOptions.slice(0, MAX_SUGGESTIONS).map((option, index) => (
-                <div
-                key={option}
-                onMouseDown={() => selectOption(option)}
-                onMouseEnter={() => setSelectedIndex(index)}
-                style={{
-                    padding: "12px 16px",
-                    borderRadius: "12px",
-                    cursor: "pointer",
+          ) : (
+            visibleOptions.map((option, index) => {
+              const isSelected = selectedIndex === index;
 
+              return (
+                <div
+                  id={`${listboxId}-option-${index}`}
+                  key={`${option}-${index}`}
+                  role="option"
+                  aria-selected={isSelected}
+                  title={option}
+                  onPointerDown={(event) => {
+                    event.preventDefault();
+                    selectOption(option);
+                  }}
+                  onPointerEnter={() =>
+                    setSelectedIndex(index)
+                  }
+                  style={{
                     display: "flex",
                     alignItems: "center",
 
+                    width: "100%",
+                    minWidth: 0,
+                    padding: "12px 16px",
+                    boxSizing: "border-box",
+                    borderRadius: "12px",
+
+                    fontSize: ".95rem",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+
+                    cursor: "pointer",
+                    touchAction: "manipulation",
+
+                    background: isSelected
+                      ? "rgba(0,190,159,.18)"
+                      : "transparent",
+
+                    transform: isSelected
+                      ? "translateX(4px)"
+                      : "translateX(0)",
+
                     transition:
-                        "background .2s ease, transform .15s ease",
-
-                    background:
-                        selectedIndex === index
-                        ? "rgba(0,190,159,.18)"
-                        : "transparent",
-
-                    transform:
-                        selectedIndex === index
-                        ? "translateX(4px)"
-                        : "translateX(0)",
-                    }}
+                      "background .2s ease, transform .15s ease",
+                  }}
                 >
-                {option}
+                  {option}
                 </div>
-            ))
-            )}
+              );
+            })
+          )}
         </div>
       )}
     </div>

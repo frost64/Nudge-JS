@@ -1,91 +1,156 @@
-import { createContext, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
-export const AuthContext =
-createContext();
+const TOKEN_STORAGE_KEY = "token";
+const USER_STORAGE_KEY = "user";
 
-export const AuthProvider = ({
-children
-}) => {
+export const AuthContext = createContext({
+  token: null,
+  user: null,
+  setUser: () => {},
+  login: () => {},
+  logout: () => {},
+});
 
-const [token, setToken] =
-useState(
-localStorage.getItem("token") || null
-);
+/**
+ * Safely reads the stored user from localStorage.
+ *
+ * @returns {object|null}
+ */
+function getStoredUser() {
+  try {
+    const storedUser = localStorage.getItem(
+      USER_STORAGE_KEY
+    );
 
-const [user, setUser] =
-  useState(() => {
+    return storedUser
+      ? JSON.parse(storedUser)
+      : null;
+  } catch (error) {
+    console.error(
+      "Failed to parse stored user.",
+      error
+    );
 
-    try {
+    localStorage.removeItem(USER_STORAGE_KEY);
 
-      const storedUser =
-        localStorage.getItem(
-          "user"
+    return null;
+  }
+}
+
+/**
+ * Provides authentication state and actions
+ * throughout the application.
+ */
+export function AuthProvider({ children }) {
+  const [token, setToken] = useState(() =>
+    localStorage.getItem(TOKEN_STORAGE_KEY)
+  );
+
+  const [user, setUserState] = useState(
+    getStoredUser
+  );
+
+  const setUser = useCallback((nextUser) => {
+    setUserState((currentUser) => {
+      const resolvedUser =
+        typeof nextUser === "function"
+          ? nextUser(currentUser)
+          : nextUser;
+
+      if (resolvedUser) {
+        localStorage.setItem(
+          USER_STORAGE_KEY,
+          JSON.stringify(resolvedUser)
         );
+      } else {
+        localStorage.removeItem(USER_STORAGE_KEY);
+      }
 
-      return storedUser
-        ? JSON.parse(
-            storedUser
-          )
-        : null;
+      return resolvedUser;
+    });
+  }, []);
 
-    } catch {
+  const login = useCallback(
+    (jwt, userData) => {
+      localStorage.setItem(
+        TOKEN_STORAGE_KEY,
+        jwt
+      );
 
-      return null;
+      localStorage.setItem(
+        USER_STORAGE_KEY,
+        JSON.stringify(userData)
+      );
 
-    }
+      setToken(jwt);
+      setUserState(userData);
+    },
+    []
+  );
 
-  });
+  const logout = useCallback(() => {
+    localStorage.removeItem(TOKEN_STORAGE_KEY);
+    localStorage.removeItem(USER_STORAGE_KEY);
 
-const login = (
-jwt,
-userData
-) => {
+    setToken(null);
+    setUserState(null);
+  }, []);
 
-   
-localStorage.setItem(
-  "token",
-  jwt
-);
+  useEffect(() => {
+    const handleStorageChange = (event) => {
+      if (
+        event.key !== TOKEN_STORAGE_KEY &&
+        event.key !== USER_STORAGE_KEY
+      ) {
+        return;
+      }
 
-localStorage.setItem(
-  "user",
-  JSON.stringify(userData)
-);
+      setToken(
+        localStorage.getItem(TOKEN_STORAGE_KEY)
+      );
 
-setToken(jwt);
-setUser(userData);
-   
+      setUserState(getStoredUser());
+    };
 
-};
+    window.addEventListener(
+      "storage",
+      handleStorageChange
+    );
 
-const logout = () => {
+    return () => {
+      window.removeEventListener(
+        "storage",
+        handleStorageChange
+      );
+    };
+  }, []);
 
-   
-localStorage.removeItem(
-  "token"
-);
+  const contextValue = useMemo(
+    () => ({
+      token,
+      user,
+      setUser,
+      login,
+      logout,
+    }),
+    [
+      token,
+      user,
+      setUser,
+      login,
+      logout,
+    ]
+  );
 
-localStorage.removeItem(
-  "user"
-);
-
-setToken(null);
-setUser(null);
-   
-
-};
-
-return (
-<AuthContext.Provider
-value={{
-token,
-user,
-setUser,
-login,
-logout
-}}
->
-{children}
-</AuthContext.Provider>
-);
-};
+  return (
+    <AuthContext.Provider value={contextValue}>
+      {children}
+    </AuthContext.Provider>
+  );
+}

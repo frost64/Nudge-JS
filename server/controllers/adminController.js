@@ -1,170 +1,323 @@
-const User = require("../models/User");
-const Note = require("../models/Note");
-const Reminder = require("../models/Reminder");
+const mongoose = require("mongoose");
+
+const Activity = require("../models/Activity");
 const Birthday = require("../models/Birthday");
 const Link = require("../models/Link");
+const Note = require("../models/Note");
+const Reminder = require("../models/Reminder");
 const Suggestion = require("../models/Suggestion");
-const logActivity = require("../utils/activityLogger");
-const Activity = require("../models/Activity");
 const SystemLog = require("../models/SystemLog");
+const User = require("../models/User");
 
-const getStats = async (req, res) => {
-    try {
-      
-        const users =
-            await User.countDocuments();
+const logActivity = require("../utils/activityLogger");
 
-        const notes =
-            await Note.countDocuments();
+const SYSTEM_LOG_LIMIT = 200;
+const RECENT_ITEM_LIMIT = 6;
+const USER_GROWTH_MONTHS = 12;
 
-        const reminders =
-            await Reminder.countDocuments();
+const VALID_LOG_LEVELS = new Set([
+  "success",
+  "info",
+  "warning",
+  "error",
+]);
 
-        const birthdays =
-            await Birthday.countDocuments();
+/**
+ * Sends a consistent internal-server-error response.
+ *
+ * @param {import("express").Response} res
+ * @param {Error} error
+ * @param {string} fallbackMessage
+ * @returns {import("express").Response}
+ */
+function sendServerError(
+  res,
+  error,
+  fallbackMessage = "Internal server error."
+) {
+  console.error(error);
 
-        const links =
-            await Link.countDocuments();
+  return res.status(500).json({
+    success: false,
+    message:
+      process.env.NODE_ENV === "production"
+        ? fallbackMessage
+        : error.message || fallbackMessage,
+  });
+}
 
-        res.json({
-            users,
-            notes,
-            reminders,
-            birthdays,
-            links
-        });
+/**
+ * Formats an activity timestamp for the admin dashboard.
+ *
+ * @param {Date|string} value
+ * @returns {string}
+ */
+function formatActivityTime(value) {
+  const createdAt = new Date(value);
 
-    } catch (error) {
+  if (Number.isNaN(createdAt.getTime())) {
+    return "Unknown";
+  }
 
-        res.status(500).json({
-            message: error.message
-        });
+  const now = new Date();
 
-    }
-};
+  const differenceInMinutes = Math.max(
+    0,
+    Math.floor(
+      (now.getTime() - createdAt.getTime()) /
+        (1000 * 60)
+    )
+  );
 
-const getSystemLogs = async (req, res) => {
+  if (differenceInMinutes < 1) {
+    return "Just now";
+  }
+
+  if (differenceInMinutes < 60) {
+    return `${differenceInMinutes}m ago`;
+  }
+
+  const formattedTime =
+    createdAt.toLocaleTimeString([], {
+      hour: "numeric",
+      minute: "2-digit",
+    });
+
+  const formattedDate =
+    createdAt.toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+
+  return `${formattedTime} • ${formattedDate}`;
+}
+
+/**
+ * Returns application-wide document statistics.
+ */
+async function getStats(req, res) {
+  try {
+    const [
+      users,
+      notes,
+      reminders,
+      birthdays,
+      links,
+    ] = await Promise.all([
+      User.countDocuments(),
+      Note.countDocuments(),
+      Reminder.countDocuments(),
+      Birthday.countDocuments(),
+      Link.countDocuments(),
+    ]);
+
+    return res.json({
+      users,
+      notes,
+      reminders,
+      birthdays,
+      links,
+    });
+  } catch (error) {
+    return sendServerError(
+      res,
+      error,
+      "Failed to load statistics."
+    );
+  }
+}
+
+/**
+ * Returns the most recent system logs.
+ */
+async function getSystemLogs(req, res) {
   try {
     const logs = await SystemLog.find()
       .sort({ createdAt: -1 })
-      .limit(200);
+      .limit(SYSTEM_LOG_LIMIT)
+      .lean();
 
-    res.json(logs);
+    return res.json(logs);
   } catch (error) {
-    res.status(500).json({
-      message: error.message,
-    });
+    return sendServerError(
+      res,
+      error,
+      "Failed to load system logs."
+    );
   }
-};
+}
 
-
-const clearSystemLogs = async (req, res) => {
+/**
+ * Clears all system logs or logs matching one level.
+ */
+async function clearSystemLogs(req, res) {
   try {
-    const { level } = req.query;
+    const requestedLevel = String(
+      req.query.level || "all"
+    ).toLowerCase();
 
-    let result;
-
-    if (level && level !== "all") {
-      result = await SystemLog.deleteMany({
-        level,
+    if (
+      requestedLevel !== "all" &&
+      !VALID_LOG_LEVELS.has(requestedLevel)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid log level.",
       });
-    } else {
-      result = await SystemLog.deleteMany({});
     }
 
-    res.json({
+    const filter =
+      requestedLevel === "all"
+        ? {}
+        : {
+            level: requestedLevel,
+          };
+
+    const result =
+      await SystemLog.deleteMany(filter);
+
+    return res.json({
       success: true,
       deletedCount: result.deletedCount,
       message:
-        level && level !== "all"
-          ? `${level} logs cleared successfully`
-          : "All logs cleared successfully",
+        requestedLevel === "all"
+          ? "All logs cleared successfully."
+          : `${requestedLevel} logs cleared successfully.`,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    return sendServerError(
+      res,
+      error,
+      "Failed to clear system logs."
+    );
   }
-};
+}
 
-const getUsers = async (req, res) => {
-    try {
-
-        const users = await User.find({
-            role: "user"
-        })
-            .select("-password")
-            .sort({ createdAt: -1 });
-
-        res.json(users);
-
-    } catch (error) {
-
-        res.status(500).json({
-            message: error.message
-        });
-
-    }
-};
-
-
-const deleteUser = async (req, res) => {
-    try {
-
-        const user = await User.findById(
-            req.params.id
-        );
-
-        if (!user) {
-            return res.status(404).json({
-                message: "User not found"
-            });
-        }
-        // Delete all data belonging to the user
-        await Note.deleteMany({ user: user._id });
-        await Reminder.deleteMany({ user: user._id });
-        await Birthday.deleteMany({ user: user._id });
-        await Link.deleteMany({ user: user._id });
-        await Suggestion.deleteMany({ user: user._id });
-        await Activity.deleteMany({ user: user._id });
-
-        // Finally delete the user
-        await logActivity({
-            type: "user_deleted",
-            message: `Admin deleted ${user.username}`,
-            user: user._id,
-        });
-        await user.deleteOne();
-
-        res.json({
-            success: true,
-            message: "User deleted"
-        });
-
-    } catch (error) {
-
-        res.status(500).json({
-            message: error.message
-        });
-
-    }
-};
-
-
-const mongoose = require("mongoose");
-const fs = require("fs");
-const path = require("path");
-
-const getSystemStatus = async (req, res) => {
+/**
+ * Returns all standard users without sensitive fields.
+ */
+async function getUsers(req, res) {
   try {
+    const users = await User.find({
+      role: "user",
+    })
+      .select(
+        "-password -resetPasswordToken -resetPasswordExpire"
+      )
+      .sort({ createdAt: -1 })
+      .lean();
+
+    return res.json(users);
+  } catch (error) {
+    return sendServerError(
+      res,
+      error,
+      "Failed to load users."
+    );
+  }
+}
+
+/**
+ * Deletes a user and all records owned by that user.
+ */
+async function deleteUser(req, res) {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.isValidObjectId(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid user ID.",
+      });
+    }
+
+    const user = await User.findById(id).select(
+      "_id username role"
+    );
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found.",
+      });
+    }
+
+    if (user.role === "admin") {
+      return res.status(403).json({
+        success: false,
+        message:
+          "Administrator accounts cannot be deleted from this endpoint.",
+      });
+    }
+
+    await Promise.all([
+      Note.deleteMany({
+        user: user._id,
+      }),
+      Reminder.deleteMany({
+        user: user._id,
+      }),
+      Birthday.deleteMany({
+        user: user._id,
+      }),
+      Link.deleteMany({
+        user: user._id,
+      }),
+      Suggestion.deleteMany({
+        user: user._id,
+      }),
+      Activity.deleteMany({
+        user: user._id,
+      }),
+    ]);
+
+    /*
+     * Log before deleting the user so activityLogger can
+     * still resolve the referenced account if necessary.
+     */
+    try {
+      await logActivity({
+        type: "user_deleted",
+        message: `Admin deleted ${user.username}`,
+        user: user._id,
+      });
+    } catch (loggingError) {
+      console.error(
+        "Failed to record user-deletion activity:",
+        loggingError
+      );
+    }
+
+    await user.deleteOne();
+
+    return res.json({
+      success: true,
+      message: "User deleted successfully.",
+    });
+  } catch (error) {
+    return sendServerError(
+      res,
+      error,
+      "Failed to delete user."
+    );
+  }
+}
+
+/**
+ * Returns the current status of core application services.
+ */
+async function getSystemStatus(req, res) {
+  try {
+    const databaseConnected =
+      mongoose.connection.readyState === 1;
+
     const services = [
       {
         name: "Database",
-        status:
-          mongoose.connection.readyState === 1
-            ? "Operational"
-            : "Offline",
+        status: databaseConnected
+          ? "Operational"
+          : "Offline",
       },
       {
         name: "API Server",
@@ -178,188 +331,222 @@ const getSystemStatus = async (req, res) => {
       },
       {
         name: "Notes",
-        status: fs.existsSync(
-          path.join(__dirname, "../models/Note.js")
-        )
+        status: Note
           ? "Operational"
           : "Offline",
       },
       {
         name: "Links",
-        status: fs.existsSync(
-          path.join(__dirname, "../models/Link.js")
-        )
+        status: Link
           ? "Operational"
           : "Offline",
       },
       {
         name: "Reminders",
-        status: fs.existsSync(
-          path.join(__dirname, "../models/Reminder.js")
-        )
+        status: Reminder
           ? "Operational"
           : "Offline",
       },
       {
         name: "Birthdays",
-        status: fs.existsSync(
-          path.join(__dirname, "../models/Birthday.js")
-        )
+        status: Birthday
           ? "Operational"
           : "Offline",
       },
     ];
 
-    res.json(services);
-  } catch (err) {
-    res.status(500).json({
-      message: "Failed to load system status.",
-    });
-  }
-};
-
-const getRecentSuggestions = async (req, res) => {
-  try {
-    const suggestions = await Suggestion.find()
-      .sort({ createdAt: -1 })
-      .limit(6);
-
-    res.json(suggestions);
+    return res.json(services);
   } catch (error) {
-    res.status(500).json({
-      message: error.message,
-    });
+    return sendServerError(
+      res,
+      error,
+      "Failed to load system status."
+    );
   }
-};
+}
 
-const getUserGrowth = async (req, res) => {
+/**
+ * Returns the newest user suggestions.
+ */
+async function getRecentSuggestions(req, res) {
   try {
-    const users = await User.find().select("createdAt");
+    const suggestions =
+      await Suggestion.find()
+        .sort({ createdAt: -1 })
+        .limit(RECENT_ITEM_LIMIT)
+        .lean();
 
-    const today = new Date();
-
-    const months = [];
-    const monthMap = {};
-
-    for (let i = 11; i >= 0; i--) {
-      const d = new Date(
-        today.getFullYear(),
-        today.getMonth() - i,
-        1
-      );
-
-      const key = `${d.getFullYear()}-${d.getMonth()}`;
-
-      months.push({
-        month: d.toLocaleString("default", {
-          month: "short",
-        }),
-        year: d.getFullYear(),
-        users: 0,
-      });
-
-      monthMap[key] = months.length - 1;
-    }
-
-    users.forEach((user) => {
-      const d = new Date(user.createdAt);
-
-      const key = `${d.getFullYear()}-${d.getMonth()}`;
-
-      if (monthMap[key] !== undefined) {
-        months[monthMap[key]].users++;
-      }
-    });
-
-    let total = 0;
-
-    const growth = months.map((m) => {
-      total += m.users;
-
-      return {
-        month: m.month,
-        users: total,
-      };
-    });
-
-    res.json(growth);
+    return res.json(suggestions);
   } catch (error) {
-    res.status(500).json({
-      message: error.message,
-    });
+    return sendServerError(
+      res,
+      error,
+      "Failed to load recent suggestions."
+    );
   }
-};
+}
 
-const getRecentActivities = async (req, res) => {
+/**
+ * Returns cumulative user growth for the last 12 months.
+ */
+async function getUserGrowth(req, res) {
   try {
-    const activities = await Activity.find()
-      .sort({ createdAt: -1 })
-      .limit(6);
-
-    res.json(activities);
-  } catch (error) {
-    res.status(500).json({
-      message: error.message,
-    });
-  }
-};
-
-const getActivities = async (req, res) => {
-  try {
-    const activities = await Activity.find()
-      .sort({ createdAt: -1 });
-
-    const formatted = activities.map((activity) => {
-    const created = new Date(activity.createdAt);
     const now = new Date();
 
-    const diffMinutes = Math.floor(
-      (now - created) / (1000 * 60)
+    const startDate = new Date(
+      now.getFullYear(),
+      now.getMonth() -
+        (USER_GROWTH_MONTHS - 1),
+      1
     );
 
-    let time;
-
-    if (diffMinutes < 60) {
-      time = `${diffMinutes}m ago`;
-    } else {
-      const formattedTime = created.toLocaleTimeString([], {
-        hour: "numeric",
-        minute: "2-digit",
+    const usersBeforePeriod =
+      await User.countDocuments({
+        createdAt: {
+          $lt: startDate,
+        },
       });
 
-      const formattedDate = created.toLocaleDateString("en-GB", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-      });
+    const monthlyRegistrations =
+      await User.aggregate([
+        {
+          $match: {
+            createdAt: {
+              $gte: startDate,
+            },
+          },
+        },
+        {
+          $group: {
+            _id: {
+              year: {
+                $year: "$createdAt",
+              },
+              month: {
+                $month: "$createdAt",
+              },
+            },
+            users: {
+              $sum: 1,
+            },
+          },
+        },
+      ]);
 
-      time = `${formattedTime} • ${formattedDate}`;
-    }
+    const registrationMap = new Map(
+      monthlyRegistrations.map(
+        (entry) => [
+          `${entry._id.year}-${entry._id.month}`,
+          entry.users,
+        ]
+      )
+    );
 
-      return {
-        ...activity.toObject(),
-        time,
-        timestamp: activity.createdAt,
-      };
-    });
+    let cumulativeUsers =
+      usersBeforePeriod;
 
-    res.json(formatted);
+    const growth = Array.from(
+      {
+        length: USER_GROWTH_MONTHS,
+      },
+      (_, index) => {
+        const date = new Date(
+          startDate.getFullYear(),
+          startDate.getMonth() + index,
+          1
+        );
+
+        const key = `${
+          date.getFullYear()
+        }-${date.getMonth() + 1}`;
+
+        cumulativeUsers +=
+          registrationMap.get(key) || 0;
+
+        return {
+          month: date.toLocaleString(
+            "default",
+            {
+              month: "short",
+            }
+          ),
+          year: date.getFullYear(),
+          users: cumulativeUsers,
+        };
+      }
+    );
+
+    return res.json(growth);
   } catch (error) {
-    res.status(500).json({
-      message: error.message,
-    });
+    return sendServerError(
+      res,
+      error,
+      "Failed to load user growth."
+    );
   }
-};
+}
+
+/**
+ * Returns the six most recent activity records.
+ */
+async function getRecentActivities(req, res) {
+  try {
+    const activities =
+      await Activity.find()
+        .sort({ createdAt: -1 })
+        .limit(RECENT_ITEM_LIMIT)
+        .lean();
+
+    return res.json(activities);
+  } catch (error) {
+    return sendServerError(
+      res,
+      error,
+      "Failed to load recent activities."
+    );
+  }
+}
+
+/**
+ * Returns all activities with display-ready timestamps.
+ */
+async function getActivities(req, res) {
+  try {
+    const activities =
+      await Activity.find()
+        .sort({ createdAt: -1 })
+        .lean();
+
+    const formattedActivities =
+      activities.map((activity) => ({
+        ...activity,
+        time: formatActivityTime(
+          activity.createdAt
+        ),
+        timestamp: activity.createdAt,
+      }));
+
+    return res.json(
+      formattedActivities
+    );
+  } catch (error) {
+    return sendServerError(
+      res,
+      error,
+      "Failed to load activities."
+    );
+  }
+}
 
 module.exports = {
-    getStats,
-    getUsers,
-    deleteUser,
-    getSystemStatus,
-    getRecentSuggestions,
-    getUserGrowth,
-    getRecentActivities,
-    getActivities,
-    getSystemLogs,
-    clearSystemLogs,
+  clearSystemLogs,
+  deleteUser,
+  getActivities,
+  getRecentActivities,
+  getRecentSuggestions,
+  getStats,
+  getSystemLogs,
+  getSystemStatus,
+  getUserGrowth,
+  getUsers,
 };

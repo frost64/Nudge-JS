@@ -1,64 +1,95 @@
-import { useContext } from "react";
+import { forwardRef, useContext, useMemo } from "react";
+
 import { AuthContext } from "../context/AuthContext";
+import useBreakpoint from "../hooks/useBreakpoint";
 import { LayoutContext } from "./Layout";
-import { forwardRef } from "react";
 
-const Card = forwardRef(function Card({
-  children,
-  style = {},
-  variant,
-}, ref) {
-  const {
-    boxShadow: customBoxShadow,
-    ...restStyle
-  } = style;
-
+/**
+ * Reusable responsive card component.
+ *
+ * Supports solid and glass variants while allowing callers
+ * to override individual styles and native div properties.
+ */
+const Card = forwardRef(function Card(
+  {
+    children,
+    style = {},
+    variant,
+    ...restProps
+  },
+  ref
+) {
   const { user } = useContext(AuthContext);
   const { cardVariant } = useContext(LayoutContext);
+  const { isMobile, isTablet } = useBreakpoint();
 
   const darkMode = user?.theme === "dark";
-
-  const variants = {
-    solid: {
-      background: darkMode
-        ? "#1f2937"
-        : "#ffffff",
-
-      border: darkMode
-        ? "1px solid #374151"
-        : "1px solid #e5e7eb",
-    },
-
-    glass: {
-      background: darkMode
-        ? "rgba(17,24,39,.38)"
-        : "rgba(255,255,255,.18)",
-
-      backgroundImage: darkMode
-        ? "linear-gradient(160deg, rgba(255,255,255,.14), rgba(255,255,255,.04) 35%, rgba(255,255,255,0))"
-        : "linear-gradient(160deg, rgba(255,255,255,.40), rgba(255,255,255,.08) 35%, rgba(255,255,255,0))",
-
-      border: darkMode
-        ? "1px solid rgba(255,255,255,.12)"
-        : "1px solid rgba(255,255,255,.35)",
-
-      outline: darkMode
-        ? "1px solid rgba(255,255,255,.04)"
-        : "1px solid rgba(255,255,255,.12)",
-
-      boxSizing: "border-box",
-
-      backdropFilter: "none",
-      WebkitBackdropFilter: "none",
-    },
-  };
-
   const activeVariant = variant || cardVariant || "solid";
-  const currentVariant = variants[activeVariant];
 
-  const defaultShadow =
-    activeVariant === "glass"
-      ? darkMode
+  const variantStyles = useMemo(
+    () => ({
+      solid: {
+        background: darkMode
+          ? "#1f2937"
+          : "#ffffff",
+
+        backgroundImage: "none",
+
+        border: darkMode
+          ? "1px solid #374151"
+          : "1px solid #e5e7eb",
+
+        outline: "none",
+
+        backdropFilter: "none",
+        WebkitBackdropFilter: "none",
+      },
+
+      glass: {
+        background: darkMode
+          ? "rgba(17,24,39,.38)"
+          : "rgba(255,255,255,.18)",
+
+        backgroundImage: darkMode
+          ? `
+              linear-gradient(
+                160deg,
+                rgba(255,255,255,.14),
+                rgba(255,255,255,.04) 35%,
+                rgba(255,255,255,0)
+              )
+            `
+          : `
+              linear-gradient(
+                160deg,
+                rgba(255,255,255,.40),
+                rgba(255,255,255,.08) 35%,
+                rgba(255,255,255,0)
+              )
+            `,
+
+        border: darkMode
+          ? "1px solid rgba(255,255,255,.12)"
+          : "1px solid rgba(255,255,255,.35)",
+
+        outline: darkMode
+          ? "1px solid rgba(255,255,255,.04)"
+          : "1px solid rgba(255,255,255,.12)",
+
+        backdropFilter: "none",
+        WebkitBackdropFilter: "none",
+      },
+    }),
+    [darkMode]
+  );
+
+  const currentVariant =
+    variantStyles[activeVariant] ||
+    variantStyles.solid;
+
+  const defaultShadow = useMemo(() => {
+    if (activeVariant === "glass") {
+      return darkMode
         ? `
             0 0 20px rgba(0,255,204,.16),
             0 0 45px rgba(0,140,255,.10),
@@ -68,66 +99,64 @@ const Card = forwardRef(function Card({
             0 0 18px rgba(0,180,255,.16),
             0 0 40px rgba(0,255,200,.10),
             0 18px 40px rgba(0,0,0,.15)
-          `
-      : darkMode
-        ? "0 12px 30px rgba(0,0,0,.35)"
-        : "0 10px 25px rgba(0,0,0,.12)";
+          `;
+    }
+
+    return darkMode
+      ? "0 12px 30px rgba(0,0,0,.35)"
+      : "0 10px 25px rgba(0,0,0,.12)";
+  }, [activeVariant, darkMode]);
+
+  const {
+    boxShadow: customBoxShadow,
+    ...customStyles
+  } = style;
 
   return (
     <div
       ref={ref}
+      {...restProps}
       style={{
-        background:
-          style.background ??
-          currentVariant.background,
+        ...currentVariant,
 
-        backgroundImage:
-          style.backgroundImage ??
-          currentVariant.backgroundImage,
+        width: "auto",
+        maxWidth: "100%",
+        minWidth: 0,
 
-        border:
-          style.border ??
-          currentVariant.border,
+        boxSizing: "border-box",
 
-        outline:
-          style.outline ??
-          currentVariant.outline,
+        color: darkMode
+          ? "#f9fafb"
+          : "#111827",
 
-        boxSizing:
-          style.boxSizing ??
-          currentVariant.boxSizing,
+        borderRadius: isMobile
+          ? "14px"
+          : isTablet
+            ? "16px"
+            : "18px",
 
-        backdropFilter:
-          style.backdropFilter ??
-          currentVariant.backdropFilter,
+        padding: isMobile
+          ? "14px"
+          : isTablet
+            ? "16px"
+            : "20px",
 
-        WebkitBackdropFilter:
-          style.WebkitBackdropFilter ??
-          currentVariant.WebkitBackdropFilter,
+        margin: isMobile
+          ? "10px 0"
+          : "15px 0",
 
-        color:
-          darkMode
-            ? "#f9fafb"
-            : "#111827",
-
-        borderRadius: "18px",
-        padding: "20px",
-        margin: "15px 0",
+        position: "relative",
+        overflow: "visible",
+        overflowWrap: "anywhere",
 
         boxShadow:
           customBoxShadow ??
           defaultShadow,
 
-        position: "relative",
-
-        overflow: "visible",
-
-        overflowWrap: "break-word",
-
         transition:
           "background .25s ease, border .25s ease, box-shadow .25s ease",
 
-        ...restStyle,
+        ...customStyles,
       }}
     >
       {children}

@@ -1,113 +1,279 @@
-const Reminder = require("../models/Reminder");
 const Birthday = require("../models/Birthday");
-const Note = require("../models/Note");
 const Link = require("../models/Link");
+const Note = require("../models/Note");
+const Reminder = require("../models/Reminder");
 
-const getDashboard = async (req, res) => {
-    try {
+const DASHBOARD_ITEM_LIMIT = 5;
+const MILLISECONDS_PER_DAY =
+  24 * 60 * 60 * 1000;
 
-        const userId = req.user.id;
+/**
+ * Sends a consistent internal-server-error response.
+ *
+ * @param {import("express").Response} res
+ * @param {Error} error
+ * @param {string} fallbackMessage
+ * @returns {import("express").Response}
+ */
+function sendServerError(
+  res,
+  error,
+  fallbackMessage = "Internal server error."
+) {
+  console.error(error);
 
-        const totalReminders = await Reminder.countDocuments({
-            user: userId
-        });
+  return res.status(500).json({
+    success: false,
+    message:
+      process.env.NODE_ENV === "production"
+        ? fallbackMessage
+        : error.message || fallbackMessage,
+  });
+}
 
-        const totalBirthdays = await Birthday.countDocuments({
-            user: userId
-        });
+/**
+ * Returns the start of the current UTC calendar day.
+ *
+ * Using UTC prevents dashboard results from changing
+ * based on the deployment server's local timezone.
+ *
+ * @param {Date} date
+ * @returns {Date}
+ */
+function getStartOfUtcDay(date = new Date()) {
+  return new Date(
+    Date.UTC(
+      date.getUTCFullYear(),
+      date.getUTCMonth(),
+      date.getUTCDate()
+    )
+  );
+}
 
-        const totalNotes = await Note.countDocuments({
-            user: userId
-        });
+/**
+ * Calculates the next occurrence of a recurring birthday.
+ *
+ * @param {object} birthday
+ * @param {Date} today
+ * @returns {(object & {daysRemaining: number}) | null}
+ */
+function calculateUpcomingBirthday(
+  birthday,
+  today
+) {
+  const birthDay = Number(
+    birthday.birthDay
+  );
 
-        const totalLinks = await Link.countDocuments({
-            user: userId
-        });
+  const birthMonth = Number(
+    birthday.birthMonth
+  );
 
-        const recentNotes = await Note.find({
-            user: userId
+  if (
+    !Number.isInteger(birthDay) ||
+    birthDay < 1 ||
+    birthDay > 31 ||
+    !Number.isInteger(birthMonth) ||
+    birthMonth < 1 ||
+    birthMonth > 12
+  ) {
+    return null;
+  }
+
+  const currentYear =
+    today.getUTCFullYear();
+
+  let nextBirthday = new Date(
+    Date.UTC(
+      currentYear,
+      birthMonth - 1,
+      birthDay
+    )
+  );
+
+  if (nextBirthday < today) {
+    nextBirthday = new Date(
+      Date.UTC(
+        currentYear + 1,
+        birthMonth - 1,
+        birthDay
+      )
+    );
+  }
+
+  const daysRemaining = Math.round(
+    (nextBirthday.getTime() -
+      today.getTime()) /
+      MILLISECONDS_PER_DAY
+  );
+
+  return {
+    ...birthday,
+    daysRemaining,
+  };
+}
+
+/**
+ * Returns the five nearest upcoming birthdays.
+ *
+ * @param {object[]} birthdays
+ * @param {Date} today
+ * @returns {object[]}
+ */
+function getNearestBirthdays(
+  birthdays,
+  today
+) {
+  return birthdays
+    .map((birthday) =>
+      calculateUpcomingBirthday(
+        birthday,
+        today
+      )
+    )
+    .filter(Boolean)
+    .sort(
+      (first, second) =>
+        first.daysRemaining -
+          second.daysRemaining ||
+        String(first.name).localeCompare(
+          String(second.name)
+        )
+    )
+    .slice(0, DASHBOARD_ITEM_LIMIT);
+}
+
+/**
+ * Returns dashboard statistics and recent user content.
+ */
+async function getDashboard(req, res) {
+  try {
+    const userId = req.user.id;
+    const today = getStartOfUtcDay();
+
+    const reminderFilter = {
+      user: userId,
+    };
+
+    const birthdayFilter = {
+      user: userId,
+    };
+
+    const noteFilter = {
+      user: userId,
+    };
+
+    const linkFilter = {
+      user: userId,
+    };
+
+    const [
+      totalReminders,
+      totalBirthdays,
+      totalNotes,
+      totalLinks,
+      recentNotes,
+      favoriteLinks,
+      pendingReminders,
+      overdueReminders,
+      birthdays,
+    ] = await Promise.all([
+      Reminder.countDocuments(
+        reminderFilter
+      ),
+
+      Birthday.countDocuments(
+        birthdayFilter
+      ),
+
+      Note.countDocuments(noteFilter),
+
+      Link.countDocuments(linkFilter),
+
+      Note.find(noteFilter)
+        .sort({
+          createdAt: -1,
         })
-        .sort({ createdAt: -1 })
-        .limit(5);
+        .limit(DASHBOARD_ITEM_LIMIT)
+        .lean(),
 
-        const favoriteLinks = await Link.find({
-            user: userId,
-            favorite: true
+      Link.find({
+        ...linkFilter,
+        favorite: true,
+      })
+        .sort({
+          updatedAt: -1,
+          createdAt: -1,
         })
-        .limit(5);
+        .limit(DASHBOARD_ITEM_LIMIT)
+        .lean(),
 
-        const pendingReminders = await Reminder.find({
-            user: userId,
-            completed: false
+      Reminder.find({
+        ...reminderFilter,
+        completed: false,
+        dueDate: {
+          $gte: today,
+        },
+      })
+        .sort({
+          dueDate: 1,
+          reminderTime: 1,
+          createdAt: 1,
         })
-        .sort({ dueDate: 1 })
-        .limit(5);
+        .limit(DASHBOARD_ITEM_LIMIT)
+        .lean(),
 
-        const overdueReminders = await Reminder.find({
-            user: userId,
-            completed: false,
-            dueDate: { $lt: new Date() }
+      Reminder.find({
+        ...reminderFilter,
+        completed: false,
+        dueDate: {
+          $lt: today,
+        },
+      })
+        .sort({
+          dueDate: 1,
+          reminderTime: 1,
+          createdAt: 1,
         })
-        .sort({ dueDate: 1 })
-        .limit(5);
+        .limit(DASHBOARD_ITEM_LIMIT)
+        .lean(),
 
-        const birthdays = await Birthday.find({
-    user: userId
-});
+      Birthday.find(birthdayFilter)
+        .select(
+          "-__v"
+        )
+        .lean(),
+    ]);
 
-const today = new Date();
-today.setHours(0, 0, 0, 0);
+    const upcomingBirthdays =
+      getNearestBirthdays(
+        birthdays,
+        today
+      );
 
-const upcomingBirthdays = birthdays
-    .map((birthday) => {
+    return res.status(200).json({
+      stats: {
+        totalReminders,
+        totalBirthdays,
+        totalNotes,
+        totalLinks,
+      },
 
-        const nextBirthday = new Date(
-            today.getFullYear(),
-            birthday.birthMonth - 1,
-            birthday.birthDay
-        );
+      recentNotes,
+      favoriteLinks,
+      pendingReminders,
+      overdueReminders,
+      upcomingBirthdays,
+    });
+  } catch (error) {
+    return sendServerError(
+      res,
+      error,
+      "Failed to load dashboard."
+    );
+  }
+}
 
-        nextBirthday.setHours(0, 0, 0, 0);
-
-        if (nextBirthday < today) {
-            nextBirthday.setFullYear(
-                today.getFullYear() + 1
-            );
-        }
-
-        const daysRemaining = Math.round(
-            (nextBirthday - today) /
-            (1000 * 60 * 60 * 24)
-        );
-
-        return {
-            ...birthday.toObject(),
-            daysRemaining
-        };
-    })
-    .sort((a, b) => a.daysRemaining - b.daysRemaining)
-    .slice(0, 5);
-        res.status(200).json({
-            stats: {
-                totalReminders,
-                totalBirthdays,
-                totalNotes,
-                totalLinks
-            },
-            recentNotes,
-            favoriteLinks,
-            pendingReminders,
-            overdueReminders,
-            upcomingBirthdays
-        });
-
-    } catch (error) {
-
-        res.status(500).json({
-            message: error.message
-        });
-
-    }
+module.exports = {
+  getDashboard,
 };
-
-module.exports = {getDashboard};

@@ -1,5 +1,4 @@
-import { useEffect, useState, useContext } from "react";
-import { LayoutContext } from "../components/Layout";
+import { useContext, useEffect, useMemo, useState } from "react";
 import { useConfirm } from "../context/ConfirmContext";
 import toast from "react-hot-toast";
 import api from "../services/api";
@@ -14,6 +13,7 @@ import dashboardDarkBg from "../assets/backgrounds/dashboard-dark.png";
 import LoadingSpinner from "../components/LoadingSpinner";
 
 import { useNavigate } from "react-router-dom";
+import useBreakpoint from "../hooks/useBreakpoint";
 
 import {
   FaFileExport,
@@ -69,14 +69,14 @@ import {
 } from "recharts";
 
 
+/**
+ * Administrative dashboard for monitoring users, activity, suggestions,
+ * logs, service health, and application statistics.
+ */
 function AdminDashboard() {
   const { user } = useContext(AuthContext);
-  const {
-  isMobile,
-  isTablet,
-  isDesktop,
-} = useContext(LayoutContext);
   const darkMode = user?.theme === "dark";
+  const { isMobile, isTablet } = useBreakpoint();
 
   const backgroundImage = darkMode
     ? dashboardDarkBg
@@ -774,8 +774,6 @@ const getLogMeta = (level) => {
       };
   }
 };
-
-
 useEffect(() => {
   if (activeTab === "suggestions") {
     fetchSuggestions();
@@ -877,12 +875,14 @@ const sidebar = (
   <Card
     variant="glass"
     style={{
-      position: isMobile ? "static" : "fixed",
-      top: isMobile ? undefined : "15%",
-      left: isMobile ? undefined : "2%",
-      width: isMobile ? "100%" : "20%",
-      minHeight: isMobile ? "auto" : "75%",
-      padding: "24px",
+      width: "100%",
+      minWidth: 0,
+      minHeight: "auto",
+      margin: 0,
+      padding:
+        isMobile
+        ? "18px"
+        : "24px",
       borderRadius: "22px",
 
       display: "flex",
@@ -895,7 +895,10 @@ const sidebar = (
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        gap: "10px",
+        gap:
+          isMobile
+          ? "10px"
+          : "16px"
       }}
     >
       <FaUserShield color="#38bdf8" />
@@ -906,7 +909,9 @@ const sidebar = (
 
     <div
       className="glow-top left"
-      style={{ marginBottom: "12px" }}
+      style={{ 
+        marginBottom: "12px" 
+      }}
       onClick={() => setActiveTab("dashboard")}
     >
       <FaChartPie style={{ marginRight: 10 }} />
@@ -955,7 +960,7 @@ const sidebar = (
   <Card
     variant="glass"
     style={{
-      padding: "18px",
+      padding: isMobile ? "12px" : "16px",
     }}
   >
       <div
@@ -1074,7 +1079,9 @@ if (loading) {
     </Layout>
   );
 }
+
   return (
+    
     <Layout
       sidebar={sidebar}
       backgroundImage={backgroundImage}
@@ -1085,6 +1092,8 @@ if (loading) {
           display: "flex",
           flexDirection: "column",
           gap: "5px",
+          width: "100%",
+          minWidth: 0,
         }}
       >
 {activeTab === "dashboard" && stats && (
@@ -1092,15 +1101,19 @@ if (loading) {
     <div
       style={{
         display: "grid",
-        gridTemplateColumns: "repeat(auto-fit,minmax(120px,1fr))",
-        gap: "10px",
+        gridTemplateColumns:
+          isMobile
+            ? "1fr"
+            : "repeat(auto-fit, minmax(180px, 1fr))",
+        gap:
+          isMobile
+          ? "10px"
+          : "16px",
       }}
     >
       
       {statCards.map((card) => {
         const Icon = card.icon;
-        
-
         return (
           <Card
             key={card.title}
@@ -1116,15 +1129,15 @@ if (loading) {
           >
             <div
               style={{
-                width: "64px",
-                height: "64px",
+                width: isMobile ? 52 : 64,
+                height: isMobile ? 52 : 64,
+                fontSize: isMobile ? 22 : 28,
                 borderRadius: "50px",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 background: `${card.color}22`,
                 color: card.color,
-                fontSize: "28px",
               }}
             >
               <Icon />
@@ -1142,7 +1155,10 @@ if (loading) {
 
               <div
                 style={{
-                  fontSize: "2rem",
+                  fontSize:
+                    isMobile
+                    ? "1.5rem"
+                    : "2rem",
                   fontWeight: 700,
                   marginTop: "4px",
                 }}
@@ -1157,9 +1173,10 @@ if (loading) {
 <div
   style={{
     display: "grid",
-    gridTemplateColumns: isMobile
-      ? "1fr"
-      : "2fr 1fr",
+    gridTemplateColumns:
+      isMobile || isTablet
+        ? "1fr"
+        : "2fr 1fr",
     gap: "10px",
     marginTop: "5px",
   }}
@@ -1167,8 +1184,11 @@ if (loading) {
     <Card
   variant="glass"
   style={{
-    flex: 2,
-    height: "250px",
+    width: "100%",
+    height:
+      isMobile
+        ? 250
+        : 320,
     padding: "15px",
   }}
 >
@@ -1211,8 +1231,11 @@ if (loading) {
 <Card
   variant="glass"
   style={{
-    flex: 1,
-    height: "250px",
+    width: "100%",
+    height:
+      isMobile
+        ? 250
+        : 320,
     padding: "20px",
     display: "flex",
     flexDirection: "column",
@@ -1298,8 +1321,8 @@ if (loading) {
         gridTemplateColumns: isMobile
           ? "1fr"
           : isTablet
-          ? "repeat(2, 1fr)"
-          : "repeat(3, 1fr)",
+          ? "repeat(2, minmax(0, 1fr))"
+          : "repeat(3, minmax(0, 1fr))",
         gap: "20px",
         height: "100%",
         width: "100%",
@@ -1339,6 +1362,10 @@ if (loading) {
     <div
       key={service.name}
       style={{
+        fontSize:
+          isMobile
+          ? ".9rem"
+          : "1rem",
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center",
@@ -1425,24 +1452,39 @@ if (loading) {
     style={{
       display: "flex",
       justifyContent: "space-between",
-      alignItems: "center",
+      flexDirection:
+        isMobile
+        ? "column"
+        : "row",
+      alignItems: "flex-start",
       marginBottom: "15px"
     }}
   >
     <h3
       style={{
-        display: "flex",
+        display:
+          isMobile
+          ? "block"
+          : "flex",
         alignItems: "center",
         gap: "12px",
         margin: 0,
       }}
     >
-      <FaHistory color="#38bdf8" />
+      <FaHistory style={{color:"#38bdf8",
+        marginRight: "10px"
+      }} />
       Recent Activity
     </h3>
 
     <button
       className="glow-top"
+      style={{
+        padding:
+          isMobile
+            ? "8px 14px"
+            : "8px 18px"
+      }}
       onClick={() => setActiveTab("activities")}
     >
       View All
@@ -1485,7 +1527,7 @@ if (loading) {
           <Icon size={15} />
         </div>
 
-        <div style={{ flex: 1 }}>
+        <div style={{ flexGrow: 1, flexShrink: 1, flexBasis: 0, minWidth: 0 }}>
           <div
             style={{
               display: "flex",
@@ -1534,26 +1576,38 @@ if (loading) {
     style={{
       display: "flex",
       justifyContent: "space-between",
-      alignItems: "center",
-      marginBottom: "18px",
+      flexDirection:
+        isMobile
+        ? "column"
+        : "row",
+      alignItems: "flex-start",
+      marginBottom: "15px"
     }}
   >
     <h3
       style={{
-        display: "flex",
+        display:
+          isMobile
+          ? "block"
+          : "flex",
         alignItems: "center",
         gap: "12px",
         margin: 0,
       }}
     >
-      <FaLightbulb color="#fbbf24" />
+      <FaLightbulb style={{color:"#fbbf24",
+        marginRight: "10px"
+      }} />
       Suggestions
     </h3>
 
     <button
       className="glow-top"
       style={{
-        padding: "8px 18px",
+        padding:
+          isMobile
+            ? "8px 14px"
+            : "8px 18px"
       }}
       onClick={() => setActiveTab("suggestions")}
     >
@@ -1635,7 +1689,17 @@ if (loading) {
           style={{
             display: "flex",
             justifyContent: "space-between",
-            alignItems: "center",
+            flexDirection:
+              isMobile
+                ? "column"
+                : "row",
+
+            alignItems:
+              isMobile
+                ? "stretch"
+                : "center",
+
+            width: "100%",
             gap: "20px",
             flexWrap: "wrap",
             marginBottom: "24px",
@@ -1656,8 +1720,10 @@ if (loading) {
           <div
             className="input-icon-wrapper"
             style={{
-              width: "300px",
-              flex: "0 0 auto",
+              width: isMobile ? "100%" : "300px",
+              flexGrow: 0,
+              flexShrink: 0,
+              flexBasis: "auto",
               margin: 0,
             }}
           >
@@ -1704,14 +1770,24 @@ if (loading) {
                 style={{
                   display: "flex",
                   justifyContent: "space-between",
-                  alignItems: "flex-start",
+                  flexDirection:
+                    isMobile
+                      ? "column"
+                      : "row",
+                  alignItems:
+                    isMobile
+                      ? "flex-start"
+                      : "flex-start",
                   flexWrap: "wrap",
                   gap: "20px",
                 }}
               >
                 <div
                   style={{
-                    flex: 1,
+                    flexGrow: 1,
+                    flexShrink: 1,
+                    flexBasis: 0,
+                    minWidth: 0,
                   }}
                 >
                   <h3
@@ -1770,7 +1846,15 @@ if (loading) {
                   style={{
                     display: "flex",
                     flexDirection: "column",
-                    alignItems: "flex-end",
+                    width:
+                      isMobile
+                        ? "100%"
+                        : "auto",
+
+                    alignItems:
+                      isMobile
+                        ? "stretch"
+                        : "flex-end",
                     gap: "15px",
                   }}
                 >
@@ -1800,6 +1884,10 @@ if (loading) {
 
                   {user.role === "user" && (
                     <button
+                      style={{width:
+                        isMobile
+                          ? "100%"
+                          : "auto"}}
                       className="glow-top delete"
                       onClick={() =>
                         handleDelete(user._id)
@@ -1816,11 +1904,11 @@ if (loading) {
                 </div>
               </div>
             </Card>
-    ))}
-  </div>
-        )}
-        </>
-        )}
+        ))}
+      </div>
+    )}
+    </>
+    )}
 
 
 {activeTab === "logs" && (
@@ -1829,7 +1917,16 @@ if (loading) {
       style={{
         display: "flex",
         justifyContent: "space-between",
-        alignItems: "center",
+        flexDirection:
+          isMobile
+            ? "column"
+            : "row",
+
+        alignItems:
+          isMobile
+            ? "stretch"
+            : "center",
+        width: "100%",
         gap: "20px",
         marginBottom: "8px",
         flexWrap: "wrap",
@@ -1857,8 +1954,10 @@ if (loading) {
         <div
           className="input-icon-wrapper"
           style={{
-            width: "300px",
-            flex: "0 0 auto",
+            width: isMobile ? "100%" : "300px",
+            flexGrow: 0,
+            flexShrink: 0,
+            flexBasis: "auto",
             marginBottom: 0,
             marginLeft: 0,
           }}
@@ -1911,6 +2010,12 @@ if (loading) {
         style={{
           display: "flex",
           gap: "12px",
+          justifyContent:
+            isMobile
+              ? "center"
+              : "flex-start",
+
+          rowGap:"12px",
           flexWrap: "wrap",
         }}
       >
@@ -2252,6 +2357,10 @@ if (loading) {
           style={{
             padding: "24px",
             marginBottom: "20px",
+            flexDirection:
+              isMobile
+                ? "column"
+                : "row",
           }}
         >
           <div
@@ -2264,7 +2373,10 @@ if (loading) {
           >
             <div
               style={{
-                flex: 1,
+                flexGrow: 1,
+                flexShrink: 1,
+                flexBasis: 0,
+                minWidth: 0,
                 width: "100%",
               }}
             >
@@ -2364,9 +2476,13 @@ if (loading) {
             display: "flex",
             alignItems: "center",
             gap: "12px",
+            fontSize: isMobile ? "1.3rem" : "1.8rem",
+            flexWrap: "wrap",
+            marginBottom: isMobile ? "12px" : "18px",
           }}
         >
-          <FaHistory color="#be24fb"/> Recent Activity
+          <FaHistory color="#be24fb" />
+          Recent Activity
         </h2>
 
           {activities.length === 0 ? (
@@ -2402,22 +2518,25 @@ if (loading) {
                 <div
                   style={{
                     display: "flex",
+                    flexDirection: isMobile ? "column" : "row",
                     justifyContent: "space-between",
-                    alignItems: "flex-start",
-                    gap: "20px",
+                    alignItems: isMobile ? "stretch" : "flex-start",
+                    gap: isMobile ? "14px" : "20px",
                   }}
                 >
                   <div
                     style={{
                       display: "flex",
                       alignItems: "flex-start",
-                      gap: "16px",
+                      gap: isMobile ? "12px" : "16px",
+                      width: "100%",
+                      minWidth: 0,
                     }}
                   >
                     <div
                       style={{
-                        width: "30px",
-                        height: "30px",
+                        width: isMobile ? "36px" : "42px",
+                        height: isMobile ? "36px" : "42px",
                         borderRadius: "50%",
                         background: meta.color,
                         display: "flex",
@@ -2428,15 +2547,25 @@ if (loading) {
                         boxShadow: `0 0 18px ${meta.color}55`,
                       }}
                     >
-                      <Icon size={15} />
+                      <Icon size={isMobile ? 16 : 18} />
                     </div>
 
-                    <div>
+                    <div
+                      style={{
+                        flexGrow: 1,
+                    flexShrink: 1,
+                    flexBasis: 0,
+                    minWidth: 0,
+                        minWidth: 0,
+                      }}
+                    >
                       <div
                         style={{
                           fontWeight: 600,
                           marginBottom: "6px",
                           lineHeight: "1.5",
+                          fontSize: isMobile ? ".95rem" : "1rem",
+                          wordBreak: "break-word",
                         }}
                       >
                         <span
@@ -2464,9 +2593,12 @@ if (loading) {
                  <div
                   style={{
                     display: "flex",
+                    flexDirection: isMobile ? "row" : "row",
+                    justifyContent: isMobile ? "space-between" : "flex-start",
                     alignItems: "center",
-                    gap: "10px",
-                    whiteSpace: "nowrap",
+                    gap: isMobile ? "8px" : "10px",
+                    width: isMobile ? "100%" : "auto",
+                    flexWrap: "wrap",
                   }}
                 >
                   <span
@@ -2474,9 +2606,9 @@ if (loading) {
                       background: `${badge.color}22`,
                       color: badge.color,
                       border: `1px solid ${badge.color}55`,
-                      padding: "4px 10px",
+                      padding: isMobile ? "4px 8px" : "5px 10px",
+                      fontSize: isMobile ? "10px" : "11px",
                       borderRadius: "999px",
-                      fontSize: "11px",
                       fontWeight: 700,
                       letterSpacing: "0.08em",
                       textTransform: "uppercase",
@@ -2491,7 +2623,7 @@ if (loading) {
                       alignItems: "center",
                       gap: "6px",
                       opacity: 0.7,
-                      fontSize: "0.85rem",
+                      fontSize: isMobile ? ".78rem" : ".85rem",
                     }}
                   >
                     <FaClock />

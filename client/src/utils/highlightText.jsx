@@ -1,28 +1,63 @@
-function escapeRegExp(string) {
-  return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+/**
+ * Escapes special RegExp characters.
+ *
+ * @param {string} value
+ * @returns {string}
+ */
+function escapeRegExp(value) {
+  return value.replace(
+    /[.*+?^${}()|[\]\\]/g,
+    "\\$&"
+  );
 }
 
-export default function highlightText(text, query) {
-  if (!query || !text) {
-    return text;
+/**
+ * Highlights occurrences of the search query.
+ *
+ * @param {string} text
+ * @param {string} query
+ * @returns {string | React.ReactNode[]}
+ */
+export default function highlightText(
+  text,
+  query
+) {
+  const content =
+    String(text ?? "");
+
+  const search =
+    String(query ?? "").trim();
+
+  if (!content || !search) {
+    return content;
   }
 
-  const escapedQuery = escapeRegExp(query);
+  const escapedQuery =
+    escapeRegExp(search);
 
-  const parts = text.split(
-    new RegExp(`(${escapedQuery})`, "gi")
+  const regex = new RegExp(
+    `(${escapedQuery})`,
+    "gi"
   );
 
-  return parts.map((part, index) =>
-    part.toLowerCase() === query.toLowerCase() ? (
-      <span
-        key={index}
-        className="search-highlight"
-      >
-        {part}
-      </span>
-    ) : (
-      part
-    )
+  const parts =
+    content.split(regex);
+
+  const normalizedSearch =
+    search.toLowerCase();
+
+  return parts.map(
+    (part, index) =>
+      part.toLowerCase() ===
+      normalizedSearch ? (
+        <span
+          key={index}
+          className="search-highlight"
+        >
+          {part}
+        </span>
+      ) : (
+        part
+      )
   );
 }

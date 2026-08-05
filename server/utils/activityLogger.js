@@ -1,14 +1,35 @@
 const Activity = require("../models/Activity");
 
-const activityConfig = {
+const DEFAULT_ACTIVITY_CONFIG =
+  Object.freeze({
+    icon: "FaCircle",
+    color: "#38bdf8",
+  });
+
+const activityConfig = Object.freeze({
   user_registered: {
     icon: "FaUserPlus",
     color: "#22c55e",
   },
 
+  user_login: {
+    icon: "FaSignInAlt",
+    color: "#38bdf8",
+  },
+
   user_deleted: {
     icon: "FaUserMinus",
     color: "#ef4444",
+  },
+
+  password_updated: {
+    icon: "FaLock",
+    color: "#f59e0b",
+  },
+
+  password_reset: {
+    icon: "FaKey",
+    color: "#22c55e",
   },
 
   note_created: {
@@ -71,35 +92,95 @@ const activityConfig = {
     color: "#ef4444",
   },
 
+  suggestion_created: {
+    icon: "FaLightbulb",
+    color: "#fbbf24",
+  },
+
+  /*
+   * Retained for compatibility with older activity records
+   * or controllers that used the previous event name.
+   */
   suggestion_submitted: {
     icon: "FaLightbulb",
     color: "#fbbf24",
   },
-};
+});
 
-const logActivity = async ({
+/**
+ * Normalizes a value into trimmed text.
+ *
+ * @param {unknown} value
+ * @returns {string}
+ */
+function normalizeText(value) {
+  return String(value ?? "").trim();
+}
+
+/**
+ * Writes an activity record.
+ *
+ * Logging errors are contained so an activity-log failure
+ * does not break the original API request.
+ *
+ * @param {object} activity
+ * @param {string} activity.type
+ * @param {string} activity.message
+ * @param {string|object|null} [activity.user]
+ * @param {string} [activity.performedBy]
+ * @returns {Promise<object|null>}
+ */
+async function logActivity({
   type,
   message,
   user = null,
   performedBy = "",
-}) => {
+} = {}) {
   try {
-    const config = activityConfig[type] || {
-      icon: "FaCircle",
-      color: "#38bdf8",
-    };
+    const normalizedType =
+      normalizeText(type);
 
-    await Activity.create({
-      type,
-      message,
-      icon: config.icon,
-      color: config.color,
-      user,
-      performedBy,
-    });
+    const normalizedMessage =
+      normalizeText(message);
+
+    const normalizedPerformedBy =
+      normalizeText(performedBy);
+
+    if (
+      !normalizedType ||
+      !normalizedMessage
+    ) {
+      console.warn(
+        "Activity log skipped: type and message are required."
+      );
+
+      return null;
+    }
+
+    const config =
+      activityConfig[normalizedType] ||
+      DEFAULT_ACTIVITY_CONFIG;
+
+    const activity =
+      await Activity.create({
+        type: normalizedType,
+        message: normalizedMessage,
+        icon: config.icon,
+        color: config.color,
+        user: user || null,
+        performedBy:
+          normalizedPerformedBy,
+      });
+
+    return activity;
   } catch (error) {
-    console.error("Activity Log Error:", error.message);
+    console.error(
+      "Activity Log Error:",
+      error
+    );
+
+    return null;
   }
-};
+}
 
 module.exports = logActivity;
