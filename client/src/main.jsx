@@ -28,7 +28,7 @@ if (!googleClientId) {
 ReactDOM.createRoot(rootElement).render(
   <StrictMode>
     <GoogleOAuthProvider
-      clientId={googleClientId || ""}
+      clientId={googleClientId}
     >
       <AuthProvider>
         <App />

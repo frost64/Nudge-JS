@@ -1115,6 +1115,7 @@ function Profile() {
     <Layout
       backgroundImage={formBackground}
       sidebar={sidebar}
+      sidebarTitle="Profile Details"
       cardVariant="glass"
     >
       <div

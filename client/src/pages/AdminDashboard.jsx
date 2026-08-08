@@ -873,200 +873,220 @@ const overallStatus = allOperational
 
 const sidebar = (
   <Card
+    className="nudge-sidebar"
     variant="glass"
-    style={{
-      width: "100%",
-      minWidth: 0,
-      minHeight: "auto",
-      margin: 0,
-      padding:
-        isMobile
-        ? "18px"
-        : "24px",
-      borderRadius: "22px",
-
-      display: "flex",
-      flexDirection: "column",
-    }}
   >
-    <h1
-      style={{
-        textAlign: "center",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        gap:
-          isMobile
-          ? "10px"
-          : "16px"
-      }}
-    >
-      <FaUserShield color="#38bdf8" />
-      Admin
+    <h1 className="nudge-sidebar-title">
+      <FaUserShield
+        aria-hidden="true"
+        color="#38bdf8"
+      />
+
+      <span>Admin</span>
     </h1>
-    <div>
 
-
-    <div
-      className="glow-top left"
-      style={{ 
-        marginBottom: "12px" 
-      }}
-      onClick={() => setActiveTab("dashboard")}
+    <nav
+      className="nudge-sidebar-actions"
+      aria-label="Admin navigation"
     >
-      <FaChartPie style={{ marginRight: 10 }} />
-      Dashboard
-    </div>
-
-    <div
-      className="glow-top left"
-      style={{ marginBottom: "12px" }}
-      onClick={() => setActiveTab("users")}
-    >
-      <FaUsersCog style={{ marginRight: 10 }} />
-      Manage Users
-    </div>
-
-    <div
-      className="glow-top left"
-      style={{ marginBottom: "12px" }}
-      onClick={() => setActiveTab("logs")}
-    >
-      <FaClipboardList style={{ marginRight: 10 }} />
-      System Logs
-    </div>
-
-    <div
-      className="glow-top left"
-      style={{ marginBottom: "12px" }}
-      onClick={() => setActiveTab("suggestions")}
-    >
-      <FaLightbulb style={{ marginRight: 10 }} />
-      Suggestions
-    </div>
-
-    <div
-      className="glow-top left"
-      style={{ marginBottom: "12px" }}
-      onClick={() => setActiveTab("activities")}
-    >
-      <FaHistory style={{ marginRight: 10 }} />
-      Recent Activities
-    </div>
-</div>
-
-
-  <div style={{ marginTop: "auto" }}>
-  <Card
-    variant="glass"
-    style={{
-      padding: isMobile ? "12px" : "16px",
-    }}
-  >
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "16px",
-        }}
+      <button
+        type="button"
+        className={`glow-top left nudge-sidebar-button ${
+          activeTab === "dashboard"
+            ? "nudge-sidebar-button-active"
+            : ""
+        }`}
+        aria-pressed={activeTab === "dashboard"}
+        onClick={() =>
+          setActiveTab("dashboard")
+        }
       >
-  <div
-    style={{
-      width: "56px",
-      height: "56px",
-      borderRadius: "50%",
-      background:
-        overallStatus === "Operational"
-          ? "#10b98122"
-          : overallStatus === "Down"
-          ? "#ef444422"
-          : "#f59e0b22",
+        <FaChartPie
+          aria-hidden="true"
+          className="nudge-sidebar-button-icon"
+        />
 
-      border: `1px solid ${
-        overallStatus === "Operational"
-          ? "#10b98155"
-          : overallStatus === "Down"
-          ? "#ef444455"
-          : "#f59e0b55"
-      }`,
+        <span className="nudge-sidebar-button-text">
+          Dashboard
+        </span>
+      </button>
 
-      display: "flex",
-      justifyContent: "center",
-      alignItems: "center",
+      <button
+        type="button"
+        className={`glow-top left nudge-sidebar-button ${
+          activeTab === "users"
+            ? "nudge-sidebar-button-active"
+            : ""
+        }`}
+        aria-pressed={activeTab === "users"}
+        onClick={() =>
+          setActiveTab("users")
+        }
+      >
+        <FaUsersCog
+          aria-hidden="true"
+          className="nudge-sidebar-button-icon"
+        />
 
-      boxShadow: `0 0 20px ${
-        overallStatus === "Operational"
-          ? "#10b98144"
-          : overallStatus === "Down"
-          ? "#ef444444"
-          : "#f59e0b44"
-      }`,
-    }}
-  >
-    <FaShieldAlt
-      size={24}
-      color={
-        overallStatus === "Operational"
-          ? "#10b981"
-          : overallStatus === "Down"
-          ? "#ef4444"
-          : "#f59e0b"
-      }
-    />
-  </div>
+        <span className="nudge-sidebar-button-text">
+          Manage Users
+        </span>
+      </button>
 
-  <div>
-  <h3
-    style={{
-      margin: 0,
-      marginBottom: "10px",
-      fontSize: "1rem",
-    }}
-  >
-    System Status
-  </h3>
+      <button
+        type="button"
+        className={`glow-top left nudge-sidebar-button ${
+          activeTab === "logs"
+            ? "nudge-sidebar-button-active"
+            : ""
+        }`}
+        aria-pressed={activeTab === "logs"}
+        onClick={() =>
+          setActiveTab("logs")
+        }
+      >
+        <FaClipboardList
+          aria-hidden="true"
+          className="nudge-sidebar-button-icon"
+        />
 
-  <span
-    style={{
-      display: "inline-block",
-      background:
-        overallStatus === "Operational"
-          ? "#10b98122"
-          : overallStatus === "Down"
-          ? "#ef444422"
-          : "#f59e0b22",
+        <span className="nudge-sidebar-button-text">
+          System Logs
+        </span>
+      </button>
 
-      color:
-        overallStatus === "Operational"
-          ? "#10b981"
-          : overallStatus === "Down"
-          ? "#ef4444"
-          : "#f59e0b",
+      <button
+        type="button"
+        className={`glow-top left nudge-sidebar-button ${
+          activeTab === "suggestions"
+            ? "nudge-sidebar-button-active"
+            : ""
+        }`}
+        aria-pressed={
+          activeTab === "suggestions"
+        }
+        onClick={() =>
+          setActiveTab("suggestions")
+        }
+      >
+        <FaLightbulb
+          aria-hidden="true"
+          className="nudge-sidebar-button-icon"
+        />
 
-      border: `1px solid ${
-        overallStatus === "Operational"
-          ? "#10b98155"
-          : overallStatus === "Down"
-          ? "#ef444455"
-          : "#f59e0b55"
-      }`,
+        <span className="nudge-sidebar-button-text">
+          Suggestions
+        </span>
+      </button>
 
-      padding: "4px 8px",
-      borderRadius: "999px",
-      fontSize: "11px",
-      fontWeight: 600,
-      whiteSpace: "nowrap",
-    }}
-  >
-    {overallStatus === "Operational"
-      ? "All systems operational"
-      : overallStatus === "Down"
-      ? "All systems are down"
-      : "Check system status"}
-  </span>
-</div>
-      </div>
-    </Card>
+      <button
+        type="button"
+        className={`glow-top left nudge-sidebar-button ${
+          activeTab === "activities"
+            ? "nudge-sidebar-button-active"
+            : ""
+        }`}
+        aria-pressed={
+          activeTab === "activities"
+        }
+        onClick={() =>
+          setActiveTab("activities")
+        }
+      >
+        <FaHistory
+          aria-hidden="true"
+          className="nudge-sidebar-button-icon"
+        />
+
+        <span className="nudge-sidebar-button-text">
+          Recent Activities
+        </span>
+      </button>
+    </nav>
+
+    <div className="nudge-sidebar-footer">
+      <Card
+        className="nudge-sidebar-status"
+        variant="glass"
+      >
+        <div className="nudge-sidebar-status-content">
+          <div
+            className="nudge-sidebar-status-icon"
+            style={{
+              background:
+                overallStatus === "Operational"
+                  ? "#10b98122"
+                  : overallStatus === "Down"
+                    ? "#ef444422"
+                    : "#f59e0b22",
+
+              borderColor:
+                overallStatus === "Operational"
+                  ? "#10b98155"
+                  : overallStatus === "Down"
+                    ? "#ef444455"
+                    : "#f59e0b55",
+
+              boxShadow:
+                overallStatus === "Operational"
+                  ? "0 0 20px #10b98144"
+                  : overallStatus === "Down"
+                    ? "0 0 20px #ef444444"
+                    : "0 0 20px #f59e0b44",
+            }}
+          >
+            <FaShieldAlt
+              aria-hidden="true"
+              size={24}
+              color={
+                overallStatus === "Operational"
+                  ? "#10b981"
+                  : overallStatus === "Down"
+                    ? "#ef4444"
+                    : "#f59e0b"
+              }
+            />
+          </div>
+
+          <div className="nudge-sidebar-status-details">
+            <h3 className="nudge-sidebar-status-title">
+              System Status
+            </h3>
+
+            <span
+              className="nudge-sidebar-status-badge"
+              style={{
+                background:
+                  overallStatus === "Operational"
+                    ? "#10b98122"
+                    : overallStatus === "Down"
+                      ? "#ef444422"
+                      : "#f59e0b22",
+
+                color:
+                  overallStatus === "Operational"
+                    ? "#10b981"
+                    : overallStatus === "Down"
+                      ? "#ef4444"
+                      : "#f59e0b",
+
+                borderColor:
+                  overallStatus === "Operational"
+                    ? "#10b98155"
+                    : overallStatus === "Down"
+                      ? "#ef444455"
+                      : "#f59e0b55",
+              }}
+            >
+              {overallStatus === "Operational"
+                ? "All systems operational"
+                : overallStatus === "Down"
+                  ? "All systems are down"
+                  : "Check system status"}
+            </span>
+          </div>
+        </div>
+      </Card>
     </div>
   </Card>
 );
@@ -1084,6 +1104,7 @@ if (loading) {
     
     <Layout
       sidebar={sidebar}
+      sidebarTitle="Admin Panel"
       backgroundImage={backgroundImage}
       cardVariant="glass"
     >
@@ -1102,52 +1123,131 @@ if (loading) {
       style={{
         display: "grid",
         gridTemplateColumns:
-          isMobile
-            ? "1fr"
-            : "repeat(auto-fit, minmax(180px, 1fr))",
-        gap:
-          isMobile
-          ? "10px"
-          : "16px",
+          "repeat(5, minmax(0, 1fr))",
+
+        width: "100%",
+        minWidth: 0,
+
+        gap: isMobile
+          ? "5px"
+          : isTablet
+            ? "10px"
+            : "16px",
       }}
     >
-      
       {statCards.map((card) => {
         const Icon = card.icon;
+
         return (
           <Card
             key={card.title}
             variant="glass"
+            title={`${card.title}: ${card.value}`}
             style={{
               display: "flex",
+
+              flexDirection: isMobile
+                ? "column"
+                : "row",
+
               alignItems: "center",
-              gap: "18px",
-              padding: "10px",
-              transition: ".3s",
+              justifyContent: isMobile
+                ? "center"
+                : "flex-start",
+
+              minWidth: 0,
+
+              gap: isMobile
+                ? "4px"
+                : "14px",
+
+              margin: 0,
+
+              padding: isMobile
+                ? "8px 3px"
+                : isTablet
+                  ? "10px"
+                  : "14px",
+
+              boxSizing: "border-box",
+
+              textAlign: isMobile
+                ? "center"
+                : "left",
+
               cursor: "default",
+
+              overflow: "hidden",
+
+              transition: ".3s",
             }}
           >
             <div
               style={{
-                width: isMobile ? 52 : 64,
-                height: isMobile ? 52 : 64,
-                fontSize: isMobile ? 22 : 28,
-                borderRadius: "50px",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                background: `${card.color}22`,
+
+                width: isMobile
+                  ? "32px"
+                  : isTablet
+                    ? "46px"
+                    : "56px",
+
+                height: isMobile
+                  ? "32px"
+                  : isTablet
+                    ? "46px"
+                    : "56px",
+
+                minWidth: isMobile
+                  ? "32px"
+                  : isTablet
+                    ? "46px"
+                    : "56px",
+
+                flexShrink: 0,
+
                 color: card.color,
+                background: `${card.color}22`,
+
+                borderRadius: "50%",
               }}
             >
-              <Icon />
+              <Icon
+                aria-hidden="true"
+                size={
+                  isMobile
+                    ? 14
+                    : isTablet
+                      ? 20
+                      : 25
+                }
+              />
             </div>
 
-            <div>
+            <div
+              style={{
+                minWidth: 0,
+                overflow: "hidden",
+              }}
+            >
               <div
                 style={{
+                  fontSize: isMobile
+                    ? ".58rem"
+                    : isTablet
+                      ? ".78rem"
+                      : ".9rem",
+
+                  fontWeight: 600,
+                  lineHeight: 1.1,
+
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+
                   opacity: 0.75,
-                  fontSize: ".95rem",
                 }}
               >
                 {card.title}
@@ -1155,12 +1255,18 @@ if (loading) {
 
               <div
                 style={{
-                  fontSize:
-                    isMobile
-                    ? "1.5rem"
-                    : "2rem",
+                  marginTop: isMobile
+                    ? "2px"
+                    : "4px",
+
+                  fontSize: isMobile
+                    ? "1rem"
+                    : isTablet
+                      ? "1.35rem"
+                      : "1.8rem",
+
                   fontWeight: 700,
-                  marginTop: "4px",
+                  lineHeight: 1,
                 }}
               >
                 {card.value}
@@ -1311,7 +1417,7 @@ if (loading) {
     </PieChart>
   </ResponsiveContainer>
 </div>
-    </Card>
+</Card>
     
     
     </div>
@@ -1444,172 +1550,341 @@ if (loading) {
   style={{
     width: "100%",
     height: "100%",
-    padding: "24px",
+
+    padding: isMobile
+      ? "18px"
+      : "24px",
+
     borderRadius: "22px",
+    boxSizing: "border-box",
   }}
 >
   <div
     style={{
       display: "flex",
+      alignItems: "center",
       justifyContent: "space-between",
-      flexDirection:
-        isMobile
-        ? "column"
-        : "row",
-      alignItems: "flex-start",
-      marginBottom: "15px"
+
+      width: "100%",
+      minWidth: 0,
+
+      gap: isMobile
+        ? "8px"
+        : "12px",
+
+      marginBottom: "15px",
     }}
   >
     <h3
       style={{
-        display:
-          isMobile
-          ? "block"
-          : "flex",
+        display: "flex",
         alignItems: "center",
-        gap: "12px",
+
+        minWidth: 0,
+
+        gap: isMobile
+          ? "7px"
+          : "12px",
+
         margin: 0,
+
+        fontSize: isMobile
+          ? "1rem"
+          : undefined,
+
+        lineHeight: 1.2,
       }}
     >
-      <FaHistory style={{color:"#38bdf8",
-        marginRight: "10px"
-      }} />
-      Recent Activity
+      <FaHistory
+        aria-hidden="true"
+        style={{
+          color: "#38bdf8",
+          flexShrink: 0,
+        }}
+      />
+
+      <span
+        style={{
+          minWidth: 0,
+
+          whiteSpace: "nowrap",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+        }}
+      >
+        Recent Activity
+      </span>
     </h3>
 
     <button
+      type="button"
       className="glow-top"
+      onClick={() =>
+        setActiveTab("activities")
+      }
       style={{
-        padding:
-          isMobile
-            ? "8px 14px"
-            : "8px 18px"
+        width: "auto",
+        minWidth: "max-content",
+
+        flexShrink: 0,
+
+        margin: 0,
+        marginLeft: "auto",
+
+        padding: isMobile
+          ? "7px 10px"
+          : "8px 18px",
+
+        fontSize: isMobile
+          ? ".78rem"
+          : "inherit",
+
+        whiteSpace: "nowrap",
       }}
-      onClick={() => setActiveTab("activities")}
     >
       View All
     </button>
   </div>
 
   {recentActivities.length === 0 ? (
-  <p style={{ opacity: 0.7 }}>
-    No recent activity.
-  </p>
-) : (
-  recentActivities.map((activity) => {
-    const Icon =
-      activityIcons[activity.type] || FaCircle;
+    <p
+      style={{
+        margin: 0,
+        opacity: 0.7,
+      }}
+    >
+      No recent activity.
+    </p>
+  ) : (
+    recentActivities.map(
+      (activity) => {
+        const Icon =
+          activityIcons[
+            activity.type
+          ] || FaCircle;
 
-    return (
-      <div
-        key={activity._id}
-        style={{
-          display: "flex",
-          gap: "8px",
-          padding: "5px 0",
-          borderBottom:
-            "1px solid rgba(255,255,255,.08)",
-        }}
-      >
-        <div
-          style={{
-            width: 40,
-            height: 40,
-            borderRadius: "50%",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            background: `${activity.color}20`,
-            color: activity.color,
-            flexShrink: 0,
-          }}
-        >
-          <Icon size={15} />
-        </div>
-
-        <div style={{ flexGrow: 1, flexShrink: 1, flexBasis: 0, minWidth: 0 }}>
+        return (
           <div
+            key={activity._id}
             style={{
               display: "flex",
-              justifyContent: "space-between",
+              alignItems: "flex-start",
+
+              gap: "8px",
+
+              padding: "5px 0",
+
+              borderBottom:
+                "1px solid rgba(255,255,255,.08)",
             }}
           >
-            <strong style={{fontSize: "13px"}}>{activity.message}</strong>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+
+                width: 40,
+                height: 40,
+
+                flexShrink: 0,
+
+                color:
+                  activity.color,
+
+                background:
+                  `${activity.color}20`,
+
+                borderRadius: "50%",
+              }}
+            >
+              <Icon
+                aria-hidden="true"
+                size={15}
+              />
+            </div>
+
+            <div
+              style={{
+                flexGrow: 1,
+                flexShrink: 1,
+                flexBasis: 0,
+
+                minWidth: 0,
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent:
+                    "space-between",
+
+                  minWidth: 0,
+                }}
+              >
+                <strong
+                  style={{
+                    minWidth: 0,
+
+                    fontSize: "13px",
+
+                    overflowWrap:
+                      "anywhere",
+                  }}
+                >
+                  {activity.message}
+                </strong>
+              </div>
+
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent:
+                    "space-between",
+
+                  gap: "8px",
+
+                  marginTop: "6px",
+
+                  fontSize: ".8rem",
+
+                  opacity: 0.65,
+                }}
+              >
+                <span
+                  style={{
+                    whiteSpace:
+                      "nowrap",
+                  }}
+                >
+                  {new Date(
+                    activity.createdAt
+                  ).toLocaleTimeString(
+                    [],
+                    {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    }
+                  )}
+                </span>
+
+                <span
+                  style={{
+                    textAlign: "right",
+                    whiteSpace:
+                      "nowrap",
+                  }}
+                >
+                  {getActivityDate(
+                    activity.createdAt
+                  )}
+                </span>
+              </div>
+            </div>
           </div>
-
-          <div
-  style={{
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginTop: "6px",
-    fontSize: ".8rem",
-    opacity: 0.65,
-  }}
->
-  <span>
-    {new Date(activity.createdAt).toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-    })}
-  </span>
-
-  <span>{getActivityDate(activity.createdAt)}</span>
-</div>
-        </div>
-      </div>
-    );
-  })
-)}
+        );
+      }
+    )
+  )}
 </Card>
 
-  <Card 
-    variant="glass"
-    style={{
-      width: "100%",
-      height: "100%",
-      padding: "24px",
-      borderRadius: "22px",
-    }}
-  >
+  <Card
+  variant="glass"
+  style={{
+    width: "100%",
+    height: "100%",
+
+    padding: isMobile
+      ? "18px"
+      : "24px",
+
+    borderRadius: "22px",
+    boxSizing: "border-box",
+  }}
+>
   <div
     style={{
       display: "flex",
+      alignItems: "center",
       justifyContent: "space-between",
-      flexDirection:
-        isMobile
-        ? "column"
-        : "row",
-      alignItems: "flex-start",
-      marginBottom: "15px"
+
+      width: "100%",
+      minWidth: 0,
+
+      gap: isMobile
+        ? "8px"
+        : "12px",
+
+      marginBottom: "15px",
     }}
   >
     <h3
       style={{
-        display:
-          isMobile
-          ? "block"
-          : "flex",
+        display: "flex",
         alignItems: "center",
-        gap: "12px",
+
+        minWidth: 0,
+
+        gap: isMobile
+          ? "7px"
+          : "12px",
+
         margin: 0,
+
+        fontSize: isMobile
+          ? "1rem"
+          : undefined,
+
+        lineHeight: 1.2,
       }}
     >
-      <FaLightbulb style={{color:"#fbbf24",
-        marginRight: "10px"
-      }} />
-      Suggestions
+      <FaLightbulb
+        aria-hidden="true"
+        style={{
+          color: "#fbbf24",
+          flexShrink: 0,
+        }}
+      />
+
+      <span
+        style={{
+          minWidth: 0,
+
+          whiteSpace: "nowrap",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+        }}
+      >
+        Suggestions
+      </span>
     </h3>
 
     <button
+      type="button"
       className="glow-top"
+      onClick={() =>
+        setActiveTab("suggestions")
+      }
       style={{
-        padding:
-          isMobile
-            ? "8px 14px"
-            : "8px 18px"
+        width: "auto",
+        minWidth: "max-content",
+
+        flexShrink: 0,
+
+        margin: 0,
+        marginLeft: "auto",
+
+        padding: isMobile
+          ? "7px 10px"
+          : "8px 18px",
+
+        fontSize: isMobile
+          ? ".78rem"
+          : "inherit",
+
+        whiteSpace: "nowrap",
       }}
-      onClick={() => setActiveTab("suggestions")}
     >
       View All
     </button>
@@ -1618,6 +1893,7 @@ if (loading) {
   {recentSuggestions.length === 0 ? (
     <p
       style={{
+        margin: 0,
         opacity: 0.7,
       }}
     >
@@ -1628,7 +1904,8 @@ if (loading) {
       <div
         key={item._id}
         style={{
-          padding: "4px 0",
+          padding: "6px 0",
+
           borderBottom:
             "1px solid rgba(255,255,255,.08)",
         }}
@@ -1636,19 +1913,40 @@ if (loading) {
         <div
           style={{
             display: "flex",
-            justifyContent: "space-between",
             alignItems: "center",
+            justifyContent: "space-between",
+
+            minWidth: 0,
+
+            gap: "10px",
           }}
         >
-          <strong>{item.title}</strong>
+          <strong
+            style={{
+              minWidth: 0,
+
+              fontSize: isMobile
+                ? "13px"
+                : "inherit",
+
+              overflowWrap: "anywhere",
+            }}
+          >
+            {item.title}
+          </strong>
 
           <span
             style={{
+              flexShrink: 0,
+
               fontSize: ".8rem",
+
               color:
                 item.status === "new"
                   ? "#22c55e"
                   : "#38bdf8",
+
+              textTransform: "capitalize",
             }}
           >
             {item.status}
@@ -1656,25 +1954,50 @@ if (loading) {
         </div>
 
         <div
-  style={{
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    fontSize: ".9rem",
-    opacity: 0.8,
-  }}
->
-  <span style={{color: "purple"}}>{item.fullName}</span>
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
 
-  <span
-    style={{
-      fontSize: ".8rem",
-      opacity: 0.7,
-    }}
-  >
-    {new Date(item.createdAt).toLocaleDateString()}
-  </span>
-</div>
+            minWidth: 0,
+
+            gap: "10px",
+
+            marginTop: "4px",
+
+            fontSize: ".9rem",
+            opacity: 0.8,
+          }}
+        >
+          <span
+            style={{
+              minWidth: 0,
+
+              color: "purple",
+
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {item.fullName}
+          </span>
+
+          <span
+            style={{
+              flexShrink: 0,
+
+              fontSize: ".8rem",
+              opacity: 0.7,
+
+              whiteSpace: "nowrap",
+            }}
+          >
+            {new Date(
+              item.createdAt
+            ).toLocaleDateString()}
+          </span>
+        </div>
       </div>
     ))
   )}
@@ -1685,250 +2008,23 @@ if (loading) {
 
 {activeTab === "users" && (
   <>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            flexDirection:
-              isMobile
-                ? "column"
-                : "row",
-
-            alignItems:
-              isMobile
-                ? "stretch"
-                : "center",
-
-            width: "100%",
-            gap: "20px",
-            flexWrap: "wrap",
-            marginBottom: "24px",
-          }}
-        >
-          <h1
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "10px",
-              margin: 0,
-            }}
-          >
-            <FaUsersCog color="#38bdf8" />
-            Manage Users
-          </h1>
-
-          <div
-            className="input-icon-wrapper"
-            style={{
-              width: isMobile ? "100%" : "300px",
-              flexGrow: 0,
-              flexShrink: 0,
-              flexBasis: "auto",
-              margin: 0,
-            }}
-          >
-            <FaSearch className="input-icon" />
-
-            <input
-              className="input-glow"
-              type="text"
-              placeholder="Search users..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              style={{
-                width: "100%",
-              }}
-            />
-          </div>
-        </div>
-
-       {filteredUsers.length === 0 ? (
-        <Card variant="glass">
-          <p>No users found.</p>
-        </Card>
-      ) : (
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: isMobile
-              ? "1fr"
-              : "repeat(2, minmax(0, 1fr))",
-            gap: "20px",
-            width: "100%",
-          }}
-        >
-          {filteredUsers.map((user) => (
-            <Card
-              key={user._id}
-              variant="glass"
-              style={{
-                padding: "24px",
-                height: "100%",
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  flexDirection:
-                    isMobile
-                      ? "column"
-                      : "row",
-                  alignItems:
-                    isMobile
-                      ? "flex-start"
-                      : "flex-start",
-                  flexWrap: "wrap",
-                  gap: "20px",
-                }}
-              >
-                <div
-                  style={{
-                    flexGrow: 1,
-                    flexShrink: 1,
-                    flexBasis: 0,
-                    minWidth: 0,
-                  }}
-                >
-                  <h3
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "10px",
-                      marginBottom: "5px",
-                    }}
-                  >
-                    <FaUser color="#38bdf8" />
-
-                    {user.fullName}
-                  </h3>
-
-                  <p>
-                    <FaUser
-                      style={{
-                        marginRight: "8px",
-                        color: "#00be9f",
-                      }}
-                    />
-                    @{user.username}
-                  </p>
-
-                  <p>
-                    <FaEnvelope
-                      style={{
-                        marginRight: "8px",
-                        color: "#00be9f",
-                      }}
-                    />
-                    {user.email}
-                  </p>
-
-                  <p>
-                    <FaCalendarAlt
-                      style={{
-                        marginRight: "8px",
-                        color: "#00be9f",
-                      }}
-                    />
-                    Joined{" "}
-                    {new Date(user.createdAt).toLocaleDateString(
-                      "en-GB",
-                      {
-                        day: "numeric",
-                        month: "long",
-                        year: "numeric",
-                      }
-                    )}
-                  </p>
-                </div>
-
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    width:
-                      isMobile
-                        ? "100%"
-                        : "auto",
-
-                    alignItems:
-                      isMobile
-                        ? "stretch"
-                        : "flex-end",
-                    gap: "15px",
-                  }}
-                >
-                  <span
-                    style={{
-                      padding: "8px 16px",
-                      borderRadius: "999px",
-                      fontWeight: 600,
-                      background:
-                        user.role === "admin"
-                          ? "rgba(168,85,247,.18)"
-                          : "rgba(56,189,248,.18)",
-                      color:
-                        user.role === "admin"
-                          ? "#c084fc"
-                          : "#38bdf8",
-                    }}
-                  >
-                    <FaUserShield
-                      style={{
-                        marginRight: "6px",
-                      }}
-                    />
-
-                    {user.role}
-                  </span>
-
-                  {user.role === "user" && (
-                    <button
-                      style={{width:
-                        isMobile
-                          ? "100%"
-                          : "auto"}}
-                      className="glow-top delete"
-                      onClick={() =>
-                        handleDelete(user._id)
-                      }
-                    >
-                      <FaTrashAlt
-                        style={{
-                          marginRight: "8px",
-                        }}
-                      />
-                      Delete User
-                    </button>
-                  )}
-                </div>
-              </div>
-            </Card>
-        ))}
-      </div>
-    )}
-    </>
-    )}
-
-
-{activeTab === "logs" && (
-  <>
     <div
       style={{
         display: "flex",
+        flexDirection: isMobile
+          ? "column"
+          : "row",
+        alignItems: isMobile
+          ? "stretch"
+          : "center",
         justifyContent: "space-between",
-        flexDirection:
-          isMobile
-            ? "column"
-            : "row",
 
-        alignItems:
-          isMobile
-            ? "stretch"
-            : "center",
         width: "100%",
+        minWidth: 0,
+
         gap: "20px",
-        marginBottom: "8px",
+        marginBottom: "24px",
+
         flexWrap: "wrap",
       }}
     >
@@ -1936,86 +2032,726 @@ if (loading) {
         style={{
           display: "flex",
           alignItems: "center",
+
           gap: "10px",
+          margin: 0,
+
+          fontSize: isMobile
+            ? "1.5rem"
+            : undefined,
+        }}
+      >
+        <FaUsersCog
+          aria-hidden="true"
+          color="#38bdf8"
+        />
+
+        Manage Users
+      </h1>
+
+      <div
+        className="input-icon-wrapper"
+        style={{
+          width: isMobile
+            ? "100%"
+            : "300px",
+
+          minWidth: 0,
+
+          flexGrow: 0,
+          flexShrink: 1,
+          flexBasis: "auto",
+
           margin: 0,
         }}
       >
-        <FaHistory color="#38bdf8" />
-        System Logs
-      </h1>
+        <FaSearch
+          aria-hidden="true"
+          className="input-icon"
+        />
+
+        <input
+          className="input-glow"
+          type="text"
+          placeholder="Search users..."
+          value={search}
+          onChange={(event) =>
+            setSearch(event.target.value)
+          }
+          style={{
+            width: "100%",
+            minWidth: 0,
+          }}
+        />
+      </div>
+    </div>
+
+    {filteredUsers.length === 0 ? (
+      <Card variant="glass">
+        <p
+          style={{
+            margin: 0,
+            textAlign: "center",
+          }}
+        >
+          No users found.
+        </p>
+      </Card>
+    ) : (
+      <div
+        style={{
+          display: "grid",
+
+          /*
+           * Mobile and tablet use one full-width card.
+           * Desktop uses two cards per row.
+           */
+          gridTemplateColumns:
+            isMobile || isTablet
+              ? "minmax(0, 1fr)"
+              : "repeat(2, minmax(0, 1fr))",
+
+          width: "100%",
+          minWidth: 0,
+
+          gap: "20px",
+        }}
+      >
+        {filteredUsers.map((user) => (
+          <Card
+            key={user._id}
+            variant="glass"
+            style={{
+              width: "100%",
+              height: "100%",
+              minWidth: 0,
+
+              padding: isMobile
+                ? "18px"
+                : isTablet
+                  ? "22px"
+                  : "24px",
+
+              boxSizing: "border-box",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+
+                /*
+                 * Prevent tablet cards from using the
+                 * narrow desktop side-by-side layout.
+                 */
+                flexDirection:
+                  isMobile || isTablet
+                    ? "column"
+                    : "row",
+
+                alignItems: "flex-start",
+                justifyContent: "space-between",
+
+                width: "100%",
+                minWidth: 0,
+
+                gap:
+                  isMobile || isTablet
+                    ? "16px"
+                    : "20px",
+              }}
+            >
+              <div
+                style={{
+                  flexGrow: 1,
+                  flexShrink: 1,
+                  flexBasis: 0,
+
+                  width:
+                    isMobile || isTablet
+                      ? "100%"
+                      : "auto",
+
+                  minWidth: 0,
+                }}
+              >
+                {/* Full name and compact-layout role */}
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent:
+                      "space-between",
+
+                    width: "100%",
+                    minWidth: 0,
+
+                    gap: "12px",
+                    marginBottom: "16px",
+                  }}
+                >
+                  <h3
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+
+                      flexGrow: 1,
+                      flexShrink: 1,
+
+                      minWidth: 0,
+
+                      gap: "10px",
+                      margin: 0,
+
+                      fontSize: isMobile
+                        ? "1rem"
+                        : "1.1rem",
+                    }}
+                  >
+                    <FaUser
+                      aria-hidden="true"
+                      color="#38bdf8"
+                      style={{
+                        flexShrink: 0,
+                      }}
+                    />
+
+                    <span
+                      style={{
+                        minWidth: 0,
+
+                        overflow: "hidden",
+                        textOverflow:
+                          "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {user.fullName}
+                    </span>
+                  </h3>
+
+                  {(isMobile ||
+                    isTablet) && (
+                    <span
+                      style={{
+                        display:
+                          "inline-flex",
+                        alignItems: "center",
+                        justifyContent:
+                          "center",
+
+                        flexShrink: 0,
+
+                        padding: isMobile
+                          ? "6px 10px"
+                          : "7px 14px",
+
+                        borderRadius:
+                          "999px",
+
+                        fontSize: isMobile
+                          ? ".75rem"
+                          : ".85rem",
+
+                        fontWeight: 600,
+                        lineHeight: 1,
+
+                        whiteSpace: "nowrap",
+
+                        background:
+                          user.role ===
+                          "admin"
+                            ? "rgba(168,85,247,.18)"
+                            : "rgba(56,189,248,.18)",
+
+                        color:
+                          user.role ===
+                          "admin"
+                            ? "#c084fc"
+                            : "#38bdf8",
+                      }}
+                    >
+                      <FaUserShield
+                        aria-hidden="true"
+                        size={
+                          isMobile
+                            ? 12
+                            : 14
+                        }
+                        style={{
+                          marginRight: "5px",
+                        }}
+                      />
+
+                      {user.role}
+                    </span>
+                  )}
+                </div>
+
+                <p
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+
+                    width: "100%",
+                    minWidth: 0,
+
+                    margin:
+                      "0 0 12px",
+                  }}
+                >
+                  <FaUser
+                    aria-hidden="true"
+                    style={{
+                      marginRight: "8px",
+
+                      color: "#00be9f",
+
+                      flexShrink: 0,
+                    }}
+                  />
+
+                  <span
+                    style={{
+                      minWidth: 0,
+
+                      overflowWrap:
+                        "anywhere",
+                      wordBreak:
+                        "break-word",
+                    }}
+                  >
+                    @{user.username}
+                  </span>
+                </p>
+
+                <p
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+
+                    width: "100%",
+                    minWidth: 0,
+
+                    margin:
+                      "0 0 12px",
+                  }}
+                >
+                  <FaEnvelope
+                    aria-hidden="true"
+                    style={{
+                      marginRight: "8px",
+
+                      color: "#00be9f",
+
+                      flexShrink: 0,
+                    }}
+                  />
+
+                  <span
+                    style={{
+                      minWidth: 0,
+
+                      overflowWrap:
+                        "anywhere",
+                      wordBreak:
+                        "break-word",
+                    }}
+                  >
+                    {user.email}
+                  </span>
+                </p>
+
+                <p
+                  style={{
+                    display: "flex",
+                    alignItems:
+                      "flex-start",
+
+                    width: "100%",
+                    minWidth: 0,
+
+                    margin: 0,
+                  }}
+                >
+                  <FaCalendarAlt
+                    aria-hidden="true"
+                    style={{
+                      marginTop: "3px",
+                      marginRight: "8px",
+
+                      color: "#00be9f",
+
+                      flexShrink: 0,
+                    }}
+                  />
+
+                  <span
+                    style={{
+                      minWidth: 0,
+                    }}
+                  >
+                    Joined{" "}
+                    {new Date(
+                      user.createdAt
+                    ).toLocaleDateString(
+                      "en-GB",
+                      {
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                      }
+                    )}
+                  </span>
+                </p>
+              </div>
+
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+
+                  alignItems:
+                    isMobile
+                      ? "stretch"
+                      : "flex-end",
+
+                  width: isMobile
+                    ? "100%"
+                    : "auto",
+
+                  flexShrink: 0,
+
+                  gap: "15px",
+                }}
+              >
+                {/* Desktop-only role capsule */}
+                {!isMobile &&
+                  !isTablet && (
+                    <span
+                      style={{
+                        display:
+                          "inline-flex",
+                        alignItems: "center",
+                        justifyContent:
+                          "center",
+
+                        padding:
+                          "8px 16px",
+
+                        borderRadius:
+                          "999px",
+
+                        fontWeight: 600,
+                        whiteSpace:
+                          "nowrap",
+
+                        background:
+                          user.role ===
+                          "admin"
+                            ? "rgba(168,85,247,.18)"
+                            : "rgba(56,189,248,.18)",
+
+                        color:
+                          user.role ===
+                          "admin"
+                            ? "#c084fc"
+                            : "#38bdf8",
+                      }}
+                    >
+                      <FaUserShield
+                        aria-hidden="true"
+                        style={{
+                          marginRight: "6px",
+                        }}
+                      />
+
+                      {user.role}
+                    </span>
+                  )}
+
+                {user.role === "user" && (
+                  <button
+                    type="button"
+                    className="glow-top delete"
+                    onClick={() =>
+                      handleDelete(user._id)
+                    }
+                    style={{
+                      width: isMobile
+                        ? "100%"
+                        : "auto",
+
+                      minWidth:
+                        isTablet
+                          ? "160px"
+                          : undefined,
+
+                      margin: 0,
+
+                      alignSelf:
+                        isMobile
+                          ? "stretch"
+                          : "flex-end",
+                    }}
+                  >
+                    <FaTrashAlt
+                      aria-hidden="true"
+                      style={{
+                        marginRight: "8px",
+                      }}
+                    />
+
+                    Delete User
+                  </button>
+                )}
+              </div>
+            </div>
+          </Card>
+        ))}
+      </div>
+    )}
+  </>
+)}
+
+
+{activeTab === "logs" && (
+  <>
+    <div
+      style={{
+        display: "flex",
+
+        flexDirection: isMobile
+          ? "column"
+          : "row",
+
+        alignItems: isMobile
+          ? "stretch"
+          : "center",
+
+        justifyContent:
+          "space-between",
+
+        width: "100%",
+        minWidth: 0,
+
+        gap: isMobile
+          ? "14px"
+          : "20px",
+
+        marginBottom: "20px",
+      }}
+    >
+      {/* Heading row */}
       <div
         style={{
           display: "flex",
           alignItems: "center",
+          justifyContent:
+            "space-between",
+
+          width: isMobile
+            ? "100%"
+            : "auto",
+
+          minWidth: 0,
+
+          gap: "10px",
+        }}
+      >
+        <h1
+          style={{
+            display: "flex",
+            alignItems: "center",
+
+            minWidth: 0,
+
+            gap: isMobile
+              ? "8px"
+              : "10px",
+
+            margin: 0,
+
+            fontSize: isMobile
+              ? "1.35rem"
+              : undefined,
+
+            lineHeight: 1.2,
+          }}
+        >
+          <FaHistory
+            aria-hidden="true"
+            color="#38bdf8"
+            style={{
+              flexShrink: 0,
+            }}
+          />
+
+          <span
+            style={{
+              minWidth: 0,
+              whiteSpace: "nowrap",
+            }}
+          >
+            System Logs
+          </span>
+        </h1>
+
+        {/* Mobile export button */}
+        {isMobile && (
+          <button
+            type="button"
+            className="glow-top"
+            onClick={handleExportLogs}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+
+              width: "auto",
+              minWidth: "max-content",
+
+              flexShrink: 0,
+
+              margin: 0,
+              padding: "8px 10px",
+
+              fontSize: ".78rem",
+              whiteSpace: "nowrap",
+            }}
+          >
+            <FaFileExport
+              aria-hidden="true"
+              style={{
+                marginRight: "6px",
+              }}
+            />
+
+            Export Logs
+          </button>
+        )}
+      </div>
+
+      {/* Search and desktop export button */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+
+          width: isMobile
+            ? "100%"
+            : "auto",
+
+          minWidth: 0,
+
           gap: "12px",
-          flexWrap: "wrap",
+
+          flexWrap: "nowrap",
         }}
       >
         <div
           className="input-icon-wrapper"
           style={{
-            width: isMobile ? "100%" : "300px",
-            flexGrow: 0,
-            flexShrink: 0,
+            width: isMobile
+              ? "100%"
+              : "300px",
+
+            minWidth: 0,
+
+            flexGrow: isMobile
+              ? 1
+              : 0,
+
+            flexShrink: 1,
             flexBasis: "auto",
-            marginBottom: 0,
-            marginLeft: 0,
+
+            margin: 0,
           }}
         >
-          <FaSearch className="input-icon" />
+          <FaSearch
+            aria-hidden="true"
+            className="input-icon"
+          />
 
           <input
             type="text"
             placeholder="Search logs..."
             value={logSearch}
-            onChange={(e) => setLogSearch(e.target.value)}
+            onChange={(event) =>
+              setLogSearch(
+                event.target.value
+              )
+            }
             className="input-glow"
+            style={{
+              width: "100%",
+              minWidth: 0,
+            }}
           />
         </div>
 
-        <button
-          className="glow-top"
-          onClick={handleExportLogs}
-        >
-          <FaFileExport
+        {/* Tablet and desktop export button */}
+        {!isMobile && (
+          <button
+            type="button"
+            className="glow-top"
+            onClick={handleExportLogs}
             style={{
-              marginRight: "8px",
-            }}
-          />
-          Export Logs
-        </button>
-      </div>
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
 
+              width: "auto",
+              minWidth: "max-content",
+
+              flexShrink: 0,
+
+              margin: 0,
+
+              whiteSpace: "nowrap",
+            }}
+          >
+            <FaFileExport
+              aria-hidden="true"
+              style={{
+                marginRight: "8px",
+              }}
+            />
+
+            Export Logs
+          </button>
+        )}
+      </div>
     </div>
 
-    <p
-      style={{
-        opacity: 0.7,
-        marginBottom: "24px",
-      }}
-    >
-      Monitor backend services, security events, and infrastructure activity.
-    </p>
     <div
       style={{
         display: "flex",
-        justifyContent: "space-between",
         alignItems: "center",
+        justifyContent:
+          "space-between",
+
         gap: "20px",
+
         flexWrap: "wrap",
+
         marginBottom: "24px",
       }}
     >
       <div
         style={{
           display: "flex",
-          gap: "12px",
-          justifyContent:
-            isMobile
-              ? "center"
-              : "flex-start",
 
-          rowGap:"12px",
+          justifyContent: isMobile
+            ? "center"
+            : "flex-start",
+
+          gap: "12px",
+          rowGap: "12px",
+
+          width: isMobile
+            ? "100%"
+            : "auto",
+
           flexWrap: "wrap",
         }}
       >
@@ -2048,13 +2784,20 @@ if (loading) {
         ].map((item) => (
           <button
             key={item.key}
+            type="button"
             className="glow-top"
-            onClick={() => setLogFilter(item.key)}
+            onClick={() =>
+              setLogFilter(item.key)
+            }
             style={{
               display: "flex",
               alignItems: "center",
+
               gap: "10px",
+
+              margin: 0,
               padding: "8px 16px",
+
               borderRadius: "999px",
 
               background:
@@ -2084,8 +2827,18 @@ if (loading) {
 
             <span
               style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+
                 minWidth: "22px",
                 height: "22px",
+
+                padding: "0 5px",
+
+                boxSizing:
+                  "border-box",
+
                 borderRadius: "999px",
 
                 background:
@@ -2098,10 +2851,6 @@ if (loading) {
                     ? "#fff"
                     : "inherit",
 
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-
                 fontSize: ".75rem",
                 fontWeight: 700,
               }}
@@ -2113,10 +2862,19 @@ if (loading) {
       </div>
 
       <button
+        type="button"
         className="glow-top delete"
         onClick={handleClearLogs}
+        style={{
+          width: isMobile
+            ? "100%"
+            : "auto",
+
+          margin: 0,
+        }}
       >
         <FaTrashAlt
+          aria-hidden="true"
           style={{
             marginRight: "8px",
           }}
@@ -2125,210 +2883,320 @@ if (loading) {
         {logFilter === "all"
           ? "Clear All Logs"
           : `Clear ${
-              logFilter.charAt(0).toUpperCase() +
+              logFilter
+                .charAt(0)
+                .toUpperCase() +
               logFilter.slice(1)
             } Logs`}
       </button>
     </div>
-    
+
     {filteredLogs.length === 0 ? (
-    <Card variant="glass">
-      <p
-        style={{
-          textAlign: "center",
-          opacity: 0.7,
-          padding: "20px 0",
-        }}
-      >
-        No matching logs found.
-      </p>
-    </Card>
-  ) : (
-  filteredLogs.map((log) => {
-      const meta = getLogMeta(log.level);
-      const Icon = meta.icon;
-      return(
-      <Card
-        key={log._id}
-        variant="glass"
-        style={{
-          padding: "20px",
-          marginBottom: "18px",
-        }}
-      >
-        <div
+      <Card variant="glass">
+        <p
           style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: "12px",
+            margin: 0,
+            padding: "20px 0",
+
+            textAlign: "center",
+
+            opacity: 0.7,
           }}
         >
-          <div
+          No matching logs found.
+        </p>
+      </Card>
+    ) : (
+      filteredLogs.map((log) => {
+        const meta =
+          getLogMeta(log.level);
+
+        const Icon = meta.icon;
+
+        return (
+          <Card
+            key={log._id}
+            variant="glass"
             style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "14px",
+              marginBottom: "18px",
+
+              padding: isMobile
+                ? "16px"
+                : "20px",
             }}
           >
             <div
               style={{
-                width: "42px",
-                height: "42px",
-                borderRadius: "50%",
-                background: `${meta.color}22`,
-                border: `1px solid ${meta.color}55`,
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                boxShadow: `0 0 18px ${meta.color}33`,
-                flexShrink: 0,
-              }}
-            >
-              <Icon
-                size={18}
-                color={meta.color}
-              />
-            </div>
-
-            <div
-              style={{
                 display: "flex",
                 alignItems: "center",
-                gap: "10px",
+                justifyContent:
+                  "space-between",
+
+                marginBottom: "12px",
               }}
             >
-              <span
+              <div
                 style={{
-                  padding: "4px 10px",
-                  borderRadius: "999px",
-                  fontSize: "11px",
-                  fontWeight: 700,
+                  display: "flex",
+                  alignItems: "center",
 
-                  background:
-                    log.level === "success"
-                      ? "#10b98122"
-                      : log.level === "warning"
-                      ? "#f59e0b22"
-                      : log.level === "error"
-                      ? "#ef444422"
-                      : "#3b82f622",
+                  minWidth: 0,
 
-                  color: meta.color,
-
-                  border: `1px solid ${meta.color}55`,
+                  gap: isMobile
+                    ? "10px"
+                    : "14px",
                 }}
               >
-                {log.level.toUpperCase()}
-              </span>
-
-              <span
-                style={{
-                  fontWeight: 600,
-                  opacity: 0.8,
-                }}
-              >
-                {log.source}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <h3
-          style={{
-            margin: "20px 0 14px",
-            fontSize: "1.15rem",
-            fontWeight: 700,
-            lineHeight: 1.5,
-          }}
-        >
-          {log.message}
-        </h3>
-        {log.details &&
-          Object.keys(log.details).length > 0 && (
-            <div
-              style={{
-                marginTop: "14px",
-                padding: "12px 16px",
-                borderRadius: "14px",
-
-                background: darkMode
-                  ? "rgba(255,255,255,.04)"
-                  : "rgba(0, 113, 123, 0.09)",
-
-                border: `1px solid ${
-                  darkMode
-                    ? "rgba(255,255,255,.08)"
-                    : "rgba(0, 229, 255, 0.11)"
-                }`,
-
-                boxShadow: darkMode
-                  ? "0 8px 24px rgba(0,0,0,.18)"
-                  : "0 8px 24px rgba(0,0,0,.05)",
-
-                display: "flex",
-                flexDirection: "column",
-                gap: "8px",
-              }}
-            >
-              {Object.entries(log.details).map(([key, value]) => (
                 <div
-                  key={key}
                   style={{
                     display: "flex",
                     alignItems: "center",
+                    justifyContent:
+                      "center",
+
+                    width: "42px",
+                    height: "42px",
+
+                    flexShrink: 0,
+
+                    color: meta.color,
+
+                    background:
+                      `${meta.color}22`,
+
+                    border:
+                      `1px solid ${meta.color}55`,
+
+                    borderRadius: "50%",
+
+                    boxShadow:
+                      `0 0 18px ${meta.color}33`,
+                  }}
+                >
+                  <Icon
+                    aria-hidden="true"
+                    size={18}
+                    color={meta.color}
+                  />
+                </div>
+
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+
+                    minWidth: 0,
+
                     gap: "10px",
                   }}
                 >
-                  <strong
+                  <span
                     style={{
-                      minWidth: "90px",
-                      fontSize: ".82rem",
+                      flexShrink: 0,
+
+                      padding:
+                        "4px 10px",
+
+                      borderRadius:
+                        "999px",
+
+                      fontSize: "11px",
                       fontWeight: 700,
-                      textTransform: "capitalize",
-                      color: darkMode
-                        ? "rgba(255,255,255,.7)"
-                        : "rgba(0,0,0,.65)"
+
+                      background:
+                        log.level ===
+                        "success"
+                          ? "#10b98122"
+                          : log.level ===
+                              "warning"
+                            ? "#f59e0b22"
+                            : log.level ===
+                                "error"
+                              ? "#ef444422"
+                              : "#3b82f622",
+
+                      color: meta.color,
+
+                      border:
+                        `1px solid ${meta.color}55`,
                     }}
                   >
-                    {key}:
-                  </strong>
+                    {log.level.toUpperCase()}
+                  </span>
 
                   <span
                     style={{
-                      fontSize: ".9rem",
-                      wordBreak: "break-word",
-                      color: darkMode
-                        ? "rgba(255,255,255,.92)"
-                        : "#1f2937"
+                      minWidth: 0,
+
+                      fontWeight: 600,
+
+                      overflow: "hidden",
+                      textOverflow:
+                        "ellipsis",
+                      whiteSpace: "nowrap",
+
+                      opacity: 0.8,
                     }}
                   >
-                    {String(value)}
+                    {log.source}
                   </span>
                 </div>
-              ))}
+              </div>
             </div>
-        )}
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "flex-end",
-            marginTop: "18px",
-          }}
-        >
-          <small
-            style={{
-              opacity: 0.6,
-              fontSize: ".85rem",
-            }}
-          >
-            {getLogDate(log.createdAt)}
-          </small>
-        </div>
-    </Card>
-    );
-  })
-)}
+
+            <h3
+              style={{
+                margin:
+                  "20px 0 14px",
+
+                fontSize: "1.15rem",
+                fontWeight: 700,
+                lineHeight: 1.5,
+
+                overflowWrap:
+                  "anywhere",
+              }}
+            >
+              {log.message}
+            </h3>
+
+            {log.details &&
+              Object.keys(
+                log.details
+              ).length > 0 && (
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection:
+                      "column",
+
+                    gap: "8px",
+
+                    marginTop: "14px",
+                    padding:
+                      "12px 16px",
+
+                    borderRadius:
+                      "14px",
+
+                    background:
+                      darkMode
+                        ? "rgba(255,255,255,.04)"
+                        : "rgba(0,113,123,.09)",
+
+                    border: `1px solid ${
+                      darkMode
+                        ? "rgba(255,255,255,.08)"
+                        : "rgba(0,229,255,.11)"
+                    }`,
+
+                    boxShadow:
+                      darkMode
+                        ? "0 8px 24px rgba(0,0,0,.18)"
+                        : "0 8px 24px rgba(0,0,0,.05)",
+                  }}
+                >
+                  {Object.entries(
+                    log.details
+                  ).map(
+                    ([
+                      key,
+                      value,
+                    ]) => (
+                      <div
+                        key={key}
+                        style={{
+                          display:
+                            "flex",
+
+                          flexDirection:
+                            isMobile
+                              ? "column"
+                              : "row",
+
+                          alignItems:
+                            isMobile
+                              ? "flex-start"
+                              : "center",
+
+                          gap: isMobile
+                            ? "3px"
+                            : "10px",
+                        }}
+                      >
+                        <strong
+                          style={{
+                            minWidth:
+                              isMobile
+                                ? 0
+                                : "90px",
+
+                            fontSize:
+                              ".82rem",
+
+                            fontWeight:
+                              700,
+
+                            textTransform:
+                              "capitalize",
+
+                            color:
+                              darkMode
+                                ? "rgba(255,255,255,.7)"
+                                : "rgba(0,0,0,.65)",
+                          }}
+                        >
+                          {key}:
+                        </strong>
+
+                        <span
+                          style={{
+                            minWidth: 0,
+
+                            fontSize:
+                              ".9rem",
+
+                            overflowWrap:
+                              "anywhere",
+
+                            color:
+                              darkMode
+                                ? "rgba(255,255,255,.92)"
+                                : "#1f2937",
+                          }}
+                        >
+                          {String(value)}
+                        </span>
+                      </div>
+                    )
+                  )}
+                </div>
+              )}
+
+            <div
+              style={{
+                display: "flex",
+                justifyContent:
+                  "flex-end",
+
+                marginTop: "18px",
+              }}
+            >
+              <small
+                style={{
+                  fontSize: ".85rem",
+                  opacity: 0.6,
+                }}
+              >
+                {getLogDate(
+                  log.createdAt
+                )}
+              </small>
+            </div>
+          </Card>
+        );
+      })
+    )}
   </>
 )}
 

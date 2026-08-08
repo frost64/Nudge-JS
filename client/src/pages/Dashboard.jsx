@@ -64,30 +64,31 @@ const STAT_CONFIG = [
     path: "/reminders",
     valueKey: "totalReminders",
     icon: FaClock,
+    color: "#f59e0b",
   },
   {
     title: "Notes",
     path: "/notes",
     valueKey: "totalNotes",
     icon: FaStickyNote,
+    color: "#10b981",
   },
   {
     title: "Birthdays",
     path: "/birthdays",
     valueKey: "totalBirthdays",
     icon: FaBirthdayCake,
+    color: "#ec4899",
   },
   {
     title: "Links",
     path: "/links",
     valueKey: "totalLinks",
     icon: FaLink,
+    color: "#8b5cf6",
   },
 ];
 
-/**
- * Returns the greeting content appropriate for the current time.
- */
 function getGreetingContent() {
   const hour = new Date().getHours();
 
@@ -120,33 +121,29 @@ function getGreetingContent() {
   };
 }
 
-/**
- * Returns the current date in a readable dashboard format.
- */
 function getFormattedDate() {
-  return new Date().toLocaleDateString(undefined, {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-  });
+  return new Date().toLocaleDateString(
+    undefined,
+    {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+    }
+  );
 }
 
-/**
- * Main productivity dashboard.
- *
- * Displays user statistics, quick actions, local weather,
- * saved favorites, birthdays, and reminder summaries.
- */
 function Dashboard() {
   const navigate = useNavigate();
 
   const { user } = useContext(AuthContext);
-  const { isMobile, isTablet } = useBreakpoint();
+  const { isMobile, isTablet } =
+    useBreakpoint();
 
   const [data, setData] = useState(null);
   const [error, setError] = useState("");
 
-  const darkMode = user?.theme === "dark";
+  const darkMode =
+    user?.theme === "dark";
 
   const dashboardBackground = darkMode
     ? dashboardDarkBg
@@ -170,7 +167,8 @@ function Dashboard() {
   );
 
   useEffect(() => {
-    const controller = new AbortController();
+    const controller =
+      new AbortController();
 
     const fetchDashboard = async () => {
       try {
@@ -185,8 +183,10 @@ function Dashboard() {
         setError("");
       } catch (requestError) {
         if (
-          requestError.name === "CanceledError" ||
-          requestError.code === "ERR_CANCELED"
+          requestError.name ===
+            "CanceledError" ||
+          requestError.code ===
+            "ERR_CANCELED"
         ) {
           return;
         }
@@ -194,7 +194,8 @@ function Dashboard() {
         console.error(requestError);
 
         const message =
-          requestError.response?.data?.message ||
+          requestError.response?.data
+            ?.message ||
           "Failed to load dashboard.";
 
         setError(message);
@@ -212,76 +213,56 @@ function Dashboard() {
   const quickAccess = useMemo(
     () => (
       <Card
+        className="nudge-sidebar"
         variant="glass"
-        style={{
-          width: "100%",
-          minWidth: 0,
-          margin: 0,
-          padding: isTablet ? "20px" : "24px",
-          borderRadius: "22px",
-        }}
       >
-        <h1
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-
-            gap: "8px",
-
-            marginTop: 0,
-            marginBottom: "16px",
-
-            fontSize: isTablet
-              ? "1.6rem"
-              : "1.8rem",
-
-            textAlign: "center",
-            whiteSpace: "nowrap",
-          }}
-        >
+        <h1 className="nudge-sidebar-title">
           <FaBolt aria-hidden="true" />
-          Quick Access
+
+          <span>Quick Access</span>
         </h1>
 
-        {QUICK_ACTIONS.map(
-          ({
-            label,
-            path,
-            icon: Icon,
-          }) => (
-            <button
-              key={path}
-              type="button"
-              className="glow-top left"
-              onClick={() => navigateTo(path)}
-              style={{
-                width: "100%",
-                margin: "0 0 12px",
-                textAlign: "left",
-              }}
-            >
-              <Icon
-                aria-hidden="true"
-                size={13}
-                style={{
-                  marginRight: "6px",
-                }}
-              />
+        <nav
+          className="nudge-sidebar-actions"
+          aria-label="Dashboard quick actions"
+        >
+          {QUICK_ACTIONS.map(
+            ({
+              label,
+              path,
+              icon: Icon,
+            }) => (
+              <button
+                key={path}
+                type="button"
+                className="glow-top left nudge-sidebar-button"
+                onClick={() =>
+                  navigateTo(path)
+                }
+              >
+                <Icon
+                  aria-hidden="true"
+                  className="nudge-sidebar-button-icon"
+                />
 
-              {label}
-            </button>
-          )
-        )}
+                <span className="nudge-sidebar-button-text">
+                  {label}
+                </span>
+              </button>
+            )
+          )}
+        </nav>
       </Card>
     ),
-    [isTablet, navigateTo]
+    [navigateTo]
   );
 
   if (error) {
     return (
       <Layout
-        backgroundImage={dashboardBackground}
+        backgroundImage={
+          dashboardBackground
+        }
         cardVariant="glass"
       >
         <Card
@@ -293,8 +274,15 @@ function Dashboard() {
             textAlign: "center",
           }}
         >
-          <h2>Unable to load dashboard</h2>
-          <p style={{ marginBottom: 0 }}>
+          <h2>
+            Unable to load dashboard
+          </h2>
+
+          <p
+            style={{
+              marginBottom: 0,
+            }}
+          >
             {error}
           </p>
         </Card>
@@ -305,21 +293,23 @@ function Dashboard() {
   if (!data) {
     return (
       <Layout
-        backgroundImage={dashboardBackground}
+        backgroundImage={
+          dashboardBackground
+        }
         cardVariant="glass"
       >
-        <LoadingSpinner
-          text="Loading Dashboard..."
-        />
+        <LoadingSpinner text="Loading Dashboard..." />
       </Layout>
     );
   }
 
-  const GreetingIcon = greeting.icon;
+  const GreetingIcon =
+    greeting.icon;
 
   return (
     <Layout
       sidebar={quickAccess}
+      sidebarTitle="Quick Access"
       backgroundImage={dashboardBackground}
       cardVariant="glass"
     >
@@ -336,12 +326,12 @@ function Dashboard() {
             : "28px",
         }}
       >
-        {/* Greeting and weather */}
         <Card
           variant="glass"
           style={{
             width: "100%",
             margin: 0,
+
             padding: isMobile
               ? "20px"
               : isTablet
@@ -352,27 +342,43 @@ function Dashboard() {
           <div
             style={{
               display: "flex",
+
               flexDirection: isMobile
                 ? "column"
                 : "row",
 
-              justifyContent: "space-between",
+              justifyContent: isMobile
+                ? "flex-start"
+                : "space-between",
+
               alignItems: isMobile
                 ? "stretch"
                 : "center",
 
               gap: isMobile
-                ? "24px"
+                ? "18px"
                 : "30px",
 
+              width: "100%",
               minWidth: 0,
             }}
           >
             <div
               style={{
-                flexGrow: 1,
+                flexGrow: isMobile
+                  ? 0
+                  : 1,
+
                 flexShrink: 1,
-                flexBasis: "320px",
+
+                flexBasis: isMobile
+                  ? "auto"
+                  : "320px",
+
+                width: isMobile
+                  ? "100%"
+                  : "auto",
+
                 minWidth: 0,
               }}
             >
@@ -388,7 +394,10 @@ function Dashboard() {
 
                   fontWeight: 800,
                   letterSpacing: "-1px",
-                  overflowWrap: "anywhere",
+
+                  overflowWrap:
+                    "anywhere",
+
                   userSelect: "none",
                 }}
               >
@@ -401,11 +410,15 @@ function Dashboard() {
                     background:
                       "linear-gradient(90deg, #8d7cff 0%, #7d8dff 22%, #6da6ff 55%, #7fb9ff 100%)",
 
-                    WebkitBackgroundClip: "text",
+                    WebkitBackgroundClip:
+                      "text",
+
                     WebkitTextFillColor:
                       "transparent",
 
-                    backgroundClip: "text",
+                    backgroundClip:
+                      "text",
+
                     color: "transparent",
                   }}
                 >
@@ -436,13 +449,16 @@ function Dashboard() {
                   opacity: 0.75,
                 }}
               >
-                <span>{greeting.message}</span>
+                <span>
+                  {greeting.message}
+                </span>
 
                 <GreetingIcon
                   aria-hidden="true"
                   style={{
                     flexShrink: 0,
-                    color: greeting.iconColor,
+                    color:
+                      greeting.iconColor,
                   }}
                 />
               </p>
@@ -480,8 +496,9 @@ function Dashboard() {
           </div>
         </Card>
 
-        {/* Statistics */}
-        <section aria-labelledby="dashboard-statistics">
+        <section
+          aria-labelledby="dashboard-statistics"
+        >
           <h1
             id="dashboard-statistics"
             style={{
@@ -495,14 +512,15 @@ function Dashboard() {
             style={{
               display: "grid",
 
-              gridTemplateColumns: isMobile
-                ? "minmax(0, 1fr)"
-                : isTablet
-                  ? "repeat(2, minmax(0, 1fr))"
-                  : "repeat(4, minmax(0, 1fr))",
+              gridTemplateColumns:
+                isMobile
+                  ? "repeat(4, minmax(0, 1fr))"
+                  : isTablet
+                    ? "repeat(2, minmax(0, 1fr))"
+                    : "repeat(4, minmax(0, 1fr))",
 
               gap: isMobile
-                ? "14px"
+                ? "8px"
                 : "24px",
 
               width: "100%",
@@ -514,77 +532,194 @@ function Dashboard() {
                 path,
                 valueKey,
                 icon: Icon,
+                color,
               }) => (
                 <Card
                   key={path}
                   variant="glass"
                   style={{
                     height: "100%",
+                    minWidth: 0,
                     margin: 0,
+
+                    padding: isMobile
+                      ? "10px 4px"
+                      : "14px",
+
+                    borderRadius:
+                      isMobile
+                        ? "14px"
+                        : "20px",
                   }}
                 >
                   <button
                     type="button"
-                    className="underline"
                     onClick={() =>
                       navigateTo(path)
                     }
+                    aria-label={`Open ${title}`}
                     style={{
-                      display: "inline-flex",
+                      display: "flex",
+
+                      flexDirection:
+                        isMobile
+                          ? "column"
+                          : "row",
+
                       alignItems: "center",
+
+                      justifyContent:
+                        isMobile
+                          ? "center"
+                          : "flex-start",
+
+                      width: "100%",
+                      minWidth: 0,
+                      height: "100%",
+
+                      gap: isMobile
+                        ? "5px"
+                        : "14px",
 
                       margin: 0,
                       padding: 0,
 
                       color: "inherit",
-                      background: "transparent",
+                      background:
+                        "transparent",
+
                       border: "none",
 
                       font: "inherit",
-                      fontWeight: 700,
+
+                      textAlign: isMobile
+                        ? "center"
+                        : "left",
+
                       cursor: "pointer",
                     }}
                   >
-                    <Icon
-                      aria-hidden="true"
+                    <span
                       style={{
-                        marginRight: "6px",
+                        display: "flex",
+                        alignItems:
+                          "center",
+
+                        justifyContent:
+                          "center",
+
+                        width: isMobile
+                          ? "38px"
+                          : "54px",
+
+                        height: isMobile
+                          ? "38px"
+                          : "54px",
+
+                        flexShrink: 0,
+
+                        borderRadius:
+                          "50%",
+
+                        color,
+
+                        background:
+                          `${color}22`,
+
+                        boxShadow:
+                          `0 0 14px ${color}33`,
                       }}
-                    />
+                    >
+                      <Icon
+                        aria-hidden="true"
+                        size={
+                          isMobile
+                            ? 17
+                            : 22
+                        }
+                      />
+                    </span>
 
-                    {title}
+                    <span
+                      style={{
+                        display: "flex",
+                        flexDirection:
+                          "column",
+
+                        alignItems:
+                          isMobile
+                            ? "center"
+                            : "flex-start",
+
+                        justifyContent:
+                          "center",
+
+                        minWidth: 0,
+
+                        gap: isMobile
+                          ? "4px"
+                          : "6px",
+                      }}
+                    >
+                      <span
+                        style={{
+                          maxWidth:
+                            "100%",
+
+                          fontSize:
+                            isMobile
+                              ? ".68rem"
+                              : ".95rem",
+
+                          fontWeight: 700,
+                          lineHeight: 1.15,
+
+                          overflow:
+                            "hidden",
+
+                          textOverflow:
+                            "ellipsis",
+
+                          whiteSpace:
+                            "nowrap",
+                        }}
+                      >
+                        {title}
+                      </span>
+
+                      <span
+                        style={{
+                          fontSize:
+                            isMobile
+                              ? "1rem"
+                              : "1.7rem",
+
+                          lineHeight: 1,
+                          fontWeight: 800,
+                          userSelect:
+                            "none",
+                        }}
+                      >
+                        {data.stats?.[
+                          valueKey
+                        ] ?? 0}
+                      </span>
+                    </span>
                   </button>
-
-                  <div
-                    style={{
-                      marginTop: "16px",
-
-                      fontSize: isMobile
-                        ? "1.8rem"
-                        : "2rem",
-
-                      fontWeight: 800,
-                      userSelect: "none",
-                    }}
-                  >
-                    {data.stats?.[valueKey] ?? 0}
-                  </div>
                 </Card>
               )
             )}
           </div>
         </section>
 
-        {/* Dashboard summaries */}
         <div
           className="dashboard-container"
           style={{
             display: "grid",
 
-            gridTemplateColumns: isMobile
-              ? "minmax(0, 1fr)"
-              : isTablet
-                ? "repeat(2, minmax(0, 1fr))"
+            gridTemplateColumns:
+              isMobile
+                ? "minmax(0, 1fr)"
                 : "repeat(2, minmax(0, 1fr))",
 
             gap: isMobile
@@ -598,9 +733,13 @@ function Dashboard() {
           <DashboardSection
             title="Favorite Links"
             icon={FaStar}
-            items={data.favoriteLinks}
+            items={
+              data.favoriteLinks
+            }
             emptyMessage="No favorite links"
-            getItemLabel={(item) => item.title}
+            getItemLabel={(item) =>
+              item.title
+            }
             onItemClick={(item) =>
               navigateTo(
                 `/links?linkId=${item._id}`
@@ -616,31 +755,39 @@ function Dashboard() {
               5
             )}
             emptyMessage="No upcoming birthdays"
-            getItemLabel={(birthday) => (
+            getItemLabel={(
+              birthday
+            ) => (
               <>
                 {birthday.name}{" "}
 
-                {birthday.daysRemaining === 0 ? (
+                {birthday.daysRemaining ===
+                0 ? (
                   <span>
                     <FaGift
                       aria-hidden="true"
                       size={13}
                       style={{
-                        marginInline: "4px",
+                        marginInline:
+                          "4px",
                       }}
                     />
+
                     Today!
                   </span>
                 ) : (
                   `(${birthday.daysRemaining} day${
-                    birthday.daysRemaining !== 1
+                    birthday.daysRemaining !==
+                    1
                       ? "s"
                       : ""
                   } left)`
                 )}
               </>
             )}
-            onItemClick={(birthday) =>
+            onItemClick={(
+              birthday
+            ) =>
               navigateTo(
                 `/birthdays?birthdayId=${birthday._id}`
               )
@@ -649,12 +796,17 @@ function Dashboard() {
 
           <DashboardSection
             title="Overdue Reminders"
-            icon={FaExclamationTriangle}
+            icon={
+              FaExclamationTriangle
+            }
             iconColor="#ff6b6b"
-            items={data.overdueReminders}
+            items={
+              data.overdueReminders
+            }
             emptyMessage={
               <>
                 No overdue reminders{" "}
+
                 <FaGift
                   aria-hidden="true"
                   style={{
@@ -663,7 +815,9 @@ function Dashboard() {
                 />
               </>
             }
-            getItemLabel={(item) => item.title}
+            getItemLabel={(item) =>
+              item.title
+            }
             itemStyle={{
               color: "#ff6b6b",
               fontWeight: 700,
@@ -678,9 +832,13 @@ function Dashboard() {
           <DashboardSection
             title="Pending Reminders"
             icon={FaTasks}
-            items={data.pendingReminders}
+            items={
+              data.pendingReminders
+            }
             emptyMessage="No pending reminders"
-            getItemLabel={(item) => item.title}
+            getItemLabel={(item) =>
+              item.title
+            }
             onItemClick={(item) =>
               navigateTo(
                 `/reminders?reminderId=${item._id}`
@@ -693,9 +851,6 @@ function Dashboard() {
   );
 }
 
-/**
- * Reusable dashboard summary card.
- */
 function DashboardSection({
   title,
   icon: Icon,
@@ -706,9 +861,10 @@ function DashboardSection({
   onItemClick,
   itemStyle = {},
 }) {
-  const normalizedItems = Array.isArray(items)
-    ? items
-    : [];
+  const normalizedItems =
+    Array.isArray(items)
+      ? items
+      : [];
 
   return (
     <Card
@@ -725,7 +881,6 @@ function DashboardSection({
           flexWrap: "wrap",
 
           gap: "8px",
-
           marginTop: 0,
         }}
       >
@@ -739,7 +894,8 @@ function DashboardSection({
         {title}
       </h2>
 
-      {normalizedItems.length === 0 ? (
+      {normalizedItems.length ===
+      0 ? (
         <p
           style={{
             marginBottom: 0,
@@ -749,32 +905,38 @@ function DashboardSection({
           {emptyMessage}
         </p>
       ) : (
-        normalizedItems.map((item) => (
-          <button
-            key={item._id}
-            type="button"
-            className="search-result-item"
-            onClick={() => onItemClick(item)}
-            style={{
-              display: "block",
+        normalizedItems.map(
+          (item) => (
+            <button
+              key={item._id}
+              type="button"
+              className="search-result-item"
+              onClick={() =>
+                onItemClick(item)
+              }
+              style={{
+                display: "block",
 
-              width: "100%",
-              margin: "12px 0",
-              padding: "14px",
+                width: "100%",
+                margin: "12px 0",
+                padding: "14px",
 
-              color: "inherit",
-              font: "inherit",
-              textAlign: "left",
+                color: "inherit",
+                font: "inherit",
+                textAlign: "left",
 
-              background: "transparent",
-              cursor: "pointer",
+                background:
+                  "transparent",
 
-              ...itemStyle,
-            }}
-          >
-            {getItemLabel(item)}
-          </button>
-        ))
+                cursor: "pointer",
+
+                ...itemStyle,
+              }}
+            >
+              {getItemLabel(item)}
+            </button>
+          )
+        )
       )}
     </Card>
   );

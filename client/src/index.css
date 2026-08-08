@@ -64,6 +64,26 @@ svg {
   min-height: 100dvh;
 }
 
+/* Reserve space only on screens where the navbar exists. */
+:root {
+  --navbar-top-offset: 10px;
+  --navbar-height: 90px;
+  --navbar-content-gap: 20px;
+}
+
+/*
+ * Reserve space for the fixed navbar inside the page content.
+ * Do not add this padding to body because that moves the
+ * complete Layout background downward.
+ */
+#layout-content {
+  padding-top: calc(
+    var(--navbar-top-offset) +
+    var(--navbar-height) +
+    var(--navbar-content-gap)
+  );
+}
+
 /* =========================================================
    GENERAL PAGE CONTAINER
 ========================================================= */
@@ -449,10 +469,11 @@ body.dark .input-icon {
 ========================================================= */
 
 .nav-style {
-  position: sticky;
-  z-index: 1000;
+  position: fixed;
+  z-index: 2000;
 
-  top: 10px;
+  top: var(--navbar-top-offset);
+  left: 50%;
 
   display: flex;
   align-items: center;
@@ -460,12 +481,15 @@ body.dark .input-icon {
 
   width: calc(100% - 20px);
   min-width: 0;
-  min-height: 90px;
+  min-height: var(--navbar-height);
 
-  margin: 0 auto;
+  margin: 0;
   padding: 0 25px;
 
   gap: 20px;
+
+  isolation: isolate;
+  transform: translateX(-50%);
 }
 
 /* =========================================================
@@ -1178,6 +1202,12 @@ body.dark .nudge-loader-center {
 ========================================================= */
 
 @media (max-width: 767px) {
+  :root {
+    --navbar-top-offset: 6px;
+    --navbar-height: 70px;
+    --navbar-content-gap: 12px;
+  }
+
   body {
     font-size: 15px;
   }
@@ -1272,5 +1302,623 @@ body.dark .nudge-loader-center {
     scroll-behavior: auto !important;
 
     transition-duration: 0.01ms !important;
+  }
+}
+
+
+/* -------------------------------------------------------------------------- */
+
+/* =========================================================
+   GLOBAL APPLICATION SIDEBAR
+========================================================= */
+
+:root {
+  --nudge-sidebar-width: 300px;
+  --nudge-sidebar-top: 130px;
+  --nudge-sidebar-bottom-gap: 20px;
+
+  --nudge-sidebar-padding: 24px;
+  --nudge-sidebar-radius: 22px;
+
+  --nudge-sidebar-button-height: 52px;
+  --nudge-sidebar-button-gap: 12px;
+}
+
+/*
+ * The current Layout component places the sidebar inside an aside.
+ * This reserves exactly the same width for every page.
+ */
+#layout-content
+  aside:has(> .nudge-sidebar) {
+  position: static !important;
+
+  width: var(
+    --nudge-sidebar-width
+  ) !important;
+
+  min-width: var(
+    --nudge-sidebar-width
+  ) !important;
+
+  flex-grow: 0 !important;
+  flex-shrink: 0 !important;
+  flex-basis: var(
+    --nudge-sidebar-width
+  ) !important;
+
+  overflow: visible !important;
+}
+
+/*
+ * Main sidebar card.
+ *
+ * Apply className="nudge-sidebar" to the Card that
+ * contains a page's sidebar.
+ */
+.nudge-sidebar {
+  position: fixed !important;
+  z-index: 900;
+
+  top: var(
+    --nudge-sidebar-top
+  ) !important;
+
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+
+  width: var(
+    --nudge-sidebar-width
+  ) !important;
+
+  min-width: var(
+    --nudge-sidebar-width
+  ) !important;
+
+  height:
+    calc(
+      100dvh -
+      var(--nudge-sidebar-top) -
+      var(--nudge-sidebar-bottom-gap)
+    ) !important;
+
+  min-height: 0 !important;
+
+  max-height:
+    calc(
+      100dvh -
+      var(--nudge-sidebar-top) -
+      var(--nudge-sidebar-bottom-gap)
+    ) !important;
+
+  margin: 0 !important;
+
+  padding: var(
+    --nudge-sidebar-padding
+  ) !important;
+
+  box-sizing: border-box !important;
+
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+
+  border-radius: var(
+    --nudge-sidebar-radius
+  ) !important;
+
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+
+  transition:
+    opacity 0.35s ease,
+    visibility 0.35s ease,
+    background 0.25s ease,
+    border-color 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+/* Sidebar heading */
+
+.nudge-sidebar-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 100%;
+  min-width: 0;
+
+  gap: 10px;
+
+  margin: 0 0 20px;
+  padding: 0;
+
+  text-align: center;
+  line-height: 1.25;
+}
+
+/* Container holding sidebar buttons */
+
+.nudge-sidebar-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+
+  width: 100%;
+  min-width: 0;
+
+  margin: 0;
+  padding: 0;
+
+  gap: var(
+    --nudge-sidebar-button-gap
+  );
+}
+
+/*
+ * Equal-length sidebar buttons.
+ *
+ * This supports both the existing glow-top buttons and the
+ * new nudge-sidebar-button class.
+ */
+.nudge-sidebar
+  .glow-top.left,
+.nudge-sidebar-button {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+
+  min-height: var(
+    --nudge-sidebar-button-height
+  ) !important;
+
+  margin: 0 !important;
+
+  padding: 12px 16px !important;
+
+  box-sizing: border-box !important;
+
+  text-align: left !important;
+  white-space: normal;
+
+  flex-shrink: 0;
+}
+
+/* Equal icon alignment */
+
+.nudge-sidebar-button-icon,
+.nudge-sidebar
+  .glow-top.left
+  > svg {
+  width: 18px;
+  min-width: 18px;
+
+  margin-right: 10px;
+
+  flex-shrink: 0;
+}
+
+/* Text inside sidebar buttons */
+
+.nudge-sidebar-button-text {
+  min-width: 0;
+
+  overflow-wrap: anywhere;
+  text-align: left;
+}
+
+/* Remove the old per-button bottom margins */
+
+.nudge-sidebar
+  .glow-top.left:not(:last-child),
+.nudge-sidebar-button:not(:last-child) {
+  margin-bottom: 0 !important;
+}
+
+/* Sidebar scrollbar */
+
+.nudge-sidebar {
+  scrollbar-width: thin;
+
+  scrollbar-color:
+    rgba(6, 126, 169, 0.4)
+    transparent;
+}
+
+.nudge-sidebar::-webkit-scrollbar {
+  width: 7px;
+}
+
+.nudge-sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.nudge-sidebar::-webkit-scrollbar-thumb {
+  background:
+    rgba(6, 126, 169, 0.38);
+
+  border-radius: 999px;
+}
+
+body.dark
+  .nudge-sidebar {
+  scrollbar-color:
+    rgba(94, 234, 212, 0.35)
+    transparent;
+}
+
+body.dark
+  .nudge-sidebar::-webkit-scrollbar-thumb {
+  background:
+    rgba(94, 234, 212, 0.35);
+}
+
+/* =========================================================
+   TABLET SIDEBAR
+========================================================= */
+
+@media (
+  min-width: 768px
+) and (
+  max-width: 1199px
+) {
+  :root {
+    --nudge-sidebar-width: 260px;
+    --nudge-sidebar-top: 120px;
+    --nudge-sidebar-padding: 20px;
+    --nudge-sidebar-button-height: 50px;
+  }
+
+  .nudge-sidebar {
+    left: 16px !important;
+  }
+}
+
+/* =========================================================
+   MOBILE SIDEBAR
+========================================================= */
+
+@media (max-width: 767px) {
+  :root {
+    --nudge-sidebar-width: 100%;
+    --nudge-sidebar-padding: 18px;
+    --nudge-sidebar-button-height: 50px;
+  }
+
+  #layout-content
+    aside:has(> .nudge-sidebar) {
+    position: static !important;
+
+    width: 100% !important;
+    min-width: 0 !important;
+
+    flex-basis: auto !important;
+  }
+
+  .nudge-sidebar {
+    position: static !important;
+
+    top: auto !important;
+    left: auto !important;
+
+    width: 100% !important;
+    min-width: 0 !important;
+
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+
+    overflow: visible !important;
+  }
+}
+
+/* =========================================================
+   REMOVE EXTRA SPACE LEFT OF SIDEBAR
+========================================================= */
+
+:root {
+  --nudge-sidebar-edge-gap: 20px;
+}
+
+/*
+ * Pages containing a Nudge sidebar use the available
+ * viewport width instead of the centered 1400px wrapper.
+ */
+@media (min-width: 768px) {
+  #layout-content
+    > div:has(> aside > .nudge-sidebar) {
+    max-width: none !important;
+  }
+
+  /*
+   * Keep the sidebar close to the left edge.
+   */
+  .nudge-sidebar {
+    left: var(
+      --nudge-sidebar-edge-gap
+    ) !important;
+  }
+}
+
+/* Tablet alignment matches Layout's 16px padding. */
+@media (
+  min-width: 768px
+) and (
+  max-width: 1199px
+) {
+  :root {
+    --nudge-sidebar-edge-gap: 16px;
+  }
+}
+
+/* Mobile sidebar remains inside the normal page flow. */
+@media (max-width: 767px) {
+  .nudge-sidebar {
+    left: auto !important;
+  }
+}
+
+.nudge-sidebar-title {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-wrap: nowrap !important;
+
+  width: 100% !important;
+  min-width: 0;
+
+  white-space: nowrap !important;
+}
+
+.nudge-sidebar-title > svg {
+  flex-shrink: 0;
+}
+
+.nudge-sidebar-title > span {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* =========================================================
+   ADMIN SIDEBAR
+========================================================= */
+
+.nudge-sidebar-footer {
+  width: 100%;
+  min-width: 0;
+
+  margin-top: auto;
+  padding-top: 20px;
+
+  box-sizing: border-box;
+}
+
+.nudge-sidebar-status {
+  width: 100% !important;
+  min-width: 0 !important;
+
+  margin: 0 !important;
+  padding: 16px !important;
+
+  box-sizing: border-box !important;
+}
+
+.nudge-sidebar-status-content {
+  display: flex;
+  align-items: center;
+
+  width: 100%;
+  min-width: 0;
+
+  gap: 14px;
+}
+
+.nudge-sidebar-status-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 52px;
+  height: 52px;
+
+  flex: 0 0 52px;
+
+  border: 1px solid;
+  border-radius: 50%;
+
+  box-sizing: border-box;
+}
+
+.nudge-sidebar-status-details {
+  min-width: 0;
+  flex: 1;
+}
+
+.nudge-sidebar-status-title {
+  margin: 0 0 9px;
+
+  font-size: 1rem;
+  line-height: 1.2;
+}
+
+.nudge-sidebar-status-badge {
+  display: inline-block;
+
+  max-width: 100%;
+
+  padding: 4px 8px;
+
+  border: 1px solid;
+  border-radius: 999px;
+
+  box-sizing: border-box;
+
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.35;
+
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.nudge-sidebar-button-active {
+  color: #ffffff !important;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(14, 165, 233, 0.78),
+      rgba(20, 184, 166, 0.72)
+    ) !important;
+
+  border-color:
+    rgba(125, 211, 252, 0.7) !important;
+
+  box-shadow:
+    inset 0 1px 4px rgba(255, 255, 255, 0.18),
+    0 0 16px rgba(14, 165, 233, 0.28) !important;
+}
+
+@media (max-height: 720px) and (min-width: 768px) {
+  .nudge-sidebar-footer {
+    margin-top: 20px;
+  }
+
+  .nudge-sidebar-status {
+    padding: 12px !important;
+  }
+
+  .nudge-sidebar-status-icon {
+    width: 44px;
+    height: 44px;
+    flex-basis: 44px;
+  }
+}
+
+
+#app-footer,
+#app-footer > div,
+#app-footer .card {
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+@media (max-width: 767px) {
+  #app-footer {
+    position: relative !important;
+
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+
+    margin-bottom: 0 !important;
+
+    overflow: visible !important;
+  }
+}
+
+@keyframes nudge-sidebar-overlay-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes nudge-sidebar-drawer-in {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [role="dialog"] {
+    animation: none !important;
+  }
+}
+
+/* =========================================================
+   MOBILE SIDEBAR DRAWER
+========================================================= */
+
+/*
+ * Remove the regular outer glow from the sidebar Card
+ * only while it is rendered inside the mobile drawer.
+ */
+.nudge-mobile-sidebar-drawer
+  .nudge-sidebar {
+  box-shadow:
+    inset 0 1px 4px
+      rgba(255, 255, 255, 0.45),
+    inset 0 0 18px
+      rgba(14, 165, 233, 0.14),
+    inset 0 0 34px
+      rgba(20, 184, 166, 0.1)
+    !important;
+}
+
+/*
+ * Dark-mode inner glow.
+ */
+body.dark
+  .nudge-mobile-sidebar-drawer
+  .nudge-sidebar {
+  box-shadow:
+    inset 0 1px 4px
+      rgba(255, 255, 255, 0.12),
+    inset 0 0 20px
+      rgba(14, 165, 233, 0.2),
+    inset 0 0 38px
+      rgba(45, 212, 191, 0.14)
+    !important;
+}
+
+/*
+ * Prevent generic Card hover styles from restoring
+ * an outer shadow inside the mobile drawer.
+ */
+.nudge-mobile-sidebar-drawer
+  .nudge-sidebar:hover {
+  box-shadow:
+    inset 0 1px 4px
+      rgba(255, 255, 255, 0.45),
+    inset 0 0 18px
+      rgba(14, 165, 233, 0.14),
+    inset 0 0 34px
+      rgba(20, 184, 166, 0.1)
+    !important;
+}
+
+body.dark
+  .nudge-mobile-sidebar-drawer
+  .nudge-sidebar:hover {
+  box-shadow:
+    inset 0 1px 4px
+      rgba(255, 255, 255, 0.12),
+    inset 0 0 20px
+      rgba(14, 165, 233, 0.2),
+    inset 0 0 38px
+      rgba(45, 212, 191, 0.14)
+    !important;
+}
+
+@keyframes nudge-modal-overlay-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
   }
 }

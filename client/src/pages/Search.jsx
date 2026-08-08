@@ -285,161 +285,105 @@ function Search() {
   }, [query]);
 
   const sidebar = useMemo(
-    () => (
-      <Card
-        variant="glass"
-        style={{
-          width: "100%",
-          minWidth: 0,
-          margin: 0,
+  () => (
+    <Card
+      className="nudge-sidebar"
+      variant="glass"
+    >
+      <h1 className="nudge-sidebar-title">
+        <FaSearch
+          aria-hidden="true"
+          color="#38bdf8"
+        />
 
-          padding: isTablet
-            ? "20px"
-            : "24px",
+        <span>Search By</span>
+      </h1>
 
-          borderRadius: "22px",
-        }}
-      >
-        <h1
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            flexWrap: "wrap",
-
-            gap: "8px",
-
-            marginTop: 0,
-            marginBottom: "18px",
-
-            fontSize: isTablet
-              ? "1.7rem"
-              : "2rem",
-
-            textAlign: "center",
-          }}
+      {!query ? (
+        <p className="nudge-sidebar-empty">
+          Start typing in the search bar.
+        </p>
+      ) : (
+        <nav
+          className="nudge-sidebar-actions"
+          aria-label="Search categories"
         >
-          <FaSearch
-            aria-hidden="true"
-          />
-          Search By
-        </h1>
+          {SEARCH_CATEGORIES.map(
+            ({
+              id,
+              label,
+              icon: Icon,
+            }) => {
+              const active =
+                selectedCategory === id;
 
-        {!query ? (
-          <p
-            style={{
-              margin: 0,
-              textAlign: "center",
-              opacity: 0.75,
-            }}
-          >
-            Start typing in the search
-            bar.
-          </p>
-        ) : (
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: "10px",
-            }}
-          >
-            {SEARCH_CATEGORIES.map(
-              ({
-                id,
-                label,
-                icon: Icon,
-              }) => {
-                const active =
-                  selectedCategory ===
-                  id;
+              const count =
+                id === "all"
+                  ? totalResults
+                  : resultCounts[id] ?? 0;
 
-                const count =
-                  id === "all"
-                    ? totalResults
-                    : resultCounts[id];
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  className={`glow-top left nudge-sidebar-button ${
+                    active
+                      ? "nudge-sidebar-button-active"
+                      : ""
+                  }`}
+                  aria-pressed={active}
+                  onClick={() =>
+                    setSelectedCategory(id)
+                  }
+                >
+                  <Icon
+                    aria-hidden="true"
+                    className="nudge-sidebar-button-icon"
+                  />
 
-                return (
-                  <button
-                    key={id}
-                    type="button"
-                    className="glow-top left"
-                    aria-pressed={active}
-                    onClick={() =>
-                      setSelectedCategory(
-                        id
-                      )
-                    }
+                  <span className="nudge-sidebar-button-text">
+                    {label}
+                  </span>
+
+                  <span
+                    aria-label={`${count} results`}
                     style={{
-                      display: "flex",
-                      alignItems: "center",
+                      flexShrink: 0,
+                      marginLeft: "auto",
+                      paddingLeft: "10px",
 
-                      width: "100%",
-                      margin: 0,
-                      padding: "12px 16px",
+                      fontSize: ".78rem",
+                      fontWeight: 700,
+                      lineHeight: 1,
 
-                      textAlign: "left",
-
-                      borderRadius: "10px",
-
-                      transform: active
-                        ? "translateX(5px)"
-                        : undefined,
-
-                      boxShadow: active
-                        ? darkMode
-                          ? "0 0 18px rgba(0,255,204,.30)"
-                          : "0 0 18px rgba(0,180,255,.25)"
-                        : undefined,
+                      color: "inherit",
+                      opacity: active
+                        ? 1
+                        : 0.7,
                     }}
                   >
-                    <Icon
-                      aria-hidden="true"
-                      style={{
-                        flexShrink: 0,
-                        marginRight: "8px",
-                      }}
-                    />
-
-                    <span
-                      style={{
-                        flexGrow: 1,
-                        minWidth: 0,
-                      }}
-                    >
-                      {label}
-                    </span>
-
-                    <span
-                      style={{
-                        flexShrink: 0,
-                        marginLeft: "8px",
-                        opacity: 0.7,
-                      }}
-                    >
-                      {count}
-                    </span>
-                  </button>
-                );
-              }
-            )}
-          </div>
-        )}
-      </Card>
-    ),
-    [
-      darkMode,
-      isTablet,
-      query,
-      resultCounts,
-      selectedCategory,
-      totalResults,
-    ]
-  );
+                    {count}
+                  </span>
+                </button>
+              );
+            }
+          )}
+        </nav>
+      )}
+    </Card>
+  ),
+  [
+    query,
+    resultCounts,
+    selectedCategory,
+    totalResults,
+  ]
+);
 
   return (
     <Layout
       sidebar={sidebar}
+      sidebarTitle="Search By"
       backgroundImage={backgroundImage}
       cardVariant="glass"
     >
