@@ -458,7 +458,9 @@ async function sendRegistrationOTP(
 
     try {
       await transporter.sendMail({
-        from: process.env.EMAIL_USER,
+        from:
+          process.env.EMAIL_FROM ||
+          "Nudge <onboarding@resend.dev>",
         to: email,
         subject:
           "Verify your Nudge account",
@@ -931,7 +933,9 @@ async function forgotPassword(req, res) {
 
     try {
       await transporter.sendMail({
-        from: process.env.EMAIL_USER,
+        from:
+          process.env.EMAIL_FROM ||
+          "Nudge <onboarding@resend.dev>",
         to: user.email,
         subject:
           "Nudge Password Reset",
