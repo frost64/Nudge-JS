@@ -179,12 +179,12 @@ const birthdaySchema =
  */
 birthdaySchema.pre(
   "validate",
-  function validateBirthdayDate(next) {
+  function validateBirthdayDate() {
     if (
       this.birthDay === undefined ||
       this.birthMonth === undefined
     ) {
-      return next();
+      return;
     }
 
     const validDate =
@@ -197,11 +197,9 @@ birthdaySchema.pre(
     if (!validDate) {
       this.invalidate(
         "birthDay",
-        "The supplied birth date is invalid."
+        "The birth date is invalid."
       );
     }
-
-    return next();
   }
 );
 
