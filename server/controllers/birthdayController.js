@@ -410,7 +410,7 @@ async function updateBirthday(req, res) {
           $set: data,
         },
         {
-          new: true,
+          returnDocument: "after",
           runValidators: true,
         }
       );

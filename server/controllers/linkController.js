@@ -337,7 +337,7 @@ async function updateLink(req, res) {
           $set: data,
         },
         {
-          new: true,
+          returnDocument: "after",
           runValidators: true,
         }
       );

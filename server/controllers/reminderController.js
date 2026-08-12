@@ -438,7 +438,7 @@ async function updateReminder(req, res) {
           $set: data,
         },
         {
-          new: true,
+          returnDocument: "after",
           runValidators: true,
         }
       );
@@ -552,7 +552,7 @@ async function completeReminder(
           },
         },
         {
-          new: true,
+          returnDocument: "after",
           runValidators: true,
         }
       );

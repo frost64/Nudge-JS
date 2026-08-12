@@ -335,7 +335,7 @@ async function updateNote(req, res) {
           $set: data,
         },
         {
-          new: true,
+          returnDocument: "after",
           runValidators: true,
         }
       );
