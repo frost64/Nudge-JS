@@ -7,7 +7,11 @@ import {
 import { Toaster } from "react-hot-toast";
 import ScrollToTop from "./components/ScrollTopNew";
 import { ConfirmProvider } from "./context/ConfirmContext";
-import { useMemo } from "react";
+import {
+  useContext,
+  useMemo,
+} from "react";
+import { AuthContext } from "./context/AuthContext";
 
 import About from "./pages/About";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -104,6 +108,11 @@ function App() {
         [darkMode]
       );
 
+      const { user } =
+        useContext(AuthContext);
+
+      const darkMode =
+        user?.theme === "dark";
 
   return (
     <ConfirmProvider>
