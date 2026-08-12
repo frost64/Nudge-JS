@@ -7,6 +7,7 @@ import {
 import { Toaster } from "react-hot-toast";
 import ScrollToTop from "./components/ScrollTopNew";
 import { ConfirmProvider } from "./context/ConfirmContext";
+import { useMemo } from "react";
 
 import About from "./pages/About";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -103,7 +104,7 @@ function App() {
         [darkMode]
       );
 
-      
+
   return (
     <ConfirmProvider>
       <BrowserRouter>
