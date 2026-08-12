@@ -40,6 +40,12 @@ import ProtectedRoute from "./routes/ProtectedRoute";
  * scroll restoration, toast notifications, and route protection.
  */
 function App() {
+  const { user } =
+    useContext(AuthContext);
+
+  const darkMode =
+    user?.theme === "dark";
+    
   const toasterStyle =
       useMemo(
         () => ({
@@ -108,17 +114,11 @@ function App() {
         [darkMode]
       );
 
-      const { user } =
-        useContext(AuthContext);
-
-      const darkMode =
-        user?.theme === "dark";
-
   return (
     <ConfirmProvider>
       <BrowserRouter>
       <Toaster
-          position="center"
+          position="bottom-center"
           reverseOrder={false}
           toastOptions={{
             duration: 3000,
