@@ -5,7 +5,6 @@ import {
   Routes,
 } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
-
 import ScrollToTop from "./components/ScrollTopNew";
 import { ConfirmProvider } from "./context/ConfirmContext";
 
@@ -36,19 +35,102 @@ import ProtectedRoute from "./routes/ProtectedRoute";
  * scroll restoration, toast notifications, and route protection.
  */
 function App() {
+  const toasterStyle =
+      useMemo(
+        () => ({
+          borderRadius: "18px",
+          padding: "14px 18px",
+  
+          background: darkMode
+            ? `
+                linear-gradient(
+                  160deg,
+                  rgba(255,255,255,.14),
+                  rgba(255,255,255,.04) 35%,
+                  rgba(255,255,255,0)
+                ),
+                linear-gradient(
+                  135deg,
+                  rgba(255,90,90,.10),
+                  rgba(0,158,129,.10),
+                  rgba(6,126,169,.10)
+                )
+              `
+            : `
+                linear-gradient(
+                  160deg,
+                  rgba(255,255,255,.40),
+                  rgba(255,255,255,.08) 35%,
+                  rgba(255,255,255,0)
+                ),
+                linear-gradient(
+                  135deg,
+                  rgba(255,90,90,.08),
+                  rgba(0,158,129,.08),
+                  rgba(6,126,169,.08)
+                )
+              `,
+  
+          backdropFilter:
+            "blur(18px)",
+  
+          WebkitBackdropFilter:
+            "blur(18px)",
+  
+          border: darkMode
+            ? "1px solid rgba(255,255,255,.12)"
+            : "1px solid rgba(255,255,255,.35)",
+  
+          color: darkMode
+            ? "#f9fafb"
+            : "#111827",
+  
+          boxShadow: darkMode
+            ? `
+                0 0 20px rgba(0,255,204,.16),
+                0 0 45px rgba(0,140,255,.10),
+                0 18px 45px rgba(0,0,0,.45)
+              `
+            : `
+                0 0 18px rgba(0,180,255,.16),
+                0 0 40px rgba(0,255,200,.10),
+                0 18px 40px rgba(0,0,0,.15)
+              `,
+  
+          fontWeight: 500,
+          letterSpacing: ".2px",
+        }),
+        [darkMode]
+      );
+
+      
   return (
     <ConfirmProvider>
       <BrowserRouter>
-        <ScrollToTop />
-
-        <Toaster
-          position="top-center"
+      <Toaster
+          position="center"
           reverseOrder={false}
           toastOptions={{
             duration: 3000,
+
+            style: toasterStyle,
+
+            success: {
+              iconTheme: {
+                primary: "#10b981",
+                secondary: "#ffffff",
+              },
+            },
+
+            error: {
+              iconTheme: {
+                primary: "#ef4444",
+                secondary: "#ffffff",
+              },
+            },
           }}
         />
-
+        <ScrollToTop />
         <Routes>
           {/* Public routes */}
           <Route
