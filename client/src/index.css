@@ -392,11 +392,46 @@ body.dark select.input-glow option {
   position: relative;
 
   width: 100%;
+  max-width: 100%;
   min-width: 0;
+
+  overflow: hidden;
 }
 
 .input-icon-wrapper .input-glow {
   padding-left: 46px;
+}
+
+/* =========================================================
+   IOS DATE & TIME INPUT FIX
+========================================================= */
+
+.input-icon-wrapper
+  input[type="date"].input-glow,
+.input-icon-wrapper
+  input[type="time"].input-glow {
+  display: block;
+
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+
+  overflow: hidden;
+}
+
+/*
+ * iOS Safari gives the internal date/time value its own
+ * intrinsic width. Constrain that value to the input.
+ */
+.input-icon-wrapper
+  input[type="date"]::-webkit-date-and-time-value,
+.input-icon-wrapper
+  input[type="time"]::-webkit-date-and-time-value {
+  min-width: 0;
+
+  margin: 0;
+
+  text-align: left;
 }
 
 .input-icon {
