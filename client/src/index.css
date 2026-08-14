@@ -400,38 +400,6 @@ body.dark select.input-glow option {
   padding-left: 46px;
 }
 
-/* =========================================================
-   IOS DATE & TIME INPUT FIX
-========================================================= */
-
-.input-icon-wrapper
-  input[type="date"].input-glow,
-.input-icon-wrapper
-  input[type="time"].input-glow {
-  display: block;
-
-  width: 100%;
-  max-width: 100%;
-  min-width: 0;
-
-  overflow: hidden;
-}
-
-/*
- * iOS Safari gives the internal date/time value its own
- * intrinsic width. Constrain that value to the input.
- */
-.input-icon-wrapper
-  input[type="date"]::-webkit-date-and-time-value,
-.input-icon-wrapper
-  input[type="time"]::-webkit-date-and-time-value {
-  min-width: 0;
-
-  margin: 0;
-
-  text-align: left;
-}
-
 .input-icon {
   position: absolute;
   z-index: 2;
@@ -443,6 +411,7 @@ body.dark select.input-glow option {
   font-size: 16px;
 
   pointer-events: none;
+
   transform: translateY(-50%);
 }
 
@@ -455,6 +424,230 @@ body.dark .input-icon {
   color: rgba(255, 255, 255, 0.6);
 }
 
+/* =========================================================
+   IOS DATE & TIME INPUT FIX
+========================================================= */
+
+/*
+ * iOS/WebKit can incorrectly calculate the intrinsic width
+ * of native date and time inputs when they contain padding.
+ *
+ * On touch-based WebKit devices, the visual input box is
+ * therefore handled by the wrapper while the native input
+ * itself is allowed to flex inside it without horizontal
+ * padding.
+ */
+@supports (-webkit-touch-callout: none) {
+  @media (hover: none) and (pointer: coarse) {
+
+    .input-icon-wrapper:has(
+        input[type="date"].input-glow
+      ),
+    .input-icon-wrapper:has(
+        input[type="time"].input-glow
+      ) {
+      display: flex;
+      align-items: center;
+
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+
+      min-height: 48px;
+
+      padding: 0 16px;
+
+      color: #111827;
+
+      background:
+        rgba(255, 255, 255, 0.72);
+
+      border:
+        1px solid
+        rgba(0, 0, 0, 0.08);
+
+      border-radius: 12px;
+
+      box-shadow:
+        0 3px 10px
+          rgba(15, 23, 42, 0.06),
+        0 0 0 1px
+          rgba(0, 0, 0, 0.04);
+
+      overflow: visible;
+
+      transition:
+        background-color 0.25s ease,
+        border-color 0.25s ease,
+        box-shadow 0.25s ease;
+    }
+
+    /*
+     * Turn the icon into a normal flex item for these
+     * two controls instead of absolutely positioning it.
+     */
+    .input-icon-wrapper:has(
+        input[type="date"].input-glow
+      )
+      > .input-icon,
+    .input-icon-wrapper:has(
+        input[type="time"].input-glow
+      )
+      > .input-icon {
+      position: static;
+
+      top: auto;
+      left: auto;
+
+      flex: 0 0 auto;
+
+      margin-right: 14px;
+
+      transform: none;
+    }
+
+    /*
+     * Critical iOS fix.
+     *
+     * flex-basis: 0 and width: 0 prevent WebKit's native
+     * date/time control from forcing its intrinsic width
+     * beyond the parent container.
+     */
+    .input-icon-wrapper
+      input[type="date"].input-glow,
+    .input-icon-wrapper
+      input[type="time"].input-glow {
+      display: block;
+
+      flex: 1 1 0;
+
+      width: 0;
+      max-width: 100%;
+      min-width: 0;
+
+      min-height: 46px;
+
+      margin: 0;
+      padding: 0;
+
+      color: #111827;
+      background: transparent;
+
+      border: 0;
+      border-radius: 0;
+
+      outline: none;
+      box-shadow: none;
+
+      transform: none;
+    }
+
+    /*
+     * Prevent the normal input-glow hover/focus rules
+     * from moving or restyling the native input itself.
+     */
+    .input-icon-wrapper
+      input[type="date"].input-glow:hover:not(:disabled),
+    .input-icon-wrapper
+      input[type="time"].input-glow:hover:not(:disabled),
+    .input-icon-wrapper
+      input[type="date"].input-glow:focus,
+    .input-icon-wrapper
+      input[type="time"].input-glow:focus {
+      background: transparent;
+
+      border: 0;
+      box-shadow: none;
+
+      transform: none;
+    }
+
+    /*
+     * Keep WebKit's internal date/time text constrained.
+     */
+    .input-icon-wrapper
+      input[type="date"]::-webkit-date-and-time-value,
+    .input-icon-wrapper
+      input[type="time"]::-webkit-date-and-time-value {
+      min-width: 0;
+
+      margin: 0;
+
+      text-align: left;
+    }
+
+    /*
+     * Apply the focus glow to the wrapper instead.
+     */
+    .input-icon-wrapper:has(
+        input[type="date"].input-glow
+      ):focus-within,
+    .input-icon-wrapper:has(
+        input[type="time"].input-glow
+      ):focus-within {
+      border-color: #78f7fd;
+
+      background:
+        rgba(255, 255, 255, 0.82);
+
+      box-shadow:
+        0 8px 18px
+          rgba(15, 23, 42, 0.1),
+        0 0 0 3px
+          rgba(37, 99, 235, 0.15);
+    }
+
+    /* ---------- Dark mode ---------- */
+
+    body.dark
+      .input-icon-wrapper:has(
+        input[type="date"].input-glow
+      ),
+    body.dark
+      .input-icon-wrapper:has(
+        input[type="time"].input-glow
+      ) {
+      color: #f9fafb;
+
+      background:
+        rgba(255, 255, 255, 0.03);
+
+      border-color:
+        rgba(255, 255, 255, 0.18);
+
+      box-shadow: none;
+    }
+
+    body.dark
+      .input-icon-wrapper
+      input[type="date"].input-glow,
+    body.dark
+      .input-icon-wrapper
+      input[type="time"].input-glow {
+      color: #f9fafb;
+      background: transparent;
+    }
+
+    body.dark
+      .input-icon-wrapper:has(
+        input[type="date"].input-glow
+      ):focus-within,
+    body.dark
+      .input-icon-wrapper:has(
+        input[type="time"].input-glow
+      ):focus-within {
+      background:
+        rgba(255, 255, 255, 0.05);
+
+      border-color:
+        rgba(120, 247, 253, 0.7);
+
+      box-shadow:
+        0 0 0 3px
+          rgba(59, 130, 246, 0.25);
+    }
+  }
+}
 /* =========================================================
    ICON INTERACTIONS
 ========================================================= */

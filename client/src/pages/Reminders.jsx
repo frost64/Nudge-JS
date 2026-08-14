@@ -1092,15 +1092,7 @@ function Reminders() {
                 />
               </div>
 
-              <div
-                className="input-icon-wrapper"
-                style={{
-                  width: "100%",
-                  maxWidth: "100%",
-                  minWidth: 0,
-                  boxSizing: "border-box",
-                }}
-              >
+              <div className="input-icon-wrapper">
                 <FaCalendarAlt
                   className="input-icon"
                   aria-hidden="true"
@@ -1116,25 +1108,10 @@ function Reminders() {
                       event.target.value
                     )
                   }
-                  style={{
-                    display: "block",
-                    width: "100%",
-                    maxWidth: "100%",
-                    minWidth: 0,
-                    boxSizing: "border-box",
-                  }}
                 />
               </div>
 
-              <div
-                className="input-icon-wrapper"
-                style={{
-                  width: "100%",
-                  maxWidth: "100%",
-                  minWidth: 0,
-                  boxSizing: "border-box",
-                }}
-              >
+              <div className="input-icon-wrapper">
                 <FaClock
                   className="input-icon"
                   aria-hidden="true"
@@ -1150,13 +1127,6 @@ function Reminders() {
                       event.target.value
                     )
                   }
-                  style={{
-                    display: "block",
-                    width: "100%",
-                    maxWidth: "100%",
-                    minWidth: 0,
-                    boxSizing: "border-box",
-                  }}
                 />
               </div>
 
