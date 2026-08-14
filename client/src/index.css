@@ -394,8 +394,6 @@ body.dark select.input-glow option {
   width: 100%;
   max-width: 100%;
   min-width: 0;
-
-  overflow: hidden;
 }
 
 .input-icon-wrapper .input-glow {
