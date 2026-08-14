@@ -1056,9 +1056,11 @@ function Reminders() {
             <div
               style={{
                 display: "flex",
+                flexDirection: "column",
 
-                flexDirection:
-                  "column",
+                width: "100%",
+                maxWidth: "100%",
+                minWidth: 0,
 
                 gap: isMobile
                   ? "12px"
@@ -1090,7 +1092,15 @@ function Reminders() {
                 />
               </div>
 
-              <div className="input-icon-wrapper">
+              <div
+                className="input-icon-wrapper"
+                style={{
+                  width: "100%",
+                  maxWidth: "100%",
+                  minWidth: 0,
+                  boxSizing: "border-box",
+                }}
+              >
                 <FaCalendarAlt
                   className="input-icon"
                   aria-hidden="true"
@@ -1101,18 +1111,30 @@ function Reminders() {
                   type="date"
                   value={dueDate}
                   disabled={saving}
-                  onChange={(
-                    event
-                  ) =>
+                  onChange={(event) =>
                     setDueDate(
-                      event.target
-                        .value
+                      event.target.value
                     )
                   }
+                  style={{
+                    display: "block",
+                    width: "100%",
+                    maxWidth: "100%",
+                    minWidth: 0,
+                    boxSizing: "border-box",
+                  }}
                 />
               </div>
 
-              <div className="input-icon-wrapper">
+              <div
+                className="input-icon-wrapper"
+                style={{
+                  width: "100%",
+                  maxWidth: "100%",
+                  minWidth: 0,
+                  boxSizing: "border-box",
+                }}
+              >
                 <FaClock
                   className="input-icon"
                   aria-hidden="true"
@@ -1121,18 +1143,20 @@ function Reminders() {
                 <input
                   className="input-glow"
                   type="time"
-                  value={
-                    reminderTime
-                  }
+                  value={reminderTime}
                   disabled={saving}
-                  onChange={(
-                    event
-                  ) =>
+                  onChange={(event) =>
                     setReminderTime(
-                      event.target
-                        .value
+                      event.target.value
                     )
                   }
+                  style={{
+                    display: "block",
+                    width: "100%",
+                    maxWidth: "100%",
+                    minWidth: 0,
+                    boxSizing: "border-box",
+                  }}
                 />
               </div>
 
