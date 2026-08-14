@@ -14,11 +14,19 @@ const GEOLOCATION_OPTIONS = {
   maximumAge: 5 * 60 * 1000,
 };
 
+// Default weather location:
+// Islamabad, Pakistan
+const DEFAULT_LOCATION = {
+  latitude: 33.6844,
+  longitude: 73.0479,
+};
+
 /**
  * Displays the user's current local weather.
  *
- * Requests browser geolocation permission, sends the coordinates
- * to the backend weather endpoint, and renders responsive weather data.
+ * Uses the user's browser location when available.
+ * Falls back to Islamabad, Pakistan if location
+ * permission is denied or geolocation is unavailable.
  */
 function WeatherWidget() {
   const { isMobile } = useBreakpoint();
@@ -28,22 +36,15 @@ function WeatherWidget() {
 
   useEffect(() => {
     let active = true;
-    const controller = new AbortController();
 
-    if (!navigator.geolocation) {
-      setError("Location is not supported by this browser.");
-      return undefined;
-    }
+    const controller =
+      new AbortController();
 
-    const handleLocationSuccess = async (
-      position
+    const fetchWeather = async (
+      latitude,
+      longitude
     ) => {
       try {
-        const {
-          latitude,
-          longitude,
-        } = position.coords;
-
         const response = await api.get(
           "/weather",
           {
@@ -51,6 +52,7 @@ function WeatherWidget() {
               lat: latitude,
               lon: longitude,
             },
+
             signal: controller.signal,
           }
         );
@@ -61,8 +63,10 @@ function WeatherWidget() {
         setError("");
       } catch (requestError) {
         if (
-          requestError.name === "CanceledError" ||
-          requestError.code === "ERR_CANCELED"
+          requestError.name ===
+            "CanceledError" ||
+          requestError.code ===
+            "ERR_CANCELED"
         ) {
           return;
         }
@@ -70,9 +74,32 @@ function WeatherWidget() {
         console.error(requestError);
 
         if (active) {
-          setError("Unable to load weather.");
+          setError(
+            "Unable to load weather."
+          );
         }
       }
+    };
+
+    const loadDefaultWeather = () => {
+      fetchWeather(
+        DEFAULT_LOCATION.latitude,
+        DEFAULT_LOCATION.longitude
+      );
+    };
+
+    const handleLocationSuccess = (
+      position
+    ) => {
+      const {
+        latitude,
+        longitude,
+      } = position.coords;
+
+      fetchWeather(
+        latitude,
+        longitude
+      );
     };
 
     const handleLocationError = (
@@ -82,27 +109,47 @@ function WeatherWidget() {
 
       switch (locationError.code) {
         case locationError.PERMISSION_DENIED:
-          setError("Location permission denied.");
+          console.info(
+            "Location permission denied. Using Islamabad, Pakistan."
+          );
+
+          loadDefaultWeather();
           break;
 
         case locationError.POSITION_UNAVAILABLE:
-          setError("Location is unavailable.");
+          console.info(
+            "Location unavailable. Using Islamabad, Pakistan."
+          );
+
+          loadDefaultWeather();
           break;
 
         case locationError.TIMEOUT:
-          setError("Location request timed out.");
+          console.info(
+            "Location request timed out. Using Islamabad, Pakistan."
+          );
+
+          loadDefaultWeather();
           break;
 
         default:
-          setError("Unable to access location.");
+          console.info(
+            "Unable to access location. Using Islamabad, Pakistan."
+          );
+
+          loadDefaultWeather();
       }
     };
 
-    navigator.geolocation.getCurrentPosition(
-      handleLocationSuccess,
-      handleLocationError,
-      GEOLOCATION_OPTIONS
-    );
+    if (!navigator.geolocation) {
+      loadDefaultWeather();
+    } else {
+      navigator.geolocation.getCurrentPosition(
+        handleLocationSuccess,
+        handleLocationError,
+        GEOLOCATION_OPTIONS
+      );
+    }
 
     return () => {
       active = false;
@@ -118,6 +165,7 @@ function WeatherWidget() {
           margin: 0,
           opacity: 0.7,
           fontSize: "0.9rem",
+
           textAlign: isMobile
             ? "center"
             : "right",
@@ -153,6 +201,7 @@ function WeatherWidget() {
     <div
       style={{
         display: "flex",
+
         flexDirection: isMobile
           ? "column"
           : "row",
@@ -215,7 +264,9 @@ function WeatherWidget() {
               : "1rem",
 
             fontWeight: 500,
-            overflowWrap: "anywhere",
+
+            overflowWrap:
+              "anywhere",
           }}
         >
           {city}
@@ -228,7 +279,8 @@ function WeatherWidget() {
             fontSize: ".9rem",
           }}
         >
-          Feels like {feelsLike ?? "—"}°C
+          Feels like{" "}
+          {feelsLike ?? "—"}°C
         </div>
       </div>
     </div>
