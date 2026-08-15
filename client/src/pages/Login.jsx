@@ -5,7 +5,10 @@ import {
   useState,
 } from "react";
 import { GoogleLogin } from "@react-oauth/google";
-import { Link, useNavigate } from "react-router-dom";
+import {
+  Link,
+  useNavigate,
+} from "react-router-dom";
 import toast from "react-hot-toast";
 
 import {
@@ -26,13 +29,15 @@ import useBreakpoint from "../hooks/useBreakpoint";
 import api from "../services/api";
 
 /**
- * Safely retrieves the saved user from localStorage.
+ * Safely retrieves the saved user
+ * from localStorage.
  *
  * @returns {object|null}
  */
 function getStoredUser() {
   try {
-    const storedUser = localStorage.getItem("user");
+    const storedUser =
+      localStorage.getItem("user");
 
     return storedUser
       ? JSON.parse(storedUser)
@@ -50,170 +55,238 @@ function getStoredUser() {
 }
 
 /**
- * Renders the standard and Google authentication page.
+ * Renders the standard and
+ * Google authentication page.
  */
 function Login() {
   const navigate = useNavigate();
-  const { login } = useContext(AuthContext);
-  const { isMobile, isTablet } = useBreakpoint();
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loginError, setLoginError] =
-    useState("");
-  const [loading, setLoading] =
-    useState(false);
-  const [googleLoading, setGoogleLoading] =
-    useState(false);
+  const { login } =
+    useContext(AuthContext);
+
+  const {
+    isMobile,
+    isTablet,
+  } = useBreakpoint();
+
+  const [
+    email,
+    setEmail,
+  ] = useState("");
+
+  const [
+    password,
+    setPassword,
+  ] = useState("");
+
+  const [
+    loginError,
+    setLoginError,
+  ] = useState("");
+
+  const [
+    loading,
+    setLoading,
+  ] = useState(false);
+
+  const [
+    googleLoading,
+    setGoogleLoading,
+  ] = useState(false);
 
   const savedUser = useMemo(
     () => getStoredUser(),
     []
   );
 
-  const darkMode = savedUser?.theme === "dark";
+  const darkMode =
+    savedUser?.theme === "dark";
 
   const backgroundImage = darkMode
     ? loginDarkBg
     : loginLightBg;
 
-  const clearLoginError = useCallback(() => {
-    if (loginError) {
-      setLoginError("");
-    }
-  }, [loginError]);
+  const clearLoginError =
+    useCallback(() => {
+      if (loginError) {
+        setLoginError("");
+      }
+    }, [loginError]);
 
-  const handleEmailChange = useCallback(
-    (event) => {
-      setEmail(event.target.value);
-      clearLoginError();
-    },
-    [clearLoginError]
-  );
+  const handleEmailChange =
+    useCallback(
+      (event) => {
+        setEmail(
+          event.target.value
+        );
 
-  const handlePasswordChange = useCallback(
-    (event) => {
-      setPassword(event.target.value);
-      clearLoginError();
-    },
-    [clearLoginError]
-  );
+        clearLoginError();
+      },
+      [clearLoginError]
+    );
 
-  const completeLogin = useCallback(
-    (responseData) => {
-      login(
-        responseData.token,
-        responseData.user
+  const handlePasswordChange =
+    useCallback(
+      (event) => {
+        setPassword(
+          event.target.value
+        );
+
+        clearLoginError();
+      },
+      [clearLoginError]
+    );
+
+  const completeLogin =
+    useCallback(
+      (responseData) => {
+        login(
+          responseData.token,
+          responseData.user
+        );
+
+        navigate(
+          "/dashboard",
+          {
+            replace: true,
+          }
+        );
+      },
+      [
+        login,
+        navigate,
+      ]
+    );
+
+  const handleSubmit =
+    useCallback(
+      async (event) => {
+        event.preventDefault();
+
+        if (
+          loading ||
+          googleLoading
+        ) {
+          return;
+        }
+
+        const normalizedEmail =
+          email
+            .trim()
+            .toLowerCase();
+
+        if (!normalizedEmail) {
+          setLoginError(
+            "Please enter your email address."
+          );
+
+          return;
+        }
+
+        if (!password) {
+          setLoginError(
+            "Please enter your password."
+          );
+
+          return;
+        }
+
+        try {
+          setLoading(true);
+          setLoginError("");
+
+          const response =
+            await api.post(
+              "/auth/login",
+              {
+                email:
+                  normalizedEmail,
+                password,
+              }
+            );
+
+          completeLogin(
+            response.data
+          );
+        } catch (error) {
+          console.error(error);
+
+          setLoginError(
+            error.response?.data
+              ?.message ||
+              "Invalid email or password."
+          );
+        } finally {
+          setLoading(false);
+        }
+      },
+      [
+        completeLogin,
+        email,
+        googleLoading,
+        loading,
+        password,
+      ]
+    );
+
+  const handleGoogleSuccess =
+    useCallback(
+      async (
+        credentialResponse
+      ) => {
+        if (
+          googleLoading ||
+          loading ||
+          !credentialResponse
+            ?.credential
+        ) {
+          return;
+        }
+
+        try {
+          setGoogleLoading(true);
+          setLoginError("");
+
+          const response =
+            await api.post(
+              "/auth/google",
+              {
+                credential:
+                  credentialResponse
+                    .credential,
+              }
+            );
+
+          completeLogin(
+            response.data
+          );
+        } catch (error) {
+          console.error(error);
+
+          toast.error(
+            error.response?.data
+              ?.message ||
+              "Google login failed."
+          );
+        } finally {
+          setGoogleLoading(
+            false
+          );
+        }
+      },
+      [
+        completeLogin,
+        googleLoading,
+        loading,
+      ]
+    );
+
+  const handleGoogleError =
+    useCallback(() => {
+      toast.error(
+        "Google login failed."
       );
-
-      navigate("/dashboard", {
-        replace: true,
-      });
-    },
-    [login, navigate]
-  );
-
-  const handleSubmit = useCallback(
-    async (event) => {
-      event.preventDefault();
-
-      if (loading || googleLoading) return;
-
-      const normalizedEmail = email
-        .trim()
-        .toLowerCase();
-
-      if (!normalizedEmail) {
-        setLoginError(
-          "Please enter your email address."
-        );
-        return;
-      }
-
-      if (!password) {
-        setLoginError(
-          "Please enter your password."
-        );
-        return;
-      }
-
-      try {
-        setLoading(true);
-        setLoginError("");
-
-        const response = await api.post(
-          "/auth/login",
-          {
-            email: normalizedEmail,
-            password,
-          }
-        );
-
-        completeLogin(response.data);
-      } catch (error) {
-        console.error(error);
-
-        setLoginError(
-          error.response?.data?.message ||
-            "Invalid email or password."
-        );
-      } finally {
-        setLoading(false);
-      }
-    },
-    [
-      completeLogin,
-      email,
-      googleLoading,
-      loading,
-      password,
-    ]
-  );
-
-  const handleGoogleSuccess = useCallback(
-    async (credentialResponse) => {
-      if (
-        googleLoading ||
-        loading ||
-        !credentialResponse?.credential
-      ) {
-        return;
-      }
-
-      try {
-        setGoogleLoading(true);
-        setLoginError("");
-
-        const response = await api.post(
-          "/auth/google",
-          {
-            credential:
-              credentialResponse.credential,
-          }
-        );
-
-        completeLogin(response.data);
-      } catch (error) {
-        console.error(error);
-
-        toast.error(
-          error.response?.data?.message ||
-            "Google login failed."
-        );
-      } finally {
-        setGoogleLoading(false);
-      }
-    },
-    [
-      completeLogin,
-      googleLoading,
-      loading,
-    ]
-  );
-
-  const handleGoogleError = useCallback(() => {
-    toast.error("Google login failed.");
-  }, []);
+    }, []);
 
   return (
     <main
@@ -221,116 +294,179 @@ function Login() {
         position: "relative",
 
         display: "flex",
-        alignItems: isMobile
-          ? "flex-start"
-          : "center",
-        justifyContent: "center",
+        alignItems: "center",
+        justifyContent:
+          "center",
 
         width: "100%",
         minWidth: 0,
-        minHeight: "100dvh",
+
+        height: "100dvh",
+        minHeight: 0,
 
         margin: 0,
 
         padding: isMobile
-          ? "20px 12px calc(32px + env(safe-area-inset-bottom))"
+          ? "12px"
           : isTablet
-            ? "30px"
+            ? "24px"
             : "40px 20px",
 
-        boxSizing: "border-box",
+        boxSizing:
+          "border-box",
 
-        backgroundImage: `url(${backgroundImage})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
-        backgroundAttachment: isMobile
-          ? "scroll"
-          : "fixed",
+        backgroundImage:
+          `url(${backgroundImage})`,
 
-        overflowX: "hidden",
+        backgroundSize:
+          "cover",
+
+        backgroundPosition:
+          "center",
+
+        backgroundRepeat:
+          "no-repeat",
+
+        backgroundAttachment:
+          isMobile
+            ? "scroll"
+            : "fixed",
+
+        overflow: "hidden",
       }}
     >
       <div
         aria-hidden="true"
         style={{
-          position: "absolute",
+          position:
+            "absolute",
+
           inset: 0,
 
-          background: darkMode
-            ? "rgba(0,0,0,.20)"
-            : "rgba(255,255,255,.08)",
+          background:
+            darkMode
+              ? "rgba(0,0,0,.20)"
+              : "rgba(255,255,255,.08)",
 
-          backdropFilter: "blur(2px)",
-          WebkitBackdropFilter: "blur(2px)",
+          backdropFilter:
+            "blur(2px)",
 
-          pointerEvents: "none",
+          WebkitBackdropFilter:
+            "blur(2px)",
+
+          pointerEvents:
+            "none",
         }}
       />
 
       <Card
         variant="glass"
         style={{
-          position: "relative",
+          position:
+            "relative",
+
           zIndex: 1,
 
           width: "100%",
           maxWidth: "450px",
-          minWidth: 0,
 
-          margin: isMobile
-            ? "12px 0 0"
-            : 0,
+          minWidth: 0,
+          minHeight: 0,
+
+          maxHeight: isMobile
+            ? "calc(100dvh - 24px)"
+            : isTablet
+              ? "calc(100dvh - 48px)"
+              : "calc(100dvh - 80px)",
+
+          margin: 0,
 
           padding: isMobile
-            ? "24px 18px"
+            ? "20px 18px"
             : isTablet
               ? "32px"
               : "40px",
 
-          borderRadius: isMobile
-            ? "22px"
-            : "28px",
+          boxSizing:
+            "border-box",
+
+          overflowX:
+            "hidden",
+
+          overflowY: "auto",
+
+          overscrollBehavior:
+            "contain",
+
+          WebkitOverflowScrolling:
+            "touch",
+
+          borderRadius:
+            isMobile
+              ? "22px"
+              : "28px",
         }}
       >
         <form
           noValidate
-          onSubmit={handleSubmit}
+          onSubmit={
+            handleSubmit
+          }
           style={{
             display: "flex",
-            flexDirection: "column",
-            gap: "18px",
+
+            flexDirection:
+              "column",
+
+            width: "100%",
+            minWidth: 0,
+
+            gap: isMobile
+              ? "14px"
+              : "18px",
           }}
         >
           <header
             style={{
-              textAlign: "center",
+              textAlign:
+                "center",
             }}
           >
             <img
               src={logo}
               alt="Nudge"
               style={{
-                width: isMobile
-                  ? "78px"
-                  : "100px",
+                width:
+                  isMobile
+                    ? "72px"
+                    : "100px",
 
-                height: isMobile
-                  ? "78px"
-                  : "100px",
+                height:
+                  isMobile
+                    ? "72px"
+                    : "100px",
 
-                objectFit: "contain",
+                objectFit:
+                  "contain",
               }}
             />
 
             <h1
               style={{
-                marginTop: "8px",
-                marginBottom: "4px",
+                marginTop:
+                  isMobile
+                    ? "4px"
+                    : "8px",
 
-                fontSize: isMobile
-                  ? "2rem"
-                  : "2.4rem",
+                marginBottom:
+                  "4px",
+
+                fontSize:
+                  isMobile
+                    ? "1.9rem"
+                    : "2.4rem",
+
+                lineHeight: 1.2,
               }}
             >
               Nudge
@@ -339,16 +475,24 @@ function Login() {
             <p
               style={{
                 margin: 0,
-                color: darkMode
-                  ? "#d1d5db"
-                  : "#6b7280",
+
+                color:
+                  darkMode
+                    ? "#d1d5db"
+                    : "#6b7280",
               }}
             >
               Remember Everything
             </p>
           </header>
 
-          <div className="input-icon-wrapper">
+          <div
+            className="input-icon-wrapper"
+            style={{
+              width: "100%",
+              minWidth: 0,
+            }}
+          >
             <FaEnvelope
               className="input-icon"
               aria-hidden="true"
@@ -365,28 +509,52 @@ function Login() {
               spellCheck="false"
               placeholder="Email"
               aria-label="Email address"
-              aria-invalid={Boolean(loginError)}
+              aria-invalid={
+                Boolean(
+                  loginError
+                )
+              }
               aria-describedby={
                 loginError
                   ? "login-error"
                   : undefined
               }
               value={email}
-              disabled={loading || googleLoading}
-              onChange={handleEmailChange}
+              disabled={
+                loading ||
+                googleLoading
+              }
+              onChange={
+                handleEmailChange
+              }
               style={{
-                borderColor: loginError
-                  ? "#ef4444"
-                  : undefined,
+                width: "100%",
+                maxWidth: "100%",
+                minWidth: 0,
 
-                boxShadow: loginError
-                  ? "0 0 0 2px rgba(239,68,68,.20)"
-                  : undefined,
+                boxSizing:
+                  "border-box",
+
+                borderColor:
+                  loginError
+                    ? "#ef4444"
+                    : undefined,
+
+                boxShadow:
+                  loginError
+                    ? "0 0 0 2px rgba(239,68,68,.20)"
+                    : undefined,
               }}
             />
           </div>
 
-          <div className="input-icon-wrapper">
+          <div
+            className="input-icon-wrapper"
+            style={{
+              width: "100%",
+              minWidth: 0,
+            }}
+          >
             <FaLock
               className="input-icon"
               aria-hidden="true"
@@ -400,23 +568,41 @@ function Login() {
               autoComplete="current-password"
               placeholder="Password"
               aria-label="Password"
-              aria-invalid={Boolean(loginError)}
+              aria-invalid={
+                Boolean(
+                  loginError
+                )
+              }
               aria-describedby={
                 loginError
                   ? "login-error"
                   : undefined
               }
               value={password}
-              disabled={loading || googleLoading}
-              onChange={handlePasswordChange}
+              disabled={
+                loading ||
+                googleLoading
+              }
+              onChange={
+                handlePasswordChange
+              }
               style={{
-                borderColor: loginError
-                  ? "#ef4444"
-                  : undefined,
+                width: "100%",
+                maxWidth: "100%",
+                minWidth: 0,
 
-                boxShadow: loginError
-                  ? "0 0 0 2px rgba(239,68,68,.20)"
-                  : undefined,
+                boxSizing:
+                  "border-box",
+
+                borderColor:
+                  loginError
+                    ? "#ef4444"
+                    : undefined,
+
+                boxShadow:
+                  loginError
+                    ? "0 0 0 2px rgba(239,68,68,.20)"
+                    : undefined,
               }}
             />
           </div>
@@ -426,12 +612,19 @@ function Login() {
               id="login-error"
               role="alert"
               style={{
-                margin: "-8px 0 2px",
+                margin:
+                  "-6px 0 0",
 
-                color: "#ef4444",
-                fontSize: ".9rem",
+                color:
+                  "#ef4444",
+
+                fontSize:
+                  ".9rem",
+
                 lineHeight: 1.5,
-                textAlign: "center",
+
+                textAlign:
+                  "center",
               }}
             >
               {loginError}
@@ -441,25 +634,35 @@ function Login() {
           <div
             style={{
               display: "flex",
-              justifyContent: "flex-end",
 
-              marginTop: "-6px",
+              justifyContent:
+                "flex-end",
+
+              marginTop:
+                "-4px",
             }}
           >
             <Link
               to="/forgot-password"
               style={{
-                display: "inline-flex",
-                alignItems: "center",
+                display:
+                  "inline-flex",
+
+                alignItems:
+                  "center",
 
                 gap: "6px",
 
-                color: darkMode
-                  ? "#7dd3fc"
-                  : "#0284c7",
+                color:
+                  darkMode
+                    ? "#7dd3fc"
+                    : "#0284c7",
 
-                fontSize: ".9rem",
-                textDecoration: "none",
+                fontSize:
+                  ".9rem",
+
+                textDecoration:
+                  "none",
 
                 transition:
                   "text-decoration-color .25s ease",
@@ -468,7 +671,8 @@ function Login() {
               <FaKey
                 aria-hidden="true"
                 style={{
-                  fontSize: ".8rem",
+                  fontSize:
+                    ".8rem",
                 }}
               />
 
@@ -479,12 +683,22 @@ function Login() {
           <button
             type="submit"
             className="glow-top"
-            disabled={loading || googleLoading}
-            aria-busy={loading}
+            disabled={
+              loading ||
+              googleLoading
+            }
+            aria-busy={
+              loading
+            }
             style={{
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
+              display:
+                "inline-flex",
+
+              alignItems:
+                "center",
+
+              justifyContent:
+                "center",
 
               width: "100%",
               margin: 0,
@@ -494,7 +708,8 @@ function Login() {
               aria-hidden="true"
               size={14}
               style={{
-                marginRight: "6px",
+                marginRight:
+                  "6px",
               }}
             />
 
@@ -507,7 +722,9 @@ function Login() {
             aria-hidden="true"
             style={{
               display: "flex",
-              alignItems: "center",
+
+              alignItems:
+                "center",
 
               gap: "12px",
             }}
@@ -515,21 +732,25 @@ function Login() {
             <div
               style={{
                 flexGrow: 1,
+
                 height: "1px",
 
-                background: darkMode
-                  ? "rgba(255,255,255,.20)"
-                  : "rgba(0,0,0,.12)",
+                background:
+                  darkMode
+                    ? "rgba(255,255,255,.20)"
+                    : "rgba(0,0,0,.12)",
               }}
             />
 
             <span
               style={{
-                color: darkMode
-                  ? "#9ca3af"
-                  : "#6b7280",
+                color:
+                  darkMode
+                    ? "#9ca3af"
+                    : "#6b7280",
 
-                fontSize: ".9rem",
+                fontSize:
+                  ".9rem",
               }}
             >
               OR
@@ -538,11 +759,13 @@ function Login() {
             <div
               style={{
                 flexGrow: 1,
+
                 height: "1px",
 
-                background: darkMode
-                  ? "rgba(255,255,255,.20)"
-                  : "rgba(0,0,0,.12)",
+                background:
+                  darkMode
+                    ? "rgba(255,255,255,.20)"
+                    : "rgba(0,0,0,.12)",
               }}
             />
           </div>
@@ -550,27 +773,39 @@ function Login() {
           <div
             style={{
               display: "flex",
-              justifyContent: "center",
+
+              justifyContent:
+                "center",
 
               width: "100%",
+              maxWidth: "100%",
               minWidth: 0,
 
-              opacity: googleLoading
-                ? 0.65
-                : 1,
+              opacity:
+                googleLoading
+                  ? 0.65
+                  : 1,
 
               pointerEvents:
-                googleLoading || loading
+                googleLoading ||
+                loading
                   ? "none"
                   : "auto",
 
-              transition: "opacity .2s ease",
-              overflow: "hidden",
+              transition:
+                "opacity .2s ease",
+
+              overflow:
+                "hidden",
             }}
           >
             <GoogleLogin
-              onSuccess={handleGoogleSuccess}
-              onError={handleGoogleError}
+              onSuccess={
+                handleGoogleSuccess
+              }
+              onError={
+                handleGoogleError
+              }
               theme={
                 darkMode
                   ? "filled_black"
@@ -590,33 +825,49 @@ function Login() {
             <p
               role="status"
               style={{
-                margin: "-8px 0 0",
+                margin:
+                  "-6px 0 0",
 
-                fontSize: ".9rem",
-                textAlign: "center",
+                fontSize:
+                  ".9rem",
+
+                textAlign:
+                  "center",
+
                 opacity: 0.75,
               }}
             >
-              Signing in with Google...
+              Signing in with
+              Google...
             </p>
           )}
 
           <p
             style={{
-              marginTop: "8px",
+              marginTop:
+                isMobile
+                  ? "2px"
+                  : "8px",
+
               marginBottom: 0,
 
               lineHeight: 1.6,
-              textAlign: "center",
+
+              textAlign:
+                "center",
             }}
           >
-            Don&apos;t have an account?{" "}
+            Don&apos;t have an
+            account?{" "}
 
             <Link
               to="/register"
               style={{
-                display: "inline-flex",
-                alignItems: "center",
+                display:
+                  "inline-flex",
+
+                alignItems:
+                  "center",
 
                 gap: "5px",
               }}
@@ -624,7 +875,8 @@ function Login() {
               <FaUserPlus
                 aria-hidden="true"
                 style={{
-                  fontSize: ".8rem",
+                  fontSize:
+                    ".8rem",
                 }}
               />
 
