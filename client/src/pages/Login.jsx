@@ -295,8 +295,7 @@ function Login() {
 
         display: "flex",
         alignItems: "center",
-        justifyContent:
-          "center",
+        justifyContent: "center",
 
         width: "100%",
         minWidth: 0,
@@ -312,25 +311,16 @@ function Login() {
             ? "24px"
             : "40px 20px",
 
-        boxSizing:
-          "border-box",
+        boxSizing: "border-box",
 
-        backgroundImage:
-          `url(${backgroundImage})`,
+        backgroundImage: `url(${backgroundImage})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
 
-        backgroundSize:
-          "cover",
-
-        backgroundPosition:
-          "center",
-
-        backgroundRepeat:
-          "no-repeat",
-
-        backgroundAttachment:
-          isMobile
-            ? "scroll"
-            : "fixed",
+        backgroundAttachment: isMobile
+          ? "scroll"
+          : "fixed",
 
         overflow: "hidden",
       }}
@@ -362,9 +352,7 @@ function Login() {
       <Card
         variant="glass"
         style={{
-          position:
-            "relative",
-
+          position: "relative",
           zIndex: 1,
 
           width: "100%",
@@ -375,36 +363,33 @@ function Login() {
 
           maxHeight: isMobile
             ? "calc(100dvh - 24px)"
-            : isTablet
-              ? "calc(100dvh - 48px)"
-              : "calc(100dvh - 80px)",
+            : "none",
 
           margin: 0,
 
           padding: isMobile
-            ? "20px 18px"
+            ? "18px 16px"
             : isTablet
               ? "32px"
               : "40px",
 
-          boxSizing:
-            "border-box",
+          boxSizing: "border-box",
 
-          overflowX:
-            "hidden",
+          overflowX: "hidden",
 
-          overflowY: "auto",
+          overflowY: isMobile
+            ? "auto"
+            : "visible",
 
-          overscrollBehavior:
-            "contain",
+          overscrollBehavior: isMobile
+            ? "contain"
+            : "auto",
 
-          WebkitOverflowScrolling:
-            "touch",
+          WebkitOverflowScrolling: "touch",
 
-          borderRadius:
-            isMobile
-              ? "22px"
-              : "28px",
+          borderRadius: isMobile
+            ? "22px"
+            : "28px",
         }}
       >
         <form
