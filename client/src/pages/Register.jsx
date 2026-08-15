@@ -75,28 +75,38 @@ function Register() {
     location.state ||
     {};
 
-  const [fullName, setFullName] =
-    useState(
-      registrationData.fullName || ""
-    );
+  const [
+    fullName,
+    setFullName,
+  ] = useState(
+    registrationData.fullName || ""
+  );
 
-  const [username, setUsername] =
-    useState(
-      registrationData.username || ""
-    );
+  const [
+    username,
+    setUsername,
+  ] = useState(
+    registrationData.username || ""
+  );
 
-  const [email, setEmail] =
-    useState(
-      registrationData.email || ""
-    );
+  const [
+    email,
+    setEmail,
+  ] = useState(
+    registrationData.email || ""
+  );
 
-  const [password, setPassword] =
-    useState(
-      registrationData.password || ""
-    );
+  const [
+    password,
+    setPassword,
+  ] = useState(
+    registrationData.password || ""
+  );
 
-  const [loading, setLoading] =
-    useState(false);
+  const [
+    loading,
+    setLoading,
+  ] = useState(false);
 
   const [
     googleLoading,
@@ -118,144 +128,175 @@ function Register() {
   const isBusy =
     loading || googleLoading;
 
-  const completeLogin = useCallback(
-    (responseData) => {
-      login(
-        responseData.token,
-        responseData.user
-      );
-
-      navigate("/dashboard", {
-        replace: true,
-      });
-    },
-    [login, navigate]
-  );
-
-  /**
-   * Validates registration fields and requests an OTP.
-   */
-  const handleSubmit = useCallback(
-    async (event) => {
-      event.preventDefault();
-
-      if (isBusy) return;
-
-      const normalizedFullName =
-        fullName.trim();
-
-      const normalizedUsername =
-        username.trim();
-
-      const normalizedEmail = email
-        .trim()
-        .toLowerCase();
-
-      if (
-        !normalizedFullName ||
-        !normalizedUsername ||
-        !normalizedEmail ||
-        !password
-      ) {
-        toast.error(
-          "Please fill all fields."
-        );
-
-        return;
-      }
-
-      try {
-        setLoading(true);
-
-        await api.post(
-          "/auth/register/send-otp",
-          {
-            fullName:
-              normalizedFullName,
-            username:
-              normalizedUsername,
-            email:
-              normalizedEmail,
-            password,
-          }
-        );
-
-        toast.success(
-          "OTP sent to your email."
+  const completeLogin =
+    useCallback(
+      (responseData) => {
+        login(
+          responseData.token,
+          responseData.user
         );
 
         navigate(
-          "/verify-registration",
+          "/dashboard",
           {
-            state: {
-              registrationData: {
-                fullName:
-                  normalizedFullName,
-                username:
-                  normalizedUsername,
-                email:
-                  normalizedEmail,
-                password,
-              },
-            },
+            replace: true,
           }
         );
-      } catch (error) {
-        console.error(error);
-
-        toast.error(
-          error.response?.data?.message ||
-            "Cannot connect to backend server."
-        );
-      } finally {
-        setLoading(false);
-      }
-    },
-    [
-      email,
-      fullName,
-      isBusy,
-      navigate,
-      password,
-      username,
-    ]
-  );
+      },
+      [
+        login,
+        navigate,
+      ]
+    );
 
   /**
-   * Handles Google account registration and login.
+   * Validates registration fields
+   * and requests an OTP.
+   */
+  const handleSubmit =
+    useCallback(
+      async (event) => {
+        event.preventDefault();
+
+        if (isBusy) {
+          return;
+        }
+
+        const normalizedFullName =
+          fullName.trim();
+
+        const normalizedUsername =
+          username.trim();
+
+        const normalizedEmail =
+          email
+            .trim()
+            .toLowerCase();
+
+        if (
+          !normalizedFullName ||
+          !normalizedUsername ||
+          !normalizedEmail ||
+          !password
+        ) {
+          toast.error(
+            "Please fill all fields."
+          );
+
+          return;
+        }
+
+        try {
+          setLoading(true);
+
+          await api.post(
+            "/auth/register/send-otp",
+            {
+              fullName:
+                normalizedFullName,
+
+              username:
+                normalizedUsername,
+
+              email:
+                normalizedEmail,
+
+              password,
+            }
+          );
+
+          toast.success(
+            "OTP sent to your email."
+          );
+
+          navigate(
+            "/verify-registration",
+            {
+              state: {
+                registrationData: {
+                  fullName:
+                    normalizedFullName,
+
+                  username:
+                    normalizedUsername,
+
+                  email:
+                    normalizedEmail,
+
+                  password,
+                },
+              },
+            }
+          );
+        } catch (error) {
+          console.error(error);
+
+          toast.error(
+            error.response?.data
+              ?.message ||
+              "Cannot connect to backend server."
+          );
+        } finally {
+          setLoading(false);
+        }
+      },
+      [
+        email,
+        fullName,
+        isBusy,
+        navigate,
+        password,
+        username,
+      ]
+    );
+
+  /**
+   * Handles Google account
+   * registration and login.
    */
   const handleGoogleSuccess =
     useCallback(
-      async (credentialResponse) => {
+      async (
+        credentialResponse
+      ) => {
         if (
           isBusy ||
-          !credentialResponse?.credential
+          !credentialResponse
+            ?.credential
         ) {
           return;
         }
 
         try {
-          setGoogleLoading(true);
+          setGoogleLoading(
+            true
+          );
 
           const response =
             await api.post(
               "/auth/google",
               {
                 credential:
-                  credentialResponse.credential,
+                  credentialResponse
+                    .credential,
               }
             );
 
-          completeLogin(response.data);
+          completeLogin(
+            response.data
+          );
         } catch (error) {
           console.error(error);
 
           toast.error(
-            error.response?.data?.message ||
+            error.response?.data
+              ?.message ||
               "Google sign up failed."
           );
         } finally {
-          setGoogleLoading(false);
+          setGoogleLoading(
+            false
+          );
         }
       },
       [
@@ -277,118 +318,187 @@ function Register() {
         position: "relative",
 
         display: "flex",
-        alignItems: isMobile
-          ? "flex-start"
-          : "center",
-        justifyContent: "center",
+        alignItems: "center",
+        justifyContent:
+          "center",
 
         width: "100%",
         minWidth: 0,
-        minHeight: "100dvh",
+
+        height: "100dvh",
+        minHeight: 0,
 
         margin: 0,
 
         padding: isMobile
-          ? "20px 12px calc(32px + env(safe-area-inset-bottom))"
+          ? "12px"
           : isTablet
-            ? "30px"
+            ? "24px"
             : "40px 20px",
 
-        boxSizing: "border-box",
+        boxSizing:
+          "border-box",
 
         backgroundImage:
           `url(${backgroundImage})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
-        backgroundAttachment: isMobile
-          ? "scroll"
-          : "fixed",
 
-        overflowX: "hidden",
+        backgroundSize:
+          "cover",
+
+        backgroundPosition:
+          "center",
+
+        backgroundRepeat:
+          "no-repeat",
+
+        backgroundAttachment:
+          isMobile
+            ? "scroll"
+            : "fixed",
+
+        overflow: "hidden",
       }}
     >
       <div
         aria-hidden="true"
         style={{
-          position: "absolute",
+          position:
+            "absolute",
+
           inset: 0,
 
-          background: darkMode
-            ? "rgba(0,0,0,.20)"
-            : "rgba(255,255,255,.08)",
+          background:
+            darkMode
+              ? "rgba(0,0,0,.20)"
+              : "rgba(255,255,255,.08)",
 
-          backdropFilter: "blur(2px)",
+          backdropFilter:
+            "blur(2px)",
+
           WebkitBackdropFilter:
             "blur(2px)",
 
-          pointerEvents: "none",
+          pointerEvents:
+            "none",
         }}
       />
 
       <Card
         variant="glass"
         style={{
-          position: "relative",
+          position:
+            "relative",
+
           zIndex: 1,
 
           width: "100%",
           maxWidth: "450px",
-          minWidth: 0,
 
-          margin: isMobile
-            ? "12px 0 0"
-            : 0,
+          minWidth: 0,
+          minHeight: 0,
+
+          maxHeight:
+            isMobile
+              ? "calc(100dvh - 24px)"
+              : isTablet
+                ? "calc(100dvh - 48px)"
+                : "none",
+
+          margin: 0,
 
           padding: isMobile
-            ? "24px 18px"
+            ? "18px 16px"
             : isTablet
-              ? "32px"
+              ? "30px"
               : "40px",
 
-          borderRadius: isMobile
-            ? "22px"
-            : "28px",
+          boxSizing:
+            "border-box",
+
+          overflowX:
+            "hidden",
+
+          overflowY:
+            isMobile ||
+            isTablet
+              ? "auto"
+              : "visible",
+
+          overscrollBehavior:
+            isMobile ||
+            isTablet
+              ? "contain"
+              : "auto",
+
+          WebkitOverflowScrolling:
+            "touch",
+
+          borderRadius:
+            isMobile
+              ? "22px"
+              : "28px",
         }}
       >
         <form
           noValidate
-          onSubmit={handleSubmit}
+          onSubmit={
+            handleSubmit
+          }
           style={{
             display: "flex",
-            flexDirection: "column",
-            gap: "18px",
+
+            flexDirection:
+              "column",
+
+            width: "100%",
+            minWidth: 0,
+
+            gap: isMobile
+              ? "12px"
+              : "18px",
           }}
         >
           <header
             style={{
-              textAlign: "center",
+              textAlign:
+                "center",
             }}
           >
             <img
               src={logo}
               alt="Nudge"
               style={{
-                width: isMobile
-                  ? "78px"
-                  : "100px",
+                width:
+                  isMobile
+                    ? "68px"
+                    : "100px",
 
-                height: isMobile
-                  ? "78px"
-                  : "100px",
+                height:
+                  isMobile
+                    ? "68px"
+                    : "100px",
 
-                objectFit: "contain",
+                objectFit:
+                  "contain",
               }}
             />
 
             <h1
               style={{
-                marginTop: "8px",
-                marginBottom: "4px",
+                marginTop:
+                  isMobile
+                    ? "2px"
+                    : "8px",
 
-                fontSize: isMobile
-                  ? "2rem"
-                  : "2.4rem",
+                marginBottom:
+                  "4px",
+
+                fontSize:
+                  isMobile
+                    ? "1.8rem"
+                    : "2.4rem",
+
+                lineHeight: 1.2,
               }}
             >
               Nudge
@@ -398,16 +508,23 @@ function Register() {
               style={{
                 margin: 0,
 
-                color: darkMode
-                  ? "#d1d5db"
-                  : "#6b7280",
+                color:
+                  darkMode
+                    ? "#d1d5db"
+                    : "#6b7280",
               }}
             >
               Create your account
             </p>
           </header>
 
-          <div className="input-icon-wrapper">
+          <div
+            className="input-icon-wrapper"
+            style={{
+              width: "100%",
+              minWidth: 0,
+            }}
+          >
             <FaUser
               className="input-icon"
               aria-hidden="true"
@@ -423,15 +540,32 @@ function Register() {
               aria-label="Full name"
               value={fullName}
               disabled={isBusy}
-              onChange={(event) =>
+              onChange={(
+                event
+              ) =>
                 setFullName(
-                  event.target.value
+                  event.target
+                    .value
                 )
               }
+              style={{
+                width: "100%",
+                maxWidth: "100%",
+                minWidth: 0,
+
+                boxSizing:
+                  "border-box",
+              }}
             />
           </div>
 
-          <div className="input-icon-wrapper">
+          <div
+            className="input-icon-wrapper"
+            style={{
+              width: "100%",
+              minWidth: 0,
+            }}
+          >
             <FaAt
               className="input-icon"
               aria-hidden="true"
@@ -449,15 +583,32 @@ function Register() {
               aria-label="Username"
               value={username}
               disabled={isBusy}
-              onChange={(event) =>
+              onChange={(
+                event
+              ) =>
                 setUsername(
-                  event.target.value
+                  event.target
+                    .value
                 )
               }
+              style={{
+                width: "100%",
+                maxWidth: "100%",
+                minWidth: 0,
+
+                boxSizing:
+                  "border-box",
+              }}
             />
           </div>
 
-          <div className="input-icon-wrapper">
+          <div
+            className="input-icon-wrapper"
+            style={{
+              width: "100%",
+              minWidth: 0,
+            }}
+          >
             <FaEnvelope
               className="input-icon"
               aria-hidden="true"
@@ -476,15 +627,32 @@ function Register() {
               aria-label="Email address"
               value={email}
               disabled={isBusy}
-              onChange={(event) =>
+              onChange={(
+                event
+              ) =>
                 setEmail(
-                  event.target.value
+                  event.target
+                    .value
                 )
               }
+              style={{
+                width: "100%",
+                maxWidth: "100%",
+                minWidth: 0,
+
+                boxSizing:
+                  "border-box",
+              }}
             />
           </div>
 
-          <div className="input-icon-wrapper">
+          <div
+            className="input-icon-wrapper"
+            style={{
+              width: "100%",
+              minWidth: 0,
+            }}
+          >
             <FaLock
               className="input-icon"
               aria-hidden="true"
@@ -500,11 +668,22 @@ function Register() {
               aria-label="Password"
               value={password}
               disabled={isBusy}
-              onChange={(event) =>
+              onChange={(
+                event
+              ) =>
                 setPassword(
-                  event.target.value
+                  event.target
+                    .value
                 )
               }
+              style={{
+                width: "100%",
+                maxWidth: "100%",
+                minWidth: 0,
+
+                boxSizing:
+                  "border-box",
+              }}
             />
           </div>
 
@@ -512,11 +691,18 @@ function Register() {
             type="submit"
             className="glow-top"
             disabled={isBusy}
-            aria-busy={loading}
+            aria-busy={
+              loading
+            }
             style={{
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
+              display:
+                "inline-flex",
+
+              alignItems:
+                "center",
+
+              justifyContent:
+                "center",
 
               width: "100%",
               margin: 0,
@@ -526,7 +712,8 @@ function Register() {
               aria-hidden="true"
               size={14}
               style={{
-                marginRight: "6px",
+                marginRight:
+                  "6px",
               }}
             />
 
@@ -539,7 +726,9 @@ function Register() {
             aria-hidden="true"
             style={{
               display: "flex",
-              alignItems: "center",
+
+              alignItems:
+                "center",
 
               gap: "12px",
             }}
@@ -547,21 +736,25 @@ function Register() {
             <div
               style={{
                 flexGrow: 1,
+
                 height: "1px",
 
-                background: darkMode
-                  ? "rgba(255,255,255,.20)"
-                  : "rgba(0,0,0,.12)",
+                background:
+                  darkMode
+                    ? "rgba(255,255,255,.20)"
+                    : "rgba(0,0,0,.12)",
               }}
             />
 
             <span
               style={{
-                color: darkMode
-                  ? "#9ca3af"
-                  : "#6b7280",
+                color:
+                  darkMode
+                    ? "#9ca3af"
+                    : "#6b7280",
 
-                fontSize: ".9rem",
+                fontSize:
+                  ".9rem",
               }}
             >
               OR
@@ -570,11 +763,13 @@ function Register() {
             <div
               style={{
                 flexGrow: 1,
+
                 height: "1px",
 
-                background: darkMode
-                  ? "rgba(255,255,255,.20)"
-                  : "rgba(0,0,0,.12)",
+                background:
+                  darkMode
+                    ? "rgba(255,255,255,.20)"
+                    : "rgba(0,0,0,.12)",
               }}
             />
           </div>
@@ -582,20 +777,26 @@ function Register() {
           <div
             style={{
               display: "flex",
-              justifyContent: "center",
+
+              justifyContent:
+                "center",
 
               width: "100%",
+              maxWidth: "100%",
               minWidth: 0,
 
-              opacity: googleLoading
-                ? 0.65
-                : 1,
+              opacity:
+                googleLoading
+                  ? 0.65
+                  : 1,
 
-              pointerEvents: isBusy
-                ? "none"
-                : "auto",
+              pointerEvents:
+                isBusy
+                  ? "none"
+                  : "auto",
 
-              overflow: "hidden",
+              overflow:
+                "hidden",
 
               transition:
                 "opacity .2s ease",
@@ -627,36 +828,51 @@ function Register() {
             <p
               role="status"
               style={{
-                margin: "-8px 0 0",
+                margin:
+                  "-6px 0 0",
 
-                fontSize: ".9rem",
-                textAlign: "center",
+                fontSize:
+                  ".9rem",
+
+                textAlign:
+                  "center",
+
                 opacity: 0.75,
               }}
             >
-              Signing up with Google...
+              Signing up with
+              Google...
             </p>
           )}
 
           <p
             style={{
-              marginTop: "8px",
+              marginTop:
+                isMobile
+                  ? "2px"
+                  : "8px",
+
               marginBottom: 0,
 
               lineHeight: 1.6,
-              textAlign: "center",
+
+              textAlign:
+                "center",
             }}
           >
-            Already have an account?{" "}
+            Already have an
+            account?{" "}
 
             <Link
               to="/"
               style={{
-                color: darkMode
-                  ? "#7dd3fc"
-                  : "#0284c7",
+                color:
+                  darkMode
+                    ? "#7dd3fc"
+                    : "#0284c7",
 
-                textDecoration: "none",
+                textDecoration:
+                  "none",
               }}
             >
               Login here
