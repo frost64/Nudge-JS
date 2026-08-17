@@ -228,14 +228,13 @@ function Register() {
             }
           );
         } catch (error) {
-          console.error(error);
+            console.error(error);
 
-          toast.error(
-            error.response?.data?.errors && error.response?.data?.errors.length > 0
-              ? error.response?.data?.errors[0]?.message
-              : "Cannot connect to backend server."
-          );
-        } finally {
+            toast.error(
+              error.response?.data?.message ||
+                "Cannot connect to backend server."
+            );
+          } finally {
           setLoading(false);
         }
       },
@@ -285,14 +284,13 @@ function Register() {
             response.data
           );
         } catch (error) {
-          console.error(error);
+            console.error(error);
 
-          toast.error(
-            error.response?.data?.errors && error.response?.data?.errors.length > 0
-              ? error.response?.data?.errors[0]?.message
-              : "Google sign up failed."
-          );
-        } finally {
+            toast.error(
+              error.response?.data?.message ||
+                "Google sign up failed."
+            );
+          } finally {
           setGoogleLoading(
             false
           );
