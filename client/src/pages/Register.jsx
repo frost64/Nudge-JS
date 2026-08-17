@@ -49,7 +49,6 @@ function getStoredUser() {
     );
 
     localStorage.removeItem("user");
-
     return null;
   }
 }
@@ -232,7 +231,7 @@ function Register() {
           console.error(error);
 
           toast.error(
-            error.response?.data
+            error.response?.data?.errors[0]
               ?.message ||
               "Cannot connect to backend server."
           );
@@ -289,7 +288,7 @@ function Register() {
           console.error(error);
 
           toast.error(
-            error.response?.data
+            error.response?.data?.errors[0]
               ?.message ||
               "Google sign up failed."
           );
