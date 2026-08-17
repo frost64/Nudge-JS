@@ -184,6 +184,13 @@ function Register() {
 
           return;
         }
+        if (password.length < 6) {
+          toast.error(
+            "Password must be at least 6 characters."
+          );
+
+          return;
+        }
 
         try {
           setLoading(true);
@@ -230,10 +237,16 @@ function Register() {
         } catch (error) {
             console.error(error);
 
-            toast.error(
-              error.response?.data?.message ||
-                "Cannot connect to backend server."
-            );
+            const data =
+              error.response?.data;
+
+            const message =
+              data?.errors?.[0]?.msg ||
+              data?.errors?.[0]?.message ||
+              data?.message ||
+              "Cannot connect to backend server.";
+
+            toast.error(message);
           } finally {
           setLoading(false);
         }
