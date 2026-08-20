@@ -841,7 +841,7 @@ screenshots/
 
 ---
 
-### Saved Links
+### Links
 
 ![Nudge Links](./screenshots/links.png)
 
