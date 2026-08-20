@@ -493,7 +493,7 @@ cd YOUR_REPOSITORY_NAME
 Navigate to the backend:
 
 ```bash
-cd nudge
+cd Nudge-JS
 ```
 
 Install dependencies:
@@ -789,8 +789,6 @@ Additional handling was implemented for:
 
 ## Screenshots
 
-Create a `screenshots` folder in the root of the repository:
-
 ```text
 screenshots/
 ├── login.png
@@ -803,8 +801,6 @@ screenshots/
 ├── profile.png
 └── mobile.png
 ```
-
-Then add screenshots to this section.
 
 ---
 
