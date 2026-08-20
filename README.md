@@ -811,6 +811,12 @@ screenshots/
 
 ---
 
+### Register
+
+![Nudge Register](./screenshots/register.png)
+
+---
+
 ### Dashboard
 
 ![Nudge Dashboard](./screenshots/dashboard.png)
