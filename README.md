@@ -798,6 +798,7 @@ screenshots/
 ├── notes.png
 ├── birthdays.png
 ├── links.png
+├── admin_dashboard.png
 ├── profile.png
 └── mobile.png
 ```
@@ -837,6 +838,12 @@ screenshots/
 ### Saved Links
 
 ![Nudge Links](./screenshots/links.png)
+
+---
+
+### Admin Dashboard
+
+![Nudge Admin](./screenshots/admin_dashboard.png)
 
 ---
 
