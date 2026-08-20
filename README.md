@@ -958,14 +958,14 @@ Global Search             ✅
 
 ## Author
 
-**YOUR_NAME**
+**ASJID AHMED**
 
 Full-Stack Web Developer
 
 ### Connect With Me
 
-- GitHub: [YOUR_GITHUB_USERNAME](YOUR_GITHUB_URL)
-- LinkedIn: [YOUR_NAME](YOUR_LINKEDIN_URL)
+- GitHub: [frost64](https://github.com/frost64)
+- LinkedIn: [Asjid Ahmed](https://www.linkedin.com/in/asjid-ahmed-a1031b2a4/)
 - Portfolio: [Nudge](https://nudgere.com)
 
 ---
