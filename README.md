@@ -977,8 +977,8 @@ Full-Stack Web Developer
 | Live Application | https://nudgere.com |
 | Frontend Deployment | https://nudge-js.vercel.app |
 | Backend API | https://nudge-js.onrender.com |
-| GitHub Repository | YOUR_GITHUB_REPOSITORY_URL |
-| LinkedIn | YOUR_LINKEDIN_URL |
+| GitHub Repository | https://github.com/frost64/Nudge-JS |
+| LinkedIn | https://www.linkedin.com/in/asjid-ahmed-a1031b2a4 |
 
 ---
 
