@@ -355,52 +355,190 @@ flowchart TB
 
 ## 🔐 Authentication Flow
 
-### Standard Registration
+Nudge supports multiple authentication paths, including email/password registration, standard login, Google authentication, and secure password recovery.
 
-```text
-User enters registration details
-              ↓
-Frontend sends registration request
-              ↓
-Backend validates user information
-              ↓
-Checks email and username availability
-              ↓
-Generates OTP
-              ↓
-OTP sent using Resend
-              ↓
-User enters OTP
-              ↓
-Backend verifies OTP
-              ↓
-User account created
-              ↓
-JWT generated
-              ↓
-User redirected to Dashboard
+### 📝 Email Registration & Verification
+
+New users must verify their email address using a 6-digit OTP before their account is fully created.
+
+```mermaid
+flowchart TD
+
+    A["👤 User Opens Registration"] --> B["📝 Enter Name, Username, Email & Password"]
+
+    B --> C["⚛️ React Frontend"]
+    C -->|"Registration Request"| D["⚙️ Express API"]
+
+    D --> E["✅ Validate Input"]
+
+    E --> F{"Email or Username<br/>Already Exists?"}
+
+    F -->|"Yes"| G["❌ Return Validation Error"]
+    G --> B
+
+    F -->|"No"| H["🔢 Generate 6-Digit OTP"]
+
+    H --> I["📧 Send OTP with Resend"]
+    I --> J["📩 User Receives Verification Email"]
+
+    J --> K["🔢 User Enters OTP"]
+    K --> L["⚛️ Frontend Sends OTP"]
+    L --> M["⚙️ Backend Verifies OTP"]
+
+    M --> N{"OTP Valid?"}
+
+    N -->|"No"| O["❌ Invalid / Expired OTP"]
+    O --> K
+
+    N -->|"Yes"| P["🔒 Hash Password with bcrypt"]
+    P --> Q["🍃 Create User in MongoDB"]
+    Q --> R["🎫 Generate JWT"]
+    R --> S["✅ Authentication Successful"]
+    S --> T["🏠 Redirect to Dashboard"]
 ```
 
-### Google Authentication
+### 🔑 Email & Password Login
 
-```text
-User selects Sign in with Google
-              ↓
-Google Identity Services
-              ↓
-Google credential returned to frontend
-              ↓
-Credential sent to backend
-              ↓
-Backend verifies Google token
-              ↓
-       Existing user logged in
-                 OR
-          New user created
-              ↓
-JWT generated
-              ↓
-User redirected to Dashboard
+Existing users can authenticate using their registered email address and password.
+
+```mermaid
+flowchart TD
+
+    A["👤 User Opens Login"] --> B["📧 Enter Email & Password"]
+
+    B --> C["⚛️ React Frontend"]
+    C -->|"Login Request"| D["⚙️ Express API"]
+
+    D --> E["🍃 Find User in MongoDB"]
+
+    E --> F{"User Found?"}
+
+    F -->|"No"| G["❌ Invalid Credentials"]
+    G --> B
+
+    F -->|"Yes"| H["🔒 Compare Password with bcrypt"]
+
+    H --> I{"Password Valid?"}
+
+    I -->|"No"| G
+
+    I -->|"Yes"| J["🎫 Generate JWT"]
+    J --> K["✅ Authentication Successful"]
+    K --> L["🏠 Redirect to Dashboard"]
+```
+
+### 🔵 Google Authentication
+
+Google Sign-In uses Google Identity Services on the frontend and token verification on the backend.
+
+```mermaid
+flowchart TD
+
+    A["👤 User Selects Sign in with Google"] --> B["🔵 Google Identity Services"]
+
+    B --> C["🔐 Google Authentication"]
+    C --> D["📨 Google Credential Returned"]
+
+    D --> E["⚛️ React Frontend"]
+    E -->|"Google Credential"| F["⚙️ Express API"]
+
+    F --> G["🔍 Verify Google ID Token"]
+
+    G --> H{"Token Valid?"}
+
+    H -->|"No"| I["❌ Authentication Rejected"]
+
+    H -->|"Yes"| J["🍃 Search User in MongoDB"]
+
+    J --> K{"User Exists?"}
+
+    K -->|"Yes"| L["👤 Load Existing Account"]
+
+    K -->|"No"| M["➕ Create New User Account"]
+
+    L --> N["🎫 Generate JWT"]
+    M --> N
+
+    N --> O["✅ Authentication Successful"]
+    O --> P["🏠 Redirect to Dashboard"]
+```
+
+### 🔄 Password Recovery
+
+Users who forget their password can securely request a password reset.
+
+```mermaid
+flowchart TD
+
+    A["👤 User Selects Forgot Password"] --> B["📧 Enter Registered Email"]
+
+    B --> C["⚛️ React Frontend"]
+    C -->|"Reset Request"| D["⚙️ Express API"]
+
+    D --> E["🍃 Find User in MongoDB"]
+
+    E --> F{"User Found?"}
+
+    F -->|"No"| G["❌ Invalid Request"]
+
+    F -->|"Yes"| H["🔐 Generate Secure Reset Token"]
+
+    H --> I["📧 Send Reset Email with Resend"]
+    I --> J["📩 User Opens Reset Link"]
+
+    J --> K["🔑 Enter New Password"]
+    K --> L["⚛️ Frontend Sends Reset Request"]
+
+    L --> M["⚙️ Backend Validates Reset Token"]
+
+    M --> N{"Token Valid?"}
+
+    N -->|"No"| O["❌ Invalid / Expired Token"]
+
+    N -->|"Yes"| P["🔒 Hash New Password"]
+    P --> Q["🍃 Update User Password"]
+    Q --> R["✅ Password Reset Successful"]
+    R --> S["🔑 User Can Sign In"]
+```
+
+### 🛡️ Authentication Security
+
+The authentication system includes:
+
+- 🔒 Password hashing using **bcrypt**
+- 🎫 JWT-based authentication
+- 🔐 Protected backend routes
+- 🔵 Google ID token verification
+- 📧 Email OTP verification
+- 🔢 6-digit verification codes
+- ⏳ Expiring verification and password-reset tokens
+- ✅ Server-side request validation
+- 🚫 Duplicate email and username protection
+- 🔑 Secure password recovery
+- 🌐 CORS restrictions
+- 🚦 API rate limiting
+- 🔐 Environment-based secret management
+
+### 🔁 Authentication Overview
+
+```mermaid
+flowchart LR
+
+    USER["👤 User"]
+
+    USER --> EMAIL["📧 Email Registration"]
+    USER --> LOGIN["🔑 Email Login"]
+    USER --> GOOGLE["🔵 Google Sign-In"]
+
+    EMAIL --> OTP["🔢 OTP Verification"]
+    OTP --> JWT["🎫 JWT"]
+
+    LOGIN --> JWT
+    GOOGLE --> VERIFY["🔍 Google Token Verification"]
+    VERIFY --> JWT
+
+    JWT --> API["🔐 Protected API"]
+    API --> APP["🏠 Nudge Dashboard"]
 ```
 
 ---
