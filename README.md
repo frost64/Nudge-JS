@@ -226,48 +226,47 @@ Responsive handling includes:
   <img src="https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white" alt="Vite"/>
   <img src="https://img.shields.io/badge/React_Router-CA4245?style=for-the-badge&logo=reactrouter&logoColor=white" alt="React Router"/>
   <img src="https://img.shields.io/badge/Axios-5A29E4?style=for-the-badge&logo=axios&logoColor=white" alt="Axios"/>
+  <img src="https://img.shields.io/badge/Context_API-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React Context API"/>
+  <img src="https://img.shields.io/badge/React_Hot_Toast-FF5A5F?style=for-the-badge" alt="React Hot Toast"/>
+  <img src="https://img.shields.io/badge/React_Icons-E91E63?style=for-the-badge&logo=react&logoColor=white" alt="React Icons"/>
 </p>
-
-- React
-- Vite
-- React Router
-- Axios
-- React Context API
-- React Hot Toast
-- React Icons
-- Google Identity Services
 
 ### ⚙️ Backend
 
 <p>
   <img src="https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white" alt="Node.js"/>
-  <img src="https://img.shields.io/badge/Express-000000?style=for-the-badge&logo=express&logoColor=white" alt="Express"/>
-  <img src="https://img.shields.io/badge/MongoDB-47A248?style=for-the-badge&logo=mongodb&logoColor=white" alt="MongoDB"/>
+  <img src="https://img.shields.io/badge/Express.js-000000?style=for-the-badge&logo=express&logoColor=white" alt="Express.js"/>
+  <img src="https://img.shields.io/badge/Mongoose-880000?style=for-the-badge&logo=mongoose&logoColor=white" alt="Mongoose"/>
+  <img src="https://img.shields.io/badge/JWT-000000?style=for-the-badge&logo=jsonwebtokens&logoColor=white" alt="JSON Web Tokens"/>
+  <img src="https://img.shields.io/badge/bcrypt-333333?style=for-the-badge" alt="bcrypt"/>
+  <img src="https://img.shields.io/badge/Express_Validator-000000?style=for-the-badge&logo=express&logoColor=white" alt="Express Validator"/>
+  <img src="https://img.shields.io/badge/Multer-333333?style=for-the-badge" alt="Multer"/>
 </p>
 
-- Node.js
-- Express.js
-- MongoDB
-- Mongoose
-- JSON Web Tokens
-- bcrypt / bcryptjs
-- Express Validator
-- Multer
-- Google Auth Library
+### 🗄️ Database
+
+<p>
+  <img src="https://img.shields.io/badge/MongoDB-47A248?style=for-the-badge&logo=mongodb&logoColor=white" alt="MongoDB"/>
+  <img src="https://img.shields.io/badge/MongoDB_Atlas-47A248?style=for-the-badge&logo=mongodb&logoColor=white" alt="MongoDB Atlas"/>
+</p>
 
 ### 🔌 APIs & Integrations
 
-- Google OAuth / Google Identity Services
-- OpenWeather API
-- Resend Email API
-- Calendar `.ics` export
+<p>
+  <img src="https://img.shields.io/badge/Google_OAuth-4285F4?style=for-the-badge&logo=google&logoColor=white" alt="Google OAuth"/>
+  <img src="https://img.shields.io/badge/Google_Identity-4285F4?style=for-the-badge&logo=google&logoColor=white" alt="Google Identity Services"/>
+  <img src="https://img.shields.io/badge/OpenWeather-EB6E4B?style=for-the-badge&logo=cloud&logoColor=white" alt="OpenWeather"/>
+  <img src="https://img.shields.io/badge/Resend-000000?style=for-the-badge&logo=resend&logoColor=white" alt="Resend"/>
+  <img src="https://img.shields.io/badge/Calendar_.ics-4285F4?style=for-the-badge&logo=googlecalendar&logoColor=white" alt="Calendar ICS Export"/>
+</p>
 
 ### ☁️ Deployment
 
-- **Frontend:** Vercel
-- **Backend:** Render
-- **Database:** MongoDB Atlas
-- **Domain:** Custom production domain
+<p>
+  <img src="https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white" alt="Vercel"/>
+  <img src="https://img.shields.io/badge/Render-000000?style=for-the-badge&logo=render&logoColor=white" alt="Render"/>
+  <img src="https://img.shields.io/badge/MongoDB_Atlas-47A248?style=for-the-badge&logo=mongodb&logoColor=white" alt="MongoDB Atlas"/>
+</p>
 
 ---
 
