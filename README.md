@@ -272,43 +272,84 @@ Responsive handling includes:
 
 ## 🏗️ Application Architecture
 
-```text
-                    ┌──────────────────────┐
-                    │     User Browser     │
-                    │  Desktop / Mobile    │
-                    └──────────┬───────────┘
-                               │
-                               │ HTTPS
-                               ▼
-                    ┌──────────────────────┐
-                    │    React + Vite      │
-                    │      Frontend        │
-                    │       Vercel         │
-                    └──────────┬───────────┘
-                               │
-                               │ REST API
-                               ▼
-                    ┌──────────────────────┐
-                    │ Node.js + Express.js │
-                    │       Backend        │
-                    │        Render        │
-                    └──────────┬───────────┘
-                               │
-                               ▼
-                    ┌──────────────────────┐
-                    │    MongoDB Atlas     │
-                    │       Database       │
-                    └──────────────────────┘
+Nudge follows a client-server architecture with a React frontend, REST API backend, cloud-hosted MongoDB database, and external services for authentication, email, and weather data.
 
+```mermaid
+flowchart TB
 
-External Services
-────────────────────────────────────────────
+    U["👤 User"]
 
-Google Identity Services  → Authentication
-Resend                    → Email / OTP
-OpenWeather               → Weather
-Calendar Export           → .ics files
+    subgraph CLIENT["Client"]
+        B["🌐 Web Browser<br/>Desktop • Tablet • Mobile"]
+        GEO["📍 Browser Geolocation"]
+    end
+
+    subgraph FRONTEND["Frontend — Vercel"]
+        FE["⚛️ React + Vite"]
+        UI["🖥️ Responsive UI"]
+        AUTHCLIENT["🔐 Google Identity Services"]
+    end
+
+    subgraph BACKEND["Backend — Render"]
+        API["⚙️ Node.js + Express.js"]
+        AUTH["🔑 Authentication & Authorization"]
+        LOGIC["🧠 Application Logic"]
+        ROUTES["🔗 REST API Routes"]
+    end
+
+    subgraph DATA["Data Layer"]
+        DB[("🍃 MongoDB Atlas")]
+    end
+
+    subgraph SERVICES["External Services"]
+        GOOGLE["🔵 Google OAuth"]
+        RESEND["📧 Resend"]
+        WEATHER["🌤️ OpenWeather API"]
+    end
+
+    subgraph EXPORTS["Client Exports"]
+        ICS["📅 .ics Calendar Files"]
+    end
+
+    U --> B
+
+    B --> FE
+    B --> GEO
+
+    FE --> UI
+    FE --> AUTHCLIENT
+
+    FE -->|"HTTPS / REST API"| API
+
+    API --> ROUTES
+    ROUTES --> AUTH
+    ROUTES --> LOGIC
+
+    AUTH --> DB
+    LOGIC --> DB
+
+    AUTHCLIENT --> GOOGLE
+    GOOGLE -->|"Google Credential"| API
+
+    API -->|"OTP & Password Reset Email"| RESEND
+    API -->|"Weather Request"| WEATHER
+
+    GEO -->|"Latitude / Longitude"| FE
+    WEATHER -->|"Current Weather Data"| API
+
+    FE -->|"Generate / Download"| ICS
 ```
+
+### Architecture Overview
+
+- **Client:** Users access Nudge through desktop, tablet, and mobile browsers.
+- **Frontend:** React and Vite provide the user interface and communicate with the backend through HTTPS REST API requests.
+- **Backend:** Node.js and Express.js handle authentication, validation, application logic, and API routes.
+- **Database:** MongoDB Atlas stores persistent application and user data.
+- **Authentication:** JWT handles application sessions while Google Identity Services provides Google authentication.
+- **Email:** Resend handles OTP verification and password recovery emails.
+- **Weather:** OpenWeather provides current weather information using user location when available.
+- **Calendar Export:** Reminder data can be exported as `.ics` files for compatible calendar applications.
 
 ---
 
