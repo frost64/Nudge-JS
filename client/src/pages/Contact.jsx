@@ -36,7 +36,7 @@ const SOCIAL_LINKS = [
     title: "LinkedIn",
     description: "Let's connect professionally.",
     label: "Connect",
-    url: "https://www.linkedin.com/in/asjid-ahmed-a1031b2a4/",
+    url: "https://www.linkedin.com/in/asjid-ahmed/",
     icon: FaLinkedin,
   },
 ];
